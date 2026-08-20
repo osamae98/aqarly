@@ -1,0 +1,17 @@
+[
+  {
+    "slug": "sample-listing",
+    "title": "Sample Listing",
+    "type": "apartment",
+    "purpose": "sale",
+    "price": 0,
+    "currency": "AED",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "areaSqft": 0,
+    "location": { "city": "", "area": "" },
+    "images": [],
+    "description": "Placeholder record so the data layer has a shape to work against.",
+    "featured": false
+  }
+]
