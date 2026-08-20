@@ -10,20 +10,25 @@ Next.js (App Router) + Tailwind CSS v4, JavaScript.
 ## Getting started
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
+
+This project uses **pnpm**, pinned via the `packageManager` field in
+`package.json`. Run it through [corepack](https://nodejs.org/api/corepack.html)
+(`corepack enable`) and the right version is used automatically — don't run
+`npm install` here, it will produce a competing lockfile.
 
 Then open http://localhost:3000.
 
 ## Scripts
 
-| Command         | What it does                     |
-| --------------- | -------------------------------- |
-| `npm run dev`   | Dev server with hot reload       |
-| `npm run build` | Production build                 |
-| `npm start`     | Serve the production build       |
-| `npm run lint`  | ESLint                           |
+| Command         | What it does               |
+| --------------- | -------------------------- |
+| `pnpm dev`      | Dev server with hot reload |
+| `pnpm build`    | Production build           |
+| `pnpm start`    | Serve the production build |
+| `pnpm lint`     | ESLint                     |
 
 ## Structure
 

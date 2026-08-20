@@ -25,3 +25,13 @@ without touching pages.
 
 `Aqarly` is a placeholder codename. Do not add the real company name anywhere
 in this repo.
+
+## Package manager
+
+pnpm, pinned by the `packageManager` field in `package.json` and run through
+corepack. Use `pnpm add` / `pnpm install` — never `npm` or `yarn` in this repo;
+a second lockfile would drift from `pnpm-lock.yaml`.
+
+`pnpm.onlyBuiltDependencies` is deliberately empty: no dependency is allowed to
+run install scripts. If a package genuinely needs one, add it to that array by
+name rather than disabling the check.

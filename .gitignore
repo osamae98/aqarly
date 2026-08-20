@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+
+# pnpm is the package manager for this repo — reject other lockfiles
+/package-lock.json
+/yarn.lock
 /.pnp
 .pnp.*
 .yarn/*
