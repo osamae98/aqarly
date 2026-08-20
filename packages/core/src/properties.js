@@ -1,4 +1,4 @@
-import data from "@/data/properties.json";
+import data from "../data/properties.json";
 
 // Single seam between the UI and wherever properties actually come from.
 // Today it reads a local JSON file; swap the bodies for API/DB calls later

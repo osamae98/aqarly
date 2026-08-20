@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Container from "./Container";
-import { nav, site } from "@/lib/site";
+import Container from "@aqarly/ui/Container";
+import { nav, site } from "@aqarly/core/site";
 
 export default function Header() {
   return (

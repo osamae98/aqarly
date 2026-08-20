@@ -1,5 +1,5 @@
 import Section from "@/components/ui/Section";
-import Button from "@/components/ui/Button";
+import Button from "@aqarly/ui/Button";
 
 export default function NotFound() {
   return (

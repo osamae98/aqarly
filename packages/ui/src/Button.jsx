@@ -2,31 +2,54 @@ import Link from "next/link";
 
 const variants = {
   primary:
-    "bg-foreground text-background hover:opacity-90",
-  outline:
-    "border border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10",
+    "border-transparent bg-brand text-ink-inverse hover:bg-brand-hover active:bg-brand-active",
+  outline: "border-border-strong text-ink hover:bg-sunken",
+  ghost: "border-transparent text-brand hover:bg-brand-tint",
+};
+
+const sizes = {
+  sm: "h-9 px-3.5 text-sm",
+  md: "h-11 px-5 text-sm",
+  lg: "h-13 px-7 text-base",
 };
 
 export default function Button({
-  href,
   variant = "primary",
+  size = "md",
+  disabled = false,
+  fullWidth = false,
+  iconLeft,
+  iconRight,
+  href,
   className = "",
   children,
   ...props
 }) {
-  const classes = `inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition ${variants[variant]} ${className}`;
+  const classes = [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill",
+    "border-[1.5px] font-medium transition-colors",
+    sizes[size] ?? sizes.md,
+    variants[variant] ?? variants.primary,
+    fullWidth ? "w-full" : "",
+    disabled ? "cursor-not-allowed opacity-45" : "",
+    className,
+  ].join(" ");
 
-  if (href) {
+  if (href && !disabled) {
     return (
       <Link href={href} className={classes} {...props}>
+        {iconLeft}
         {children}
+        {iconRight}
       </Link>
     );
   }
 
   return (
-    <button className={classes} {...props}>
+    <button className={classes} disabled={disabled} {...props}>
+      {iconLeft}
       {children}
+      {iconRight}
     </button>
   );
 }

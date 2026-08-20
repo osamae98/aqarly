@@ -1,5 +1,5 @@
-import Container from "./Container";
-import { site } from "@/lib/site";
+import Container from "@aqarly/ui/Container";
+import { site } from "@aqarly/core/site";
 
 export default function Footer() {
   return (

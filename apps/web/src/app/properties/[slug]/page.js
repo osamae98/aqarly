@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Section from "@/components/ui/Section";
-import { getPropertyBySlug, getPropertySlugs } from "@/lib/properties";
+import { getPropertyBySlug, getPropertySlugs } from "@aqarly/core/properties";
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();

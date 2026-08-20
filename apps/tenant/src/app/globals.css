@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@aqarly/ui/styles/tokens.css";
+
+/* Tailwind scans this app's own directory but not the symlinked workspace
+ * packages, so the class names used inside shared components have to be
+ * pointed at explicitly or they never reach the stylesheet. */
+@source "../../../../packages/ui/src";

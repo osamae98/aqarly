@@ -1,0 +1,325 @@
+{
+  "properties": [
+    { "id": "prop-marina-heights", "name": "Marina Heights", "address": "Marina District" },
+    { "id": "prop-jade-court", "name": "Jade Court", "address": "Al Nahda" },
+    { "id": "prop-oasis-residences", "name": "Oasis Residences", "address": "Business Bay" }
+  ],
+
+  "units": [
+    { "id": "unit-mh-0402", "propertyId": "prop-marina-heights", "label": "0402", "status": "occupied", "tenantId": "ten-alhabsi" },
+    { "id": "unit-mh-0711", "propertyId": "prop-marina-heights", "label": "0711", "status": "occupied", "tenantId": "ten-farouk" },
+    { "id": "unit-mh-1203", "propertyId": "prop-marina-heights", "label": "1203", "status": "occupied", "tenantId": "ten-devi" },
+    { "id": "unit-mh-0105", "propertyId": "prop-marina-heights", "label": "0105", "status": "under-maintenance", "tenantId": null },
+    { "id": "unit-jc-0203", "propertyId": "prop-jade-court", "label": "0203", "status": "occupied", "tenantId": "ten-okonkwo" },
+    { "id": "unit-jc-0508", "propertyId": "prop-jade-court", "label": "0508", "status": "occupied", "tenantId": "ten-rahman" },
+    { "id": "unit-jc-0610", "propertyId": "prop-jade-court", "label": "0610", "status": "vacant", "tenantId": null },
+    { "id": "unit-or-0301", "propertyId": "prop-oasis-residences", "label": "0301", "status": "occupied", "tenantId": "ten-silva" },
+    { "id": "unit-or-0904", "propertyId": "prop-oasis-residences", "label": "0904", "status": "occupied", "tenantId": "ten-baker" },
+    { "id": "unit-or-1502", "propertyId": "prop-oasis-residences", "label": "1502", "status": "occupied", "tenantId": "ten-nassar" }
+  ],
+
+  "tenants": [
+    { "id": "ten-alhabsi", "name": "Layla Al Habsi", "phone": "+000 000 0001" },
+    { "id": "ten-farouk", "name": "Omar Farouk", "phone": "+000 000 0002" },
+    { "id": "ten-devi", "name": "Priya Devi", "phone": "+000 000 0003" },
+    { "id": "ten-okonkwo", "name": "Chidi Okonkwo", "phone": "+000 000 0004" },
+    { "id": "ten-rahman", "name": "Sana Rahman", "phone": "+000 000 0005" },
+    { "id": "ten-silva", "name": "Marco Silva", "phone": "+000 000 0006" },
+    { "id": "ten-baker", "name": "Ellis Baker", "phone": "+000 000 0007" },
+    { "id": "ten-nassar", "name": "Rana Nassar", "phone": "+000 000 0008" }
+  ],
+
+  "staff": [
+    { "id": "stf-haddad", "name": "Youssef Haddad", "role": "maintenance" },
+    { "id": "stf-kimani", "name": "Grace Kimani", "role": "maintenance" },
+    { "id": "stf-torres", "name": "Diego Torres", "role": "maintenance" },
+    { "id": "stf-mensah", "name": "Ama Mensah", "role": "housekeeping" },
+    { "id": "stf-castillo", "name": "Rosa Castillo", "role": "housekeeping" }
+  ],
+
+  "housekeepingRates": [
+    { "serviceType": "standard-clean", "label": "Standard clean", "price": 120 },
+    { "serviceType": "deep-clean", "label": "Deep clean", "price": 320 },
+    { "serviceType": "laundry", "label": "Laundry & linens", "price": 80 },
+    { "serviceType": "post-checkout", "label": "Post-checkout turnover", "price": 450 }
+  ],
+
+  "requests": [
+    {
+      "id": "REQ-1051",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "maintenance",
+      "category": "ac",
+      "priority": "urgent",
+      "summary": "AC not cooling in main bedroom",
+      "description": "Unit runs but blows warm air. Started overnight.",
+      "stage": "submitted",
+      "assigneeId": null,
+      "createdAt": "2026-08-20T05:40:00Z",
+      "stageHistory": [{ "stage": "submitted", "at": "2026-08-20T05:40:00Z" }],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1050",
+      "unitId": "unit-jc-0508",
+      "tenantId": "ten-rahman",
+      "type": "housekeeping",
+      "category": "standard-clean",
+      "priority": "normal",
+      "summary": "Standard clean — Thursday morning",
+      "description": "Preferred slot 09:00–11:00.",
+      "stage": "submitted",
+      "assigneeId": null,
+      "createdAt": "2026-08-20T04:15:00Z",
+      "stageHistory": [{ "stage": "submitted", "at": "2026-08-20T04:15:00Z" }],
+      "charge": 120,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1049",
+      "unitId": "unit-or-0904",
+      "tenantId": "ten-baker",
+      "type": "maintenance",
+      "category": "plumbing",
+      "priority": "urgent",
+      "summary": "Water leaking under kitchen sink",
+      "description": "Pooling on the floor, cabinet base is soaked.",
+      "stage": "assigned",
+      "assigneeId": "stf-haddad",
+      "createdAt": "2026-08-19T14:20:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-19T14:20:00Z" },
+        { "stage": "assigned", "at": "2026-08-19T15:05:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1048",
+      "unitId": "unit-mh-1203",
+      "tenantId": "ten-devi",
+      "type": "maintenance",
+      "category": "electrical",
+      "priority": "normal",
+      "summary": "Two sockets in living room dead",
+      "description": "Breaker looks fine, other sockets work.",
+      "stage": "in-progress",
+      "assigneeId": "stf-kimani",
+      "createdAt": "2026-08-19T08:10:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-19T08:10:00Z" },
+        { "stage": "assigned", "at": "2026-08-19T09:30:00Z" },
+        { "stage": "in-progress", "at": "2026-08-20T06:45:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1047",
+      "unitId": "unit-jc-0203",
+      "tenantId": "ten-okonkwo",
+      "type": "maintenance",
+      "category": "appliance",
+      "priority": "normal",
+      "summary": "Washing machine drum not spinning",
+      "description": "Fills and drains, drum stays still on any cycle.",
+      "stage": "assigned",
+      "assigneeId": "stf-torres",
+      "createdAt": "2026-08-17T11:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-17T11:00:00Z" },
+        { "stage": "assigned", "at": "2026-08-18T13:40:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1046",
+      "unitId": "unit-or-1502",
+      "tenantId": "ten-nassar",
+      "type": "housekeeping",
+      "category": "deep-clean",
+      "priority": "normal",
+      "summary": "Deep clean before family visit",
+      "description": "Whole unit, including balcony.",
+      "stage": "in-progress",
+      "assigneeId": "stf-mensah",
+      "createdAt": "2026-08-18T09:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-18T09:00:00Z" },
+        { "stage": "assigned", "at": "2026-08-18T10:15:00Z" },
+        { "stage": "in-progress", "at": "2026-08-20T05:00:00Z" }
+      ],
+      "charge": 320,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1045",
+      "unitId": "unit-mh-0711",
+      "tenantId": "ten-farouk",
+      "type": "maintenance",
+      "category": "ac",
+      "priority": "urgent",
+      "summary": "AC unit dripping onto ceiling",
+      "description": "Damp patch spreading on the hallway ceiling.",
+      "stage": "assigned",
+      "assigneeId": "stf-haddad",
+      "createdAt": "2026-08-16T07:25:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-16T07:25:00Z" },
+        { "stage": "assigned", "at": "2026-08-16T08:10:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1044",
+      "unitId": "unit-or-0301",
+      "tenantId": "ten-silva",
+      "type": "housekeeping",
+      "category": "laundry",
+      "priority": "normal",
+      "summary": "Laundry & linens pickup",
+      "description": "Two bags, bed linens included.",
+      "stage": "done",
+      "assigneeId": "stf-castillo",
+      "createdAt": "2026-08-15T10:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-15T10:00:00Z" },
+        { "stage": "assigned", "at": "2026-08-15T10:40:00Z" },
+        { "stage": "in-progress", "at": "2026-08-16T08:00:00Z" },
+        { "stage": "done", "at": "2026-08-16T12:30:00Z" }
+      ],
+      "charge": 80,
+      "completionNotes": "Collected and returned same day. Tenant confirmed receipt."
+    },
+    {
+      "id": "REQ-1043",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "maintenance",
+      "category": "plumbing",
+      "priority": "normal",
+      "summary": "Bathroom tap dripping",
+      "description": "Slow but constant drip from the basin tap.",
+      "stage": "done",
+      "assigneeId": "stf-kimani",
+      "createdAt": "2026-08-12T13:15:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-12T13:15:00Z" },
+        { "stage": "assigned", "at": "2026-08-12T14:00:00Z" },
+        { "stage": "in-progress", "at": "2026-08-13T09:20:00Z" },
+        { "stage": "done", "at": "2026-08-13T10:05:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": "Replaced washer and seated the cartridge. No leak on retest."
+    },
+    {
+      "id": "REQ-1042",
+      "unitId": "unit-jc-0203",
+      "tenantId": "ten-okonkwo",
+      "type": "housekeeping",
+      "category": "standard-clean",
+      "priority": "normal",
+      "summary": "Standard clean",
+      "description": "Fortnightly booking.",
+      "stage": "done",
+      "assigneeId": "stf-mensah",
+      "createdAt": "2026-08-11T08:30:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-11T08:30:00Z" },
+        { "stage": "assigned", "at": "2026-08-11T09:00:00Z" },
+        { "stage": "in-progress", "at": "2026-08-12T09:00:00Z" },
+        { "stage": "done", "at": "2026-08-12T11:45:00Z" }
+      ],
+      "charge": 120,
+      "completionNotes": "Full standard clean completed."
+    },
+    {
+      "id": "REQ-1041",
+      "unitId": "unit-mh-0105",
+      "tenantId": null,
+      "type": "housekeeping",
+      "category": "post-checkout",
+      "priority": "normal",
+      "summary": "Post-checkout turnover",
+      "description": "Previous tenant vacated, unit being prepared for re-let.",
+      "stage": "done",
+      "assigneeId": "stf-castillo",
+      "createdAt": "2026-08-08T07:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-08T07:00:00Z" },
+        { "stage": "assigned", "at": "2026-08-08T07:30:00Z" },
+        { "stage": "in-progress", "at": "2026-08-09T08:00:00Z" },
+        { "stage": "done", "at": "2026-08-09T15:20:00Z" }
+      ],
+      "charge": 450,
+      "completionNotes": "Full turnover. Unit handed back to ops for maintenance snag list."
+    },
+    {
+      "id": "REQ-1040",
+      "unitId": "unit-or-0904",
+      "tenantId": "ten-baker",
+      "type": "maintenance",
+      "category": "other",
+      "priority": "normal",
+      "summary": "Front door handle loose",
+      "description": "Handle rattles, screws won't hold.",
+      "stage": "done",
+      "assigneeId": "stf-torres",
+      "createdAt": "2026-08-05T16:40:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-05T16:40:00Z" },
+        { "stage": "assigned", "at": "2026-08-06T08:15:00Z" },
+        { "stage": "in-progress", "at": "2026-08-06T14:00:00Z" },
+        { "stage": "done", "at": "2026-08-06T14:50:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": "Replaced handle assembly and re-tapped the fixing holes."
+    },
+    {
+      "id": "REQ-1039",
+      "unitId": "unit-or-1502",
+      "tenantId": "ten-nassar",
+      "type": "housekeeping",
+      "category": "standard-clean",
+      "priority": "normal",
+      "summary": "Standard clean",
+      "description": "Monthly booking.",
+      "stage": "done",
+      "assigneeId": "stf-mensah",
+      "createdAt": "2026-07-28T08:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-07-28T08:00:00Z" },
+        { "stage": "assigned", "at": "2026-07-28T08:45:00Z" },
+        { "stage": "in-progress", "at": "2026-07-29T09:00:00Z" },
+        { "stage": "done", "at": "2026-07-29T11:30:00Z" }
+      ],
+      "charge": 120,
+      "completionNotes": "Completed."
+    },
+    {
+      "id": "REQ-1038",
+      "unitId": "unit-jc-0508",
+      "tenantId": "ten-rahman",
+      "type": "housekeeping",
+      "category": "deep-clean",
+      "priority": "normal",
+      "summary": "Deep clean",
+      "description": "Post-renovation dust throughout.",
+      "stage": "done",
+      "assigneeId": "stf-castillo",
+      "createdAt": "2026-07-20T09:15:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-07-20T09:15:00Z" },
+        { "stage": "assigned", "at": "2026-07-20T10:00:00Z" },
+        { "stage": "in-progress", "at": "2026-07-21T08:30:00Z" },
+        { "stage": "done", "at": "2026-07-21T16:00:00Z" }
+      ],
+      "charge": 320,
+      "completionNotes": "Two-person crew, full day."
+    }
+  ]
+}

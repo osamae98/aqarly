@@ -1,5 +1,5 @@
 import Section from "@/components/ui/Section";
-import { getProperties } from "@/lib/properties";
+import { getProperties } from "@aqarly/core/properties";
 
 export const metadata = { title: "Properties" };
 

@@ -1,4 +1,4 @@
-import Container from "@/components/layout/Container";
+import Container from "@aqarly/ui/Container";
 
 export default function Section({ title, description, className = "", children }) {
   return (

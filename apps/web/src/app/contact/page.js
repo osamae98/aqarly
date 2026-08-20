@@ -1,5 +1,5 @@
 import Section from "@/components/ui/Section";
-import { site } from "@/lib/site";
+import { site } from "@aqarly/core/site";
 
 export const metadata = { title: "Contact" };
 

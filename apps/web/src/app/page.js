@@ -1,7 +1,7 @@
-import Container from "@/components/layout/Container";
+import Container from "@aqarly/ui/Container";
 import Section from "@/components/ui/Section";
-import Button from "@/components/ui/Button";
-import { site } from "@/lib/site";
+import Button from "@aqarly/ui/Button";
+import { site } from "@aqarly/core/site";
 
 export default function HomePage() {
   return (

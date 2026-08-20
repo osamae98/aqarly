@@ -1,25 +1,238 @@
-@import "tailwindcss";
+/* ---------------------------------------------------------------------------
+ * Design tokens, synced from the Claude Design project
+ * d34fa991-3f86-41bf-9d5e-a8b903594210 (2026-08-20).
+ *
+ * `:root` below carries the primitive scales verbatim, exactly as the design
+ * system ships them, so a future re-sync is a straight diff. The `@theme`
+ * block maps the semantic layer onto Tailwind utilities — reach for those
+ * (`bg-brand`, `text-ink-soft`, `rounded-pill`) rather than a raw stop.
+ *
+ * Spacing is not redefined: the design system's 4px grid (--space-1 … -24)
+ * is already exactly Tailwind's default scale, so `p-4` is `--space-4`.
+ * ------------------------------------------------------------------------- */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --green-50: #edf3ee;
+  --green-100: #d3e4d8;
+  --green-200: #a8c9b1;
+  --green-300: #7cae8b;
+  --green-400: #4f8862;
+  --green-500: #2f6b45;
+  --green-600: #1b4332;
+  --green-700: #153627;
+  --green-800: #0f291d;
+  --green-900: #0a1c13;
+
+  --sand-0: #ffffff;
+  --sand-50: #fbf8f3;
+  --sand-100: #f4eee4;
+  --sand-200: #e8dfd1;
+  --sand-300: #d6c9b4;
+  --sand-400: #b8a98d;
+  --sand-500: #8f7f63;
+  --sand-600: #6b5d47;
+  --sand-700: #4a3f30;
+  --sand-800: #2e2620;
+  --sand-900: #1c1712;
+
+  --amber-100: #fcebd2;
+  --amber-300: #f0b961;
+  --amber-500: #d97706;
+  --amber-700: #92400e;
+
+  --terracotta-100: #f6e1d8;
+  --terracotta-300: #e29a78;
+  --terracotta-500: #c1552c;
+  --terracotta-700: #8a3a1c;
+
+  --sky-100: #dce9ec;
+  --sky-300: #8fb9c4;
+  --sky-500: #3e7b8c;
+  --sky-700: #255563;
+
+  --red-100: #f7deda;
+  --red-300: #e08a7b;
+  --red-500: #c1432e;
+  --red-700: #87291a;
+
+  /* 4px grid, mirrored from tokens/spacing.css for parity with the design
+   * system's variable names. Tailwind's own scale already matches. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@theme {
+  /* Surfaces — tokens/colors.css --color-bg-* */
+  --color-page: var(--sand-50);
+  --color-surface: var(--sand-0);
+  --color-surface-raised: var(--sand-0);
+  --color-sunken: var(--sand-100);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Lines — --color-border* */
+  --color-border: var(--sand-200);
+  --color-border-strong: var(--sand-300);
+
+  /* Text — --color-text-primary / -secondary / -muted / -inverse */
+  --color-ink: var(--sand-900);
+  --color-ink-soft: var(--sand-600);
+  --color-ink-muted: var(--sand-500);
+  --color-ink-inverse: var(--sand-50);
+
+  /* Brand */
+  --color-brand: var(--green-600);
+  --color-brand-hover: var(--green-700);
+  --color-brand-active: var(--green-800);
+  --color-brand-tint: var(--green-50);
+  --color-brand-tint-strong: var(--green-100);
+
+  /* Status */
+  --color-success: var(--green-500);
+  --color-success-tint: var(--green-50);
+  --color-warning: var(--amber-500);
+  --color-warning-tint: var(--amber-100);
+  --color-danger: var(--red-500);
+  --color-danger-tint: var(--red-100);
+  --color-info: var(--sky-500);
+  --color-info-tint: var(--sky-100);
+
+  /* Tailwind inlines --shadow-* values at build time, so the focus ring has
+   * to swap via a colour token to stay dark-mode aware. */
+  --color-focus-ring: var(--green-100);
+
+  /* Request lifecycle stages */
+  --color-stage-submitted: var(--sand-500);
+  --color-stage-submitted-tint: var(--sand-100);
+  --color-stage-assigned: var(--sky-500);
+  --color-stage-assigned-tint: var(--sky-100);
+  --color-stage-in-progress: var(--amber-500);
+  --color-stage-in-progress-tint: var(--amber-100);
+  --color-stage-done: var(--green-500);
+  --color-stage-done-tint: var(--green-50);
+  --color-stage-overdue: var(--red-500);
+  --color-stage-overdue-tint: var(--red-100);
+
+  /* Request categories */
+  --color-category-maintenance: var(--terracotta-500);
+  --color-category-maintenance-tint: var(--terracotta-100);
+  --color-category-housekeeping: var(--sky-500);
+  --color-category-housekeeping-tint: var(--sky-100);
+
+  /* Kept so existing `bg-background` / `text-foreground` keep resolving. */
+  --color-background: var(--color-page);
+  --color-foreground: var(--color-ink);
+
+  /* Type — tokens/typography.css. Note `md` is a step the design system adds
+   * between `sm` and `lg`; everything from `lg` up is shifted accordingly. */
+  --font-sans: var(--font-inter), var(--font-plex-arabic), ui-sans-serif,
+    system-ui, sans-serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-inter), ui-sans-serif,
+    sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-md: 18px;
+  --text-md--line-height: 26px;
+  --text-lg: 20px;
+  --text-lg--line-height: 28px;
+  --text-xl: 24px;
+  --text-xl--line-height: 32px;
+  --text-2xl: 30px;
+  --text-2xl--line-height: 38px;
+  --text-3xl: 36px;
+  --text-3xl--line-height: 44px;
+  --text-4xl: 48px;
+  --text-4xl--line-height: 56px;
+
+  /* Corners — tokens/radii.css */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Elevation — tokens/shadows.css */
+  --shadow-sm: 0 1px 2px 0 rgb(28 23 18 / 0.06);
+  --shadow-md:
+    0 4px 12px -2px rgb(28 23 18 / 0.1), 0 2px 4px -2px rgb(28 23 18 / 0.06);
+  --shadow-lg:
+    0 12px 24px -4px rgb(28 23 18 / 0.12), 0 4px 8px -4px rgb(28 23 18 / 0.06);
+  --shadow-focus: 0 0 0 3px var(--color-focus-ring);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+
+[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
+
+/* The design system ships light tokens only. These dark values are derived
+ * from its own sand/green scales so the theme tokens keep working in dark
+ * mode — no new hexes, but they have not been reviewed by the design system
+ * owner. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-page: var(--sand-900);
+    --color-surface: var(--sand-800);
+    --color-surface-raised: var(--sand-700);
+    --color-sunken: var(--sand-700);
+
+    --color-border: var(--sand-700);
+    --color-border-strong: var(--sand-600);
+
+    --color-ink: var(--sand-50);
+    --color-ink-soft: var(--sand-300);
+    --color-ink-muted: var(--sand-400);
+    --color-ink-inverse: var(--sand-900);
+
+    --color-brand: var(--green-300);
+    --color-brand-hover: var(--green-200);
+    --color-brand-active: var(--green-100);
+    --color-brand-tint: var(--green-900);
+    --color-brand-tint-strong: var(--green-800);
+
+    --color-success: var(--green-300);
+    --color-success-tint: var(--green-900);
+    --color-warning: var(--amber-300);
+    --color-warning-tint: var(--amber-700);
+    --color-danger: var(--red-300);
+    --color-danger-tint: var(--red-700);
+    --color-info: var(--sky-300);
+    --color-info-tint: var(--sky-700);
+
+    --color-stage-submitted: var(--sand-400);
+    --color-stage-submitted-tint: var(--sand-700);
+    --color-stage-assigned: var(--sky-300);
+    --color-stage-assigned-tint: var(--sky-700);
+    --color-stage-in-progress: var(--amber-300);
+    --color-stage-in-progress-tint: var(--amber-700);
+    --color-stage-done: var(--green-300);
+    --color-stage-done-tint: var(--green-800);
+    --color-stage-overdue: var(--red-300);
+    --color-stage-overdue-tint: var(--red-700);
+
+    --color-category-maintenance: var(--terracotta-300);
+    --color-category-maintenance-tint: var(--terracotta-700);
+    --color-category-housekeeping: var(--sky-300);
+    --color-category-housekeeping-tint: var(--sky-700);
+
+    --color-focus-ring: var(--green-400);
+  }
 }
