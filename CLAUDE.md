@@ -68,7 +68,15 @@ the shared model the platform roadmap mandates. Extend them in `core` rather
 than redefining them in an app.
 
 `getSignedInTenant()` is a stub standing in for a session. There is no auth
-anywhere yet, and no write path — every app is read-only.
+anywhere yet, and no write path — every app is read-only. The tenant portal's
+`/login` screens are the designed flow rendered as navigation only: they
+authenticate nobody, and every submit control on a form is disabled with the
+reason stated on screen. Wire them to a real session rather than making them
+look like they work.
+
+Tenant notifications are derived from each request's `stageHistory` rather
+than stored, so "unread" is a recency window until read state has somewhere to
+live.
 
 ## Naming
 

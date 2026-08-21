@@ -1,18 +1,15 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import Badge from "@aqarly/ui/Badge";
-import Card from "@aqarly/ui/Card";
-import Timeline from "@aqarly/ui/Timeline";
 import {
   categoryLabels,
   formatCharge,
   formatDateTime,
   getRequestById,
   getSignedInTenant,
-  stageLabels,
-  stageSteps,
-  stageTones,
 } from "@aqarly/core/operations";
+import RequestTimeline from "@/components/RequestTimeline";
+import Screen from "@/components/Screen";
+import SectionLabel from "@/components/SectionLabel";
+import TypeTag from "@/components/TypeTag";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -31,58 +28,58 @@ export default async function TenantRequestPage({ params }) {
   // a hard requirement, so it is enforced here rather than by hiding links.
   if (!request || request.tenantId !== tenant.id) notFound();
 
+  const doneAt = request.stageHistory.find((entry) => entry.stage === "done")?.at;
+
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link
-          href="/"
-          className="text-sm text-ink-soft transition-colors hover:text-brand"
-        >
-          ← All requests
-        </Link>
-        <div className="mt-3">
-          <Badge tone={stageTones[request.stage]}>
-            {stageLabels[request.stage]}
-          </Badge>
-        </div>
-        <h1 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-          {request.summary}
-        </h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          {categoryLabels[request.category] ?? request.category} · submitted{" "}
-          {formatDateTime(request.createdAt)}
+    <Screen title={request.id} backHref="/">
+      <div className="mb-6">
+        <TypeTag type={request.type} />
+        <h2 className="my-2 text-xl font-bold text-ink">{request.summary}</h2>
+        <p className="text-sm text-ink-soft">
+          {request.unit ? `Unit ${request.unit.label}` : null}
+          {request.unit && request.property ? " · " : null}
+          {request.property?.name}
         </p>
       </div>
 
-      <Card title="Progress">
-        <Timeline steps={stageSteps(request)} />
-      </Card>
+      <div className="flex flex-col gap-5 md:grid md:grid-cols-2 md:items-start">
+        <div className="rounded-md border border-border bg-surface p-5">
+          <SectionLabel className="mb-4">Timeline</SectionLabel>
+          <RequestTimeline request={request} />
+        </div>
 
-      <Card title="What you told us">
-        <p className="text-sm text-ink-soft">{request.description}</p>
-      </Card>
+        <div className="flex flex-col gap-4">
+          <Panel title="Your description">{request.description}</Panel>
 
-      {request.completionNotes && (
-        <Card title="What was done">
-          <p className="text-sm text-ink-soft">{request.completionNotes}</p>
-        </Card>
-      )}
+          {request.charge && (
+            <div className="rounded-md bg-sunken p-4">
+              <p className="mb-2 text-sm font-semibold text-ink">
+                Service charge
+              </p>
+              <p className="text-2xl font-bold text-category-housekeeping">
+                {formatCharge(request.charge)}
+              </p>
+              <p className="mt-2 text-xs text-ink-muted">
+                {categoryLabels[request.category] ?? request.category}
+                {doneAt ? ` · billed ${formatDateTime(doneAt)}` : null}
+              </p>
+            </div>
+          )}
 
-      {request.charge && (
-        <Card title="Charge">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-ink-soft">
-              {categoryLabels[request.category]}
-            </span>
-            <span className="text-lg font-semibold text-ink">
-              {formatCharge(request.charge)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-ink-muted">
-            Confirmed at the rate shown when you booked.
-          </p>
-        </Card>
-      )}
+          {request.completionNotes && (
+            <Panel title="Notes from staff">{request.completionNotes}</Panel>
+          )}
+        </div>
+      </div>
+    </Screen>
+  );
+}
+
+function Panel({ title, children }) {
+  return (
+    <div className="rounded-md bg-sunken p-4">
+      <p className="mb-2 text-sm font-semibold text-ink">{title}</p>
+      <p className="text-sm text-ink-soft">{children}</p>
     </div>
   );
 }

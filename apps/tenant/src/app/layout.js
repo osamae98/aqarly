@@ -1,4 +1,3 @@
-import Container from "@aqarly/ui/Container";
 import { fontVariables } from "@aqarly/ui/fonts";
 import "./globals.css";
 
@@ -16,15 +15,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-page font-sans">
-        <header className="border-b border-border bg-surface">
-          <Container className="max-w-xl">
-            <div className="py-4 text-sm font-semibold text-ink">My home</div>
-          </Container>
-        </header>
-        <main className="flex-1">
-          <Container className="max-w-xl py-6">{children}</Container>
-        </main>
+      <body className="min-h-full bg-page font-sans text-ink">
+        {/* The portal is designed phone-first; on wider screens it keeps the
+         * same shell and only widens where a screen has a desktop layout. */}
+        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-page md:max-w-5xl">
+          {children}
+        </div>
       </body>
     </html>
   );

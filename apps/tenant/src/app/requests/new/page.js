@@ -1,88 +1,58 @@
 import Link from "next/link";
-import Alert from "@aqarly/ui/Alert";
-import Button from "@aqarly/ui/Button";
-import Card from "@aqarly/ui/Card";
-import Input from "@aqarly/ui/Input";
-import Select from "@aqarly/ui/Select";
-import { formatCharge, getHousekeepingRates } from "@aqarly/core/operations";
+import Screen from "@/components/Screen";
+import { Broom, ChevronRight, Wrench } from "@/components/icons";
 
 export const metadata = { title: "New request" };
 
-const maintenanceCategories = [
-  { value: "plumbing", label: "Plumbing" },
-  { value: "electrical", label: "Electrical" },
-  { value: "ac", label: "AC" },
-  { value: "appliance", label: "Appliance" },
-  { value: "other", label: "Other" },
+const options = [
+  {
+    href: "/requests/new/maintenance",
+    title: "Maintenance",
+    description: "AC, plumbing, electrical, appliances",
+    Icon: Wrench,
+    className: "bg-category-maintenance-tint text-category-maintenance",
+  },
+  {
+    href: "/requests/new/housekeeping",
+    title: "Housekeeping",
+    description: "Cleaning service with upfront pricing",
+    Icon: Broom,
+    className: "bg-category-housekeeping-tint text-category-housekeeping",
+  },
 ];
 
-export default async function NewRequestPage() {
-  const rates = await getHousekeepingRates();
-
+export default function NewRequestPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link
-          href="/"
-          className="text-sm text-ink-soft transition-colors hover:text-brand"
-        >
-          ← All requests
-        </Link>
-        <h1 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-          New request
-        </h1>
+    <Screen title="New Request" backHref="/" className="justify-center">
+      <h2 className="text-center text-xl font-bold text-ink">
+        What do you need help with?
+      </h2>
+      <p className="mb-10 mt-1 text-center text-sm text-ink-soft">
+        Choose a request type to get started
+      </p>
+
+      <div className="flex flex-col gap-4 md:mx-auto md:w-full md:max-w-lg">
+        {options.map(({ href, title, description, Icon, className }) => (
+          <Link
+            key={href}
+            href={href}
+            className="flex items-center gap-4 rounded-lg border border-border bg-surface p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <span
+              className={`flex size-13 shrink-0 items-center justify-center rounded-lg ${className}`}
+            >
+              <Icon size={26} />
+            </span>
+            <span className="flex-1">
+              <span className="block text-base font-semibold text-ink">
+                {title}
+              </span>
+              <span className="block text-sm text-ink-soft">{description}</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-ink-muted" />
+          </Link>
+        ))}
       </div>
-
-      <Alert tone="warning" title="Not connected yet">
-        The form below is the real layout, but there is no write layer behind it
-        — submitting a request needs a datastore and a signed-in tenant, neither
-        of which exists yet.
-      </Alert>
-
-      <Card title="Maintenance">
-        <div className="flex flex-col gap-4">
-          <Select
-            id="maintenance-category"
-            label="What needs attention?"
-            required
-            placeholder="Choose a category"
-            options={maintenanceCategories}
-          />
-          <Input
-            id="maintenance-description"
-            label="Tell us what's happening"
-            placeholder="e.g. AC blows warm air in the main bedroom"
-          />
-          <Button disabled fullWidth>
-            Submit request
-          </Button>
-        </div>
-      </Card>
-
-      <Card
-        title="Housekeeping"
-        description="Prices are set centrally and shown before you confirm."
-      >
-        <div className="flex flex-col gap-4">
-          <ul className="flex flex-col divide-y divide-border">
-            {rates.map((rate) => (
-              <li
-                key={rate.serviceType}
-                className="flex items-center justify-between py-3 first:pt-0"
-              >
-                <span className="text-sm text-ink">{rate.label}</span>
-                <span className="text-sm font-medium text-ink">
-                  {formatCharge(rate.price)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Input id="housekeeping-date" label="Preferred date" type="date" />
-          <Button variant="outline" disabled fullWidth>
-            Book a visit
-          </Button>
-        </div>
-      </Card>
-    </div>
+    </Screen>
   );
 }

@@ -21,6 +21,11 @@ export const stageTones = {
   done: "success",
 };
 
+export const typeLabels = {
+  maintenance: "Maintenance",
+  housekeeping: "Housekeeping",
+};
+
 export const categoryLabels = {
   plumbing: "Plumbing",
   electrical: "Electrical",
@@ -32,6 +37,16 @@ export const categoryLabels = {
   laundry: "Laundry",
   "post-checkout": "Post-checkout",
 };
+
+// The categories a tenant can file maintenance under. Housekeeping has no
+// equivalent list because its services come priced, from `housekeepingRates`.
+export const maintenanceCategories = [
+  "ac",
+  "plumbing",
+  "electrical",
+  "appliance",
+  "other",
+];
 
 // Ops PRD §7 wants these admin-configurable rather than hardcoded. MVP scope
 // allows fixed targets to start, so they live here as one table to lift into
@@ -266,6 +281,105 @@ export async function getTenantById(id) {
 // signing; nothing here authenticates anyone. Replace this, not its callers.
 export async function getSignedInTenant() {
   return getTenantById("ten-alhabsi");
+}
+
+// --- Tenant portal reads -------------------------------------------------
+// The tenant sees a much narrower slice than ops: their own requests, the
+// notifications those requests generated, and what they were charged.
+
+function notificationsFor(request) {
+  const { assignee, summary, type, charge, completionNotes } = request;
+  const who = assignee?.name;
+
+  const copy = {
+    submitted: {
+      title: "Request submitted",
+      body: `${summary} — we'll let you know as soon as it is assigned.`,
+    },
+    assigned: {
+      title: `Request assigned: ${summary}`,
+      body: who
+        ? `${who} has been assigned and will be in touch.`
+        : "A team member has been assigned.",
+    },
+    "in-progress": {
+      title: `Work started: ${summary}`,
+      body: who ? `${who} is working on it now.` : "Work is under way.",
+    },
+    done: {
+      title:
+        type === "housekeeping"
+          ? `Housekeeping completed${charge ? " & charged" : ""}`
+          : "Maintenance completed",
+      body: charge
+        ? `${summary} — ${formatCharge(charge)} charged to your account.`
+        : `${summary} — ${completionNotes ?? "marked complete."}`,
+    },
+  };
+
+  return request.stageHistory.map((entry) => ({
+    id: `${request.id}-${entry.stage}`,
+    requestId: request.id,
+    stage: entry.stage,
+    type,
+    at: entry.at,
+    ...copy[entry.stage],
+  }));
+}
+
+// Notifications are derived from stage history rather than stored: every
+// stage change is exactly the event the tenant would have been pinged about.
+// Read state needs a write path, so "unread" stands in as "in the last day".
+export async function getTenantNotifications(tenantId, { now = Date.now() } = {}) {
+  const requests = await getRequests({ tenantId });
+
+  return requests
+    .flatMap(notificationsFor)
+    .map((notification) => ({
+      ...notification,
+      unread: hoursBetween(notification.at, now) < 24,
+    }))
+    .sort((a, b) => new Date(b.at) - new Date(a.at));
+}
+
+function monthLabel(month) {
+  return new Intl.DateTimeFormat("en", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${month}-01T00:00:00Z`));
+}
+
+// Completed work for one tenant, bucketed by the month it was completed in,
+// with the housekeeping charges for that month already totalled.
+export async function getTenantHistory(tenantId, { type } = {}) {
+  const requests = await getRequests({ tenantId, type, stage: "done" });
+  const buckets = new Map();
+
+  for (const request of requests) {
+    const doneAt = stageAt(request, "done");
+    const month = doneAt.slice(0, 7);
+
+    if (!buckets.has(month)) {
+      buckets.set(month, {
+        month,
+        label: monthLabel(month),
+        items: [],
+        housekeepingTotal: 0,
+      });
+    }
+
+    const bucket = buckets.get(month);
+    bucket.items.push({ ...request, completedAt: doneAt });
+    if (request.type === "housekeeping") bucket.housekeepingTotal += request.charge ?? 0;
+  }
+
+  return [...buckets.values()]
+    .sort((a, b) => b.month.localeCompare(a.month))
+    .map((bucket) => ({
+      ...bucket,
+      items: bucket.items.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)),
+    }));
 }
 
 export async function getProperties() {

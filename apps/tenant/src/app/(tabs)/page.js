@@ -1,83 +1,135 @@
 import Link from "next/link";
-import Badge from "@aqarly/ui/Badge";
 import Button from "@aqarly/ui/Button";
 import {
-  categoryLabels,
-  formatCharge,
-  formatDateTime,
   getRequests,
   getSignedInTenant,
-  stageLabels,
-  stageTones,
+  getTenantNotifications,
 } from "@aqarly/core/operations";
+import EmptyState from "@/components/EmptyState";
+import RequestCard from "@/components/RequestCard";
+import Screen from "@/components/Screen";
+import SectionLabel from "@/components/SectionLabel";
+import {
+  Bell,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  FilePlus,
+  Plus,
+} from "@/components/icons";
 
-export default async function MyRequestsPage() {
+// How much of the completed history the dashboard shows before the tenant
+// has to go to the History tab for the rest.
+const RECENT_LIMIT = 3;
+
+export default async function MyRequestsPage({ searchParams }) {
+  const { recent } = await searchParams;
+  const collapsed = recent === "collapsed";
+
   const tenant = await getSignedInTenant();
-  const requests = await getRequests({ tenantId: tenant.id, sort: "newest" });
+  const [requests, notifications] = await Promise.all([
+    getRequests({ tenantId: tenant.id, sort: "newest" }),
+    getTenantNotifications(tenant.id),
+  ]);
 
-  const open = requests.filter((r) => r.stage !== "done");
-  const past = requests.filter((r) => r.stage === "done");
+  const active = requests.filter((request) => request.stage !== "done");
+  const done = requests.filter((request) => request.stage === "done");
+  const unread = notifications.filter((notification) => notification.unread).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">
-          {tenant.property?.name} · Unit {tenant.unit?.label}
-        </h1>
-        <p className="mt-1 text-sm text-ink-soft">{tenant.name}</p>
-      </div>
+    <Screen title="My Requests" action={<NotificationsBell unread={unread} />}>
+      {requests.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyState
+            icon={<FilePlus size={32} />}
+            title="No requests yet"
+            description="Submit your first maintenance or housekeeping request when you need help."
+            action={<Button href="/requests/new">New request</Button>}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start">
+          <section>
+            <SectionLabel className="mb-3">Active</SectionLabel>
+            {active.length ? (
+              <div className="flex flex-col gap-4">
+                {active.map((request) => (
+                  <RequestCard key={request.id} request={request} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                tone="success"
+                icon={<CheckCircle size={32} />}
+                title="All caught up!"
+                description="You have no active requests. Your recent work shows below."
+              />
+            )}
+          </section>
 
-      <Button href="/requests/new" fullWidth>
-        New request
-      </Button>
+          {done.length > 0 && (
+            <section>
+              <Link
+                href={collapsed ? "/" : "/?recent=collapsed"}
+                className="mb-3 flex items-center justify-between gap-3 text-ink-soft transition-colors hover:text-ink"
+              >
+                <SectionLabel>
+                  {collapsed ? `Recent (${done.length})` : "Recent"}
+                </SectionLabel>
+                {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+              </Link>
+              {!collapsed && (
+                <div className="flex flex-col gap-4">
+                  {done.slice(0, RECENT_LIMIT).map((request) => (
+                    <RequestCard key={request.id} request={request} />
+                  ))}
+                  {done.length > RECENT_LIMIT && (
+                    <Link
+                      href="/history"
+                      className="text-sm font-medium text-brand transition-colors hover:text-brand-hover"
+                    >
+                      See all {done.length} in History →
+                    </Link>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+      )}
 
-      <RequestList title="Active" requests={open} emptyText="No open requests." />
-      <RequestList title="Past" requests={past} emptyText="Nothing yet." />
-    </div>
+      <NewRequestButton />
+    </Screen>
   );
 }
 
-function RequestList({ title, requests, emptyText }) {
+function NotificationsBell({ unread }) {
   return (
-    <section>
-      <h2 className="mb-3 text-sm font-semibold text-ink-soft">{title}</h2>
-      {requests.length ? (
-        <ul className="flex flex-col gap-3">
-          {requests.map((request) => (
-            <li key={request.id}>
-              <Link
-                href={`/requests/${request.id}`}
-                className="block rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:bg-sunken"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium text-ink">{request.summary}</div>
-                    <div className="mt-1 text-xs text-ink-muted">
-                      {categoryLabels[request.category] ?? request.category} ·{" "}
-                      {formatDateTime(request.createdAt)}
-                    </div>
-                  </div>
-                  <Badge tone={stageTones[request.stage]}>
-                    {stageLabels[request.stage]}
-                  </Badge>
-                </div>
-                {request.charge && (
-                  <div className="mt-3 border-t border-border pt-3 text-sm text-ink-soft">
-                    Charge{" "}
-                    <span className="font-medium text-ink">
-                      {formatCharge(request.charge)}
-                    </span>
-                  </div>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded-lg border border-border bg-surface p-4 text-sm text-ink-muted">
-          {emptyText}
-        </p>
+    <Link
+      href="/notifications"
+      aria-label={unread ? `Notifications (${unread} new)` : "Notifications"}
+      className="relative flex items-center text-ink transition-colors hover:text-brand"
+    >
+      <Bell size={22} />
+      {unread > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-pill bg-brand" />
       )}
-    </section>
+    </Link>
+  );
+}
+
+// The design reaches the new-request flow from the empty state only; a
+// standing action keeps it reachable once there are requests on screen.
+function NewRequestButton() {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-18 z-20 mx-auto flex w-full max-w-md justify-end px-4 md:bottom-6 md:max-w-5xl md:px-6">
+      <Button
+        href="/requests/new"
+        className="pointer-events-auto shadow-lg"
+        iconLeft={<Plus size={18} />}
+      >
+        New request
+      </Button>
+    </div>
   );
 }

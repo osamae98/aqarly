@@ -6,27 +6,27 @@
   ],
 
   "units": [
-    { "id": "unit-mh-0402", "propertyId": "prop-marina-heights", "label": "0402", "status": "occupied", "tenantId": "ten-alhabsi" },
-    { "id": "unit-mh-0711", "propertyId": "prop-marina-heights", "label": "0711", "status": "occupied", "tenantId": "ten-farouk" },
-    { "id": "unit-mh-1203", "propertyId": "prop-marina-heights", "label": "1203", "status": "occupied", "tenantId": "ten-devi" },
-    { "id": "unit-mh-0105", "propertyId": "prop-marina-heights", "label": "0105", "status": "under-maintenance", "tenantId": null },
-    { "id": "unit-jc-0203", "propertyId": "prop-jade-court", "label": "0203", "status": "occupied", "tenantId": "ten-okonkwo" },
-    { "id": "unit-jc-0508", "propertyId": "prop-jade-court", "label": "0508", "status": "occupied", "tenantId": "ten-rahman" },
-    { "id": "unit-jc-0610", "propertyId": "prop-jade-court", "label": "0610", "status": "vacant", "tenantId": null },
-    { "id": "unit-or-0301", "propertyId": "prop-oasis-residences", "label": "0301", "status": "occupied", "tenantId": "ten-silva" },
-    { "id": "unit-or-0904", "propertyId": "prop-oasis-residences", "label": "0904", "status": "occupied", "tenantId": "ten-baker" },
-    { "id": "unit-or-1502", "propertyId": "prop-oasis-residences", "label": "1502", "status": "occupied", "tenantId": "ten-nassar" }
+    { "id": "unit-mh-0402", "propertyId": "prop-marina-heights", "label": "0402", "status": "occupied", "tenantId": "ten-alhabsi", "bedrooms": 2, "bathrooms": 2 },
+    { "id": "unit-mh-0711", "propertyId": "prop-marina-heights", "label": "0711", "status": "occupied", "tenantId": "ten-farouk", "bedrooms": 1, "bathrooms": 1 },
+    { "id": "unit-mh-1203", "propertyId": "prop-marina-heights", "label": "1203", "status": "occupied", "tenantId": "ten-devi", "bedrooms": 3, "bathrooms": 3 },
+    { "id": "unit-mh-0105", "propertyId": "prop-marina-heights", "label": "0105", "status": "under-maintenance", "tenantId": null, "bedrooms": 1, "bathrooms": 1 },
+    { "id": "unit-jc-0203", "propertyId": "prop-jade-court", "label": "0203", "status": "occupied", "tenantId": "ten-okonkwo", "bedrooms": 2, "bathrooms": 2 },
+    { "id": "unit-jc-0508", "propertyId": "prop-jade-court", "label": "0508", "status": "occupied", "tenantId": "ten-rahman", "bedrooms": 2, "bathrooms": 1 },
+    { "id": "unit-jc-0610", "propertyId": "prop-jade-court", "label": "0610", "status": "vacant", "tenantId": null, "bedrooms": 2, "bathrooms": 2 },
+    { "id": "unit-or-0301", "propertyId": "prop-oasis-residences", "label": "0301", "status": "occupied", "tenantId": "ten-silva", "bedrooms": 2, "bathrooms": 2 },
+    { "id": "unit-or-0904", "propertyId": "prop-oasis-residences", "label": "0904", "status": "occupied", "tenantId": "ten-baker", "bedrooms": 2, "bathrooms": 2 },
+    { "id": "unit-or-1502", "propertyId": "prop-oasis-residences", "label": "1502", "status": "occupied", "tenantId": "ten-nassar", "bedrooms": 2, "bathrooms": 2 }
   ],
 
   "tenants": [
-    { "id": "ten-alhabsi", "name": "Layla Al Habsi", "phone": "+000 000 0001" },
-    { "id": "ten-farouk", "name": "Omar Farouk", "phone": "+000 000 0002" },
-    { "id": "ten-devi", "name": "Priya Devi", "phone": "+000 000 0003" },
-    { "id": "ten-okonkwo", "name": "Chidi Okonkwo", "phone": "+000 000 0004" },
-    { "id": "ten-rahman", "name": "Sana Rahman", "phone": "+000 000 0005" },
-    { "id": "ten-silva", "name": "Marco Silva", "phone": "+000 000 0006" },
-    { "id": "ten-baker", "name": "Ellis Baker", "phone": "+000 000 0007" },
-    { "id": "ten-nassar", "name": "Rana Nassar", "phone": "+000 000 0008" }
+    { "id": "ten-alhabsi", "name": "Layla Al Habsi", "phone": "+000 000 0001", "email": "layla.alhabsi@example.com" },
+    { "id": "ten-farouk", "name": "Omar Farouk", "phone": "+000 000 0002", "email": "omar.farouk@example.com" },
+    { "id": "ten-devi", "name": "Priya Devi", "phone": "+000 000 0003", "email": "priya.devi@example.com" },
+    { "id": "ten-okonkwo", "name": "Chidi Okonkwo", "phone": "+000 000 0004", "email": "chidi.okonkwo@example.com" },
+    { "id": "ten-rahman", "name": "Sana Rahman", "phone": "+000 000 0005", "email": "sana.rahman@example.com" },
+    { "id": "ten-silva", "name": "Marco Silva", "phone": "+000 000 0006", "email": "marco.silva@example.com" },
+    { "id": "ten-baker", "name": "Ellis Baker", "phone": "+000 000 0007", "email": "ellis.baker@example.com" },
+    { "id": "ten-nassar", "name": "Rana Nassar", "phone": "+000 000 0008", "email": "rana.nassar@example.com" }
   ],
 
   "staff": [
@@ -45,6 +45,66 @@
   ],
 
   "requests": [
+    {
+      "id": "REQ-1058",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "housekeeping",
+      "category": "standard-clean",
+      "priority": "normal",
+      "summary": "Standard cleaning session",
+      "description": "Living areas and both bedrooms. Please come after 10am.",
+      "stage": "assigned",
+      "assigneeId": "stf-castillo",
+      "createdAt": "2026-08-21T06:10:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-21T06:10:00Z" },
+        { "stage": "assigned", "at": "2026-08-21T07:25:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1055",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "maintenance",
+      "category": "appliance",
+      "priority": "normal",
+      "summary": "Washing machine not draining",
+      "description": "Drum fills and spins but the water never drains out at the end of the cycle.",
+      "stage": "in-progress",
+      "assigneeId": "stf-haddad",
+      "createdAt": "2026-08-19T11:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-19T11:00:00Z" },
+        { "stage": "assigned", "at": "2026-08-19T12:30:00Z" },
+        { "stage": "in-progress", "at": "2026-08-20T08:15:00Z" }
+      ],
+      "charge": null,
+      "completionNotes": null
+    },
+    {
+      "id": "REQ-1053",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "housekeeping",
+      "category": "deep-clean",
+      "priority": "normal",
+      "summary": "Deep clean living room & kitchen",
+      "description": "Kitchen cabinets inside and out, plus the balcony doors.",
+      "stage": "done",
+      "assigneeId": "stf-mensah",
+      "createdAt": "2026-08-18T10:20:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-08-18T10:20:00Z" },
+        { "stage": "assigned", "at": "2026-08-18T11:05:00Z" },
+        { "stage": "in-progress", "at": "2026-08-20T06:00:00Z" },
+        { "stage": "done", "at": "2026-08-20T11:45:00Z" }
+      ],
+      "charge": 320,
+      "completionNotes": "All areas cleaned thoroughly. Extractor filter degreased."
+    },
     {
       "id": "REQ-1051",
       "unitId": "unit-mh-0402",
@@ -320,6 +380,27 @@
       ],
       "charge": 320,
       "completionNotes": "Two-person crew, full day."
+    },
+    {
+      "id": "REQ-1032",
+      "unitId": "unit-mh-0402",
+      "tenantId": "ten-alhabsi",
+      "type": "housekeeping",
+      "category": "standard-clean",
+      "priority": "normal",
+      "summary": "Standard cleaning session",
+      "description": "Routine monthly clean.",
+      "stage": "done",
+      "assigneeId": "stf-castillo",
+      "createdAt": "2026-07-28T09:00:00Z",
+      "stageHistory": [
+        { "stage": "submitted", "at": "2026-07-28T09:00:00Z" },
+        { "stage": "assigned", "at": "2026-07-28T09:40:00Z" },
+        { "stage": "in-progress", "at": "2026-07-29T06:30:00Z" },
+        { "stage": "done", "at": "2026-07-29T09:10:00Z" }
+      ],
+      "charge": 120,
+      "completionNotes": "Done. Spare linens left in the hall cupboard."
     }
   ]
 }
