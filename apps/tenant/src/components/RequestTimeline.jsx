@@ -2,8 +2,8 @@ import { formatDateTime, stageLabels, stages } from "@aqarly/core/operations";
 import { Check, Clock, Send, UserCheck } from "./icons";
 
 // The tenant design tracks progress with labelled icon tiles rather than the
-// compact dots of `@aqarly/ui/Timeline` (which the ops queue uses), so this
-// stays app-local until a second product asks for the same treatment.
+// compact dots of `@aqarly/ui/Timeline`, so this stays app-local until a
+// second product asks for the same treatment.
 const stageIcons = {
   submitted: Send,
   assigned: UserCheck,

@@ -1,8 +1,8 @@
 const tones = {
-  info: "border-info bg-info-tint text-info",
-  success: "border-success bg-success-tint text-success",
-  warning: "border-warning bg-warning-tint text-warning",
-  error: "border-danger bg-danger-tint text-danger",
+  info: "border-info bg-info-tint text-info-ink",
+  success: "border-success bg-success-tint text-success-ink",
+  warning: "border-warning bg-warning-tint text-warning-ink",
+  error: "border-danger bg-danger-tint text-danger-ink",
 };
 
 export default function Alert({

@@ -1,7 +1,7 @@
 import Button from "@aqarly/ui/Button";
 import { site } from "@aqarly/core/site";
 import Field from "@/components/Field";
-import Logo from "@/components/Logo";
+import Logo from "@aqarly/ui/Logo";
 
 export const metadata = { title: "Sign in" };
 

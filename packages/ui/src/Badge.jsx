@@ -9,7 +9,14 @@ const tones = {
   housekeeping: "bg-category-housekeeping-tint text-category-housekeeping",
 };
 
-export default function Badge({ tone = "neutral", className = "", children }) {
+// `dot` is an addition: the ops screens use the same pill without the leading
+// marker, which is how every status chip in those mockups is drawn.
+export default function Badge({
+  tone = "neutral",
+  dot = true,
+  className = "",
+  children,
+}) {
   return (
     <span
       className={[
@@ -19,7 +26,7 @@ export default function Badge({ tone = "neutral", className = "", children }) {
         className,
       ].join(" ")}
     >
-      <span className="size-1.5 shrink-0 rounded-pill bg-current" />
+      {dot && <span className="size-1.5 shrink-0 rounded-pill bg-current" />}
       {children}
     </span>
   );

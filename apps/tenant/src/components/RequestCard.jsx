@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatAge, formatCharge, formatDateTime } from "@aqarly/core/operations";
+import { formatCharge, formatDateTime } from "@aqarly/core/operations";
 import StageTag from "./StageTag";
 import TypeTag from "./TypeTag";
 
@@ -9,7 +9,7 @@ function subtitle(request) {
 
   const when = doneAt
     ? `Completed ${formatDateTime(doneAt)}`
-    : `Reported ${formatAge(request.ageHours)} ago`;
+    : `Reported ${formatDateTime(request.createdAt)}`;
 
   return [unit, when].filter(Boolean).join(" — ");
 }

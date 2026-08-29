@@ -1,10 +1,12 @@
-import Link from "next/link";
-import Container from "@aqarly/ui/Container";
+import { Suspense } from "react";
+import CompactNav from "@/components/CompactNav";
+import OpsNav from "@/components/OpsNav";
 import { fontVariables } from "@aqarly/ui/fonts";
+import { getPropertyRollups, getRequests } from "@aqarly/core/operations";
 import "./globals.css";
 
-// SLA state and request age are computed against "now", so nothing in this app
-// may be captured at build time.
+// Every rollup here is derived from request data at read time, so nothing in
+// this app may be captured at build time.
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -15,36 +17,39 @@ export const metadata = {
   description: "Maintenance and housekeeping across the portfolio.",
 };
 
-const opsNav = [
-  { href: "/", label: "Dashboard" },
-  { href: "/requests", label: "Queue" },
-];
+export default async function RootLayout({ children }) {
+  // The rail carries live counts, so the shell reads them rather than the
+  // pages passing them up.
+  const [open, properties] = await Promise.all([
+    getRequests({ open: true }),
+    getPropertyRollups(),
+  ]);
 
-export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-page font-sans">
-        <header className="border-b border-border bg-surface">
-          <Container>
-            <nav className="flex items-center gap-1 py-3">
-              <span className="mr-3 text-sm font-semibold text-ink">
-                Operations
-              </span>
-              {opsNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-pill px-3 py-1.5 text-sm text-ink-soft transition-colors hover:bg-sunken hover:text-ink"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </Container>
-        </header>
-        <main className="flex-1">
-          <Container className="py-8">{children}</Container>
-        </main>
+      <body className="h-full bg-page font-sans text-ink">
+        <div className="flex h-full overflow-hidden">
+          {/* Reads the active scope off the search params, which need a
+           * boundary even under force-dynamic. */}
+          <Suspense
+            fallback={
+              <div className="hidden w-[var(--sidebar-width)] shrink-0 bg-[var(--green-700)] md:block" />
+            }
+          >
+            <OpsNav
+              className="hidden md:flex"
+              openCount={open.length}
+              properties={properties}
+            />
+          </Suspense>
+
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <CompactNav openCount={open.length} />
+            <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              {children}
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   );

@@ -58,7 +58,7 @@ never reach its stylesheet.
 ## Data
 
 All reads go through `packages/core/src` — `operations.js` for service
-requests, SLA state, staff, and dashboard rollups; `properties.js` for
+requests, staff, and dashboard rollups; `properties.js` for
 listings; `site.js` for site-wide strings. They currently read JSON from
 `packages/core/data`; keep that the single seam so the source can change
 without touching pages.
@@ -66,6 +66,17 @@ without touching pages.
 The entities there (Property, Unit, Tenant, Lease, Service Request, Staff) are
 the shared model the platform roadmap mandates. Extend them in `core` rather
 than redefining them in an app.
+
+Derived state — unit lifetime spend, a technician's load, the repeat-fault
+flag, the period rollups — is computed in `core` at read time, never stored
+and never recomputed in a page. That is why every ops route is
+`dynamic = "force-dynamic"`.
+
+Nothing in the UI reports elapsed time or SLA state: no request age, no
+"waiting Nh", no on-track / at-risk / overdue. Requests carry the absolute
+timestamps in `stageHistory` and nothing else about time, and pressure is read
+off what is unassigned rather than off a clock. Do not reintroduce a duration
+without the SLA targets being real and admin-configurable first.
 
 `getSignedInTenant()` is a stub standing in for a session. There is no auth
 anywhere yet, and no write path — every app is read-only. The tenant portal's

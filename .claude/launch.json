@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ops",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@aqarly/ops",
+        "dev"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "tenant",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@aqarly/tenant",
+        "dev"
+      ],
+      "port": 3002
+    }
+  ]
+}

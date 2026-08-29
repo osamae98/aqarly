@@ -1,148 +1,295 @@
 import Link from "next/link";
-import Badge from "@aqarly/ui/Badge";
-import Button from "@aqarly/ui/Button";
-import CostTrend from "@/components/CostTrend";
-import StatTile from "@/components/StatTile";
+import Initials from "@/components/Initials";
+import MeterRow from "@/components/MeterRow";
+import PageBar from "@/components/PageBar";
+import Panel from "@/components/Panel";
+import Stat from "@/components/Stat";
 import {
-  formatAge,
+  formatCharge,
+  getCategoryRollups,
   getDashboardStats,
-  slaLabels,
-  slaTones,
-  stageLabels,
+  getPropertyRollups,
+  getStaffRoster,
+  reportPeriods,
+  staffCapacity,
 } from "@aqarly/core/operations";
+import Badge from "@aqarly/ui/Badge";
 
-export default async function OpsDashboardPage() {
-  const stats = await getDashboardStats();
-  const totalByStage = stats.byStage.reduce((sum, s) => sum + s.count, 0);
+export default async function OpsDashboardPage({ searchParams }) {
+  const params = await searchParams;
+  const period = reportPeriods[params.period] ? params.period : "month";
+
+  const [stats, categories, buildings, staff] = await Promise.all([
+    getDashboardStats({ period }),
+    getCategoryRollups({ period }),
+    getPropertyRollups({ period }),
+    getStaffRoster(),
+  ]);
+
+  const totalUnits = buildings.reduce((sum, b) => sum + b.units, 0);
+  const maxSpend = Math.max(...categories.map((c) => c.spend), 1);
+  const maxVolume = Math.max(...categories.map((c) => c.requests), 1);
+  const maxBuilding = Math.max(...buildings.map((b) => b.spend), 1);
+  const maxStage = Math.max(...stats.openByStage.map((b) => b.count), 1);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">
-            Portfolio dashboard
-          </h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Maintenance and housekeeping across all properties.
-          </p>
+    <>
+      <PageBar
+        title="Operations overview"
+        meta={`Portfolio · ${buildings.length} buildings · ${totalUnits} units · ${reportPeriods[period].label.toLowerCase()}`}
+      >
+        {/* The period control is real: everything counted as raised or spent
+         * below is scoped by it. */}
+        <div className="flex gap-1.5 rounded-pill bg-sunken p-1">
+          {Object.entries(reportPeriods).map(([key, spec]) => (
+            <Link
+              key={key}
+              href={key === "month" ? "/" : `/?period=${key}`}
+              aria-current={key === period ? "true" : undefined}
+              className={[
+                "rounded-pill px-3.5 py-1.5 text-[13px] transition-colors",
+                key === period
+                  ? "bg-surface font-semibold text-ink shadow-sm"
+                  : "text-ink-soft hover:text-ink",
+              ].join(" ")}
+            >
+              {spec.label}
+            </Link>
+          ))}
         </div>
-        <Button href="/requests" size="sm">
-          Open the queue
-        </Button>
-      </div>
+        <span
+          title="Export needs a write path"
+          className="cursor-not-allowed rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft opacity-45"
+        >
+          Export
+        </span>
+      </PageBar>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Open requests" value={stats.open} />
-        <StatTile
-          label="Unassigned"
-          value={stats.unassigned}
-          tone={stats.unassigned > 0 ? "warning" : "neutral"}
-          hint="Awaiting triage"
-        />
-        <StatTile
-          label="Overdue"
-          value={stats.overdue}
-          tone={stats.overdue > 0 ? "danger" : "success"}
-          hint="Past SLA target"
-        />
-        <StatTile label="In progress" value={stats.inProgress} hint="Field work underway" />
-      </div>
+      <div className="flex flex-col gap-4.5 p-4 md:p-6">
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat
+            label="Open requests"
+            value={stats.open}
+            hint={`of ${stats.raised} raised ${reportPeriods[period].label.toLowerCase()}`}
+          />
+          <Stat
+            label="Emergency, open"
+            value={stats.urgentOpen}
+            tone={stats.urgentOpen > 0 ? "danger" : "neutral"}
+            hint={`across ${stats.urgentBuildings} ${
+              stats.urgentBuildings === 1 ? "building" : "buildings"
+            }`}
+          />
+          <Stat
+            label="Charged"
+            value={formatCharge(stats.periodSpend)}
+            hint={
+              totalUnits
+                ? `${formatCharge(Math.round(stats.periodSpend / totalUnits))} per unit`
+                : "—"
+            }
+          />
+          <Stat
+            label="Nobody assigned"
+            value={stats.unassigned}
+            tone={stats.unassigned > 0 ? "warning" : "neutral"}
+            hint={`${stats.inProgress} in progress · ${stats.closed} closed`}
+          />
+        </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2">
-          <h2 className="mb-3 text-md font-semibold text-ink">Needs attention</h2>
-          {stats.needsAttention.length ? (
-            <ul className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-              {stats.needsAttention.map((request) => (
-                <li key={request.id} className="border-b border-border last:border-b-0">
-                  <Link
-                    href={`/requests/${request.id}`}
-                    className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-sunken"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-ink">
-                        {request.summary}
-                      </div>
-                      <div className="mt-1 text-xs text-ink-muted">
-                        {request.property?.name} · Unit {request.unit?.label} ·{" "}
-                        {request.assignee?.name ?? "Unassigned"}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs text-ink-muted">
-                        {formatAge(request.ageHours)}
-                      </span>
-                      <Badge tone={slaTones[request.sla.state]}>
-                        {slaLabels[request.sla.state]}
-                      </Badge>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-ink-soft">
-              Nothing overdue or at risk.
+        <div className="grid gap-3.5 lg:grid-cols-2">
+          <Panel
+            title="Spend by category"
+            caption={`${reportPeriods[period].label} · ${formatCharge(
+              categories.reduce((sum, c) => sum + c.spend, 0),
+            )} total`}
+            bodyClassName="flex flex-col gap-3.5"
+          >
+            {categories.filter((c) => c.spend > 0).length ? (
+              categories
+                .filter((category) => category.spend > 0)
+                .map((category) => (
+                  <MeterRow
+                    key={category.category}
+                    label={category.label}
+                    value={formatCharge(category.spend)}
+                    pct={(category.spend / maxSpend) * 100}
+                  />
+                ))
+            ) : (
+              <p className="text-sm text-ink-muted">
+                Nothing was charged in this period.
+              </p>
+            )}
+          </Panel>
+
+          <Panel
+            title="Requests by category"
+            caption={`${stats.raised} raised ${reportPeriods[period].label.toLowerCase()}`}
+            bodyClassName="flex flex-col gap-3.5"
+          >
+            {categories.map((category) => (
+              <MeterRow
+                key={category.category}
+                label={category.label}
+                value={`${Math.round((category.requests / stats.raised) * 100)}%`}
+                pct={(category.requests / maxVolume) * 100}
+                tone="warning"
+              />
+            ))}
+          </Panel>
+        </div>
+
+        <div className="grid gap-3.5 xl:grid-cols-3">
+          <Panel
+            className="xl:col-span-2"
+            title="Cost and volume by building"
+            caption="Sorted by spend"
+            bodyClassName="flex flex-col"
+          >
+            <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_56px_80px] gap-3 pb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted">
+              <span>Building</span>
+              <span>Spend</span>
+              <span className="text-end">Reqs</span>
+              <span className="text-end">Per unit</span>
             </div>
-          )}
-        </section>
-
-        <section className="flex flex-col gap-6">
-          <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-            <h2 className="text-md font-semibold text-ink">SLA adherence</h2>
-            <p className="mt-2 text-3xl font-semibold text-ink">
-              {stats.slaAdherence === null
-                ? "—"
-                : `${Math.round(stats.slaAdherence * 100)}%`}
-            </p>
-            <p className="mt-1 text-xs text-ink-muted">
-              Of completed requests, resolved within target
-            </p>
-            <p className="mt-4 text-sm text-ink-soft">
-              Median resolution{" "}
-              <span className="font-medium text-ink">
-                {stats.medianResolutionHours === null
-                  ? "—"
-                  : formatAge(stats.medianResolutionHours)}
-              </span>
-            </p>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-            <h2 className="mb-4 text-md font-semibold text-ink">By stage</h2>
-            <ul className="flex flex-col gap-3">
-              {stats.byStage.map(({ stage, count }) => (
-                <li key={stage}>
-                  <Link
-                    href={`/requests?stage=${stage}`}
-                    className="flex items-center justify-between text-sm transition-colors hover:text-brand"
-                  >
-                    <span className="text-ink-soft">{stageLabels[stage]}</span>
-                    <span className="font-medium text-ink">{count}</span>
-                  </Link>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-sunken">
-                    {/* Proportional to the stage split, so width is data-driven. */}
-                    <div
-                      className="h-full rounded-pill bg-brand"
-                      style={{
-                        width: `${totalByStage ? (count / totalByStage) * 100 : 0}%`,
-                      }}
+            {buildings.map((building) => (
+              <Link
+                key={building.id}
+                href={`/requests?propertyId=${building.id}`}
+                className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_56px_80px] items-center gap-3 border-t border-sunken py-2.5 transition-colors hover:bg-page"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[13.5px] font-semibold text-ink">
+                    {building.name}
+                  </span>
+                  {building.unassigned > 0 && (
+                    <span className="font-mono text-[11px] text-danger">
+                      {building.unassigned} unassigned
+                    </span>
+                  )}
+                </span>
+                <span className="flex items-center gap-2.5">
+                  <span className="h-2.5 flex-1 overflow-hidden rounded-pill bg-sunken">
+                    {/* Bar length is data-driven. */}
+                    <span
+                      className="block h-full rounded-pill bg-brand"
+                      style={{ width: `${(building.spend / maxBuilding) * 100}%` }}
                     />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      </div>
+                  </span>
+                  <span className="w-16 shrink-0 text-end font-mono text-[12.5px] font-semibold text-ink">
+                    {formatCharge(building.spend)}
+                  </span>
+                </span>
+                <span className="text-end font-mono text-[13px] text-ink-soft">
+                  {building.requests}
+                </span>
+                <span className="text-end font-mono text-[13px] text-ink-soft">
+                  {formatCharge(Math.round(building.spendPerUnit))}
+                </span>
+              </Link>
+            ))}
+          </Panel>
 
-      <section className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-1 text-md font-semibold text-ink">Housekeeping charges</h2>
-        <p className="mb-5 text-xs text-ink-muted">
-          Billed on completed visits, by month
-        </p>
-        <CostTrend data={stats.costTrend} />
-      </section>
-    </div>
+          {/* The crew card is the one dark surface on the screen — it reads as
+           * a different kind of fact from the money above it. */}
+          <Panel
+            tone="brand"
+            title="Crew"
+            caption={`Open jobs held · out of ${staffCapacity} each`}
+            bodyClassName="flex flex-col gap-3"
+          >
+            {staff.map((member) => {
+              const pct = Math.min(100, (member.load / member.capacity) * 100);
+
+              return (
+                <div key={member.id} className="flex items-center gap-2.5">
+                  <Initials name={member.name} size={30} tone="brand" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="truncate text-[13.5px] font-semibold text-[var(--sand-50)]">
+                      {member.name}
+                    </span>
+                    <span className="h-1.5 overflow-hidden rounded-pill bg-white/15">
+                      {/* Fill is data-driven. */}
+                      <span
+                        className="block h-full rounded-pill bg-[var(--green-300)]"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </span>
+                  </div>
+                  <div className="shrink-0 text-end">
+                    <div className="font-mono text-[13px] font-bold text-[var(--sand-50)]">
+                      {member.load}
+                    </div>
+                    <div className="font-mono text-[11.5px] text-[var(--green-300)]">
+                      {member.closed} closed
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </Panel>
+        </div>
+
+        <div className="grid gap-3.5 lg:grid-cols-2">
+          <Panel
+            title="Where open work sits"
+            caption={`${stats.open} open · ${stats.unassigned} with nobody assigned`}
+            bodyClassName="flex flex-col gap-3.5"
+          >
+            {stats.openByStage.map((bucket) => (
+              <MeterRow
+                key={bucket.stage}
+                label={bucket.label}
+                value={String(bucket.count)}
+                pct={(bucket.count / maxStage) * 100}
+                tone={
+                  bucket.stage === "submitted"
+                    ? "danger"
+                    : bucket.stage === "assigned"
+                      ? "warning"
+                      : "brand"
+                }
+              />
+            ))}
+          </Panel>
+
+          <Panel
+            title="Emergencies open"
+            caption="Unassigned first"
+            bodyClassName="flex flex-col"
+          >
+            {stats.emergencies.length ? (
+              stats.emergencies.map((request) => (
+                <Link
+                  key={request.id}
+                  href={`/requests/${request.id}`}
+                  className="flex items-center gap-3 border-b border-sunken py-2.5 last:border-b-0 transition-colors hover:text-brand"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-medium text-ink">
+                      {request.summary}
+                    </span>
+                    <span className="block truncate text-[11.5px] text-ink-muted">
+                      {request.property?.name} · Unit {request.unit?.label}
+                    </span>
+                  </span>
+                  <Badge
+                    tone={request.assignee ? "neutral" : "danger"}
+                    dot={false}
+                  >
+                    {request.assignee?.name ?? "Unassigned"}
+                  </Badge>
+                </Link>
+              ))
+            ) : (
+              <p className="text-sm text-ink-muted">
+                No emergency is open right now.
+              </p>
+            )}
+          </Panel>
+        </div>
+      </div>
+    </>
   );
 }

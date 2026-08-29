@@ -69,6 +69,12 @@
   --space-16: 64px;
   --space-20: 80px;
   --space-24: 96px;
+
+  /* Layout — tokens/layout.css. Only the shell measurements the portal
+   * chrome needs; the rest of that file has no consumer here yet. */
+  --sidebar-width: 264px;
+  --sidebar-width-collapsed: 72px;
+  --topbar-height: 64px;
 }
 
 @theme {
@@ -105,6 +111,14 @@
   --color-info: var(--sky-500);
   --color-info-tint: var(--sky-100);
 
+  /* Text that sits *on* the matching tint. The design system writes these as
+   * the 700 stop against the 100 stop; naming the pair keeps that legible
+   * when the dark palette swaps which end of the scale the tint comes from. */
+  --color-success-ink: var(--green-700);
+  --color-warning-ink: var(--amber-700);
+  --color-danger-ink: var(--red-700);
+  --color-info-ink: var(--sky-700);
+
   /* Tailwind inlines --shadow-* values at build time, so the focus ring has
    * to swap via a colour token to stay dark-mode aware. */
   --color-focus-ring: var(--green-100);
@@ -137,7 +151,7 @@
     system-ui, sans-serif;
   --font-arabic: var(--font-plex-arabic), var(--font-inter), ui-sans-serif,
     sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   --text-xs: 12px;
   --text-xs--line-height: 16px;
@@ -216,6 +230,12 @@ body {
     --color-danger-tint: var(--red-700);
     --color-info: var(--sky-300);
     --color-info-tint: var(--sky-700);
+
+    /* The tints are the 700 stops here, so their ink flips to the 100s. */
+    --color-success-ink: var(--green-100);
+    --color-warning-ink: var(--amber-100);
+    --color-danger-ink: var(--red-100);
+    --color-info-ink: var(--sky-100);
 
     --color-stage-submitted: var(--sand-400);
     --color-stage-submitted-tint: var(--sand-700);

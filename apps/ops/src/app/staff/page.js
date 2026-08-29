@@ -1,0 +1,46 @@
+import PageBar from "@/components/PageBar";
+import StaffRows from "@/components/StaffRows";
+import { getStaffRoster, staffCapacity } from "@aqarly/core/operations";
+
+export const metadata = {
+  title: "Field staff",
+};
+
+export default async function StaffPage() {
+  const staff = await getStaffRoster();
+
+  const maintenance = staff.filter((m) => m.role === "maintenance").length;
+  const housekeeping = staff.filter((m) => m.role === "housekeeping").length;
+  const totalLoad = staff.reduce((sum, member) => sum + member.load, 0);
+
+  return (
+    <>
+      <PageBar
+        title="Field staff"
+        meta={`${maintenance} maintenance · ${housekeeping} housekeeping · ${totalLoad} of ${
+          staff.length * staffCapacity
+        } slots in use`}
+      >
+        {/* Ops PRD §9: this roster is a Phase 1 stand-in, not the record. */}
+        <span className="rounded-pill bg-info-tint px-3.5 py-1.5 text-[12.5px] font-semibold text-info-ink">
+          Names, contracts and pay live in the HRMS
+        </span>
+        <span
+          title="Inviting staff needs a write path"
+          className="cursor-not-allowed rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse opacity-45"
+        >
+          Invite to field app
+        </span>
+      </PageBar>
+
+      <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
+        <StaffRows staff={staff} />
+        <p className="border-t border-border pt-3.5 text-[13px] text-ink-muted">
+          Skills, buildings and load are ops-owned. Everything else comes from
+          the HRMS once Phase 3 lands — this list is derived from who requests
+          were assigned to.
+        </p>
+      </div>
+    </>
+  );
+}

@@ -38,6 +38,19 @@ export const categoryLabels = {
   "post-checkout": "Post-checkout",
 };
 
+// Two-letter codes for the category tile the request detail leads with.
+export const categoryCodes = {
+  plumbing: "PL",
+  electrical: "EL",
+  ac: "AC",
+  appliance: "AP",
+  other: "GN",
+  "standard-clean": "SC",
+  "deep-clean": "DC",
+  laundry: "LN",
+  "post-checkout": "PC",
+};
+
 // The categories a tenant can file maintenance under. Housekeeping has no
 // equivalent list because its services come priced, from `housekeepingRates`.
 export const maintenanceCategories = [
@@ -47,20 +60,6 @@ export const maintenanceCategories = [
   "appliance",
   "other",
 ];
-
-// Ops PRD §7 wants these admin-configurable rather than hardcoded. MVP scope
-// allows fixed targets to start, so they live here as one table to lift into
-// admin settings later. Hours from submission.
-export const slaTargets = {
-  maintenance: {
-    urgent: { respond: 4, resolve: 24 },
-    normal: { respond: 24, resolve: 72 },
-  },
-  housekeeping: {
-    urgent: { respond: 4, resolve: 24 },
-    normal: { respond: 24, resolve: 96 },
-  },
-};
 
 const HOUR = 1000 * 60 * 60;
 
@@ -72,62 +71,7 @@ function hoursBetween(from, to) {
   return (new Date(to).getTime() - new Date(from).getTime()) / HOUR;
 }
 
-export function targetFor(request) {
-  return slaTargets[request.type][request.priority] ?? slaTargets[request.type].normal;
-}
-
-// Open requests resolve to on-track / at-risk / overdue; closed ones to the
-// historical met / breached, so the dashboard can report both live pressure
-// and past adherence off the same function.
-export function computeSla(request, now = Date.now()) {
-  const target = targetFor(request);
-  const doneAt = stageAt(request, "done");
-
-  if (request.stage === "done") {
-    const elapsed = hoursBetween(request.createdAt, doneAt);
-    return {
-      state: elapsed <= target.resolve ? "met" : "breached",
-      elapsedHours: elapsed,
-      targetHours: target.resolve,
-    };
-  }
-
-  const elapsed = hoursBetween(request.createdAt, now);
-  const awaitingAssignment = request.stage === "submitted";
-  const breachedResponse = awaitingAssignment && elapsed > target.respond;
-
-  let state = "on-track";
-  if (elapsed > target.resolve || breachedResponse) {
-    state = "overdue";
-  } else if (elapsed > target.resolve * 0.75) {
-    state = "at-risk";
-  }
-
-  return {
-    state,
-    elapsedHours: elapsed,
-    targetHours: target.resolve,
-    breachedResponse,
-  };
-}
-
-export const slaLabels = {
-  "on-track": "On track",
-  "at-risk": "At risk",
-  overdue: "Overdue",
-  met: "Met",
-  breached: "Breached",
-};
-
-export const slaTones = {
-  "on-track": "success",
-  "at-risk": "warning",
-  overdue: "danger",
-  met: "success",
-  breached: "danger",
-};
-
-function enrich(request, now) {
+function enrich(request) {
   const unit = data.units.find((u) => u.id === request.unitId) ?? null;
   const property = unit
     ? (data.properties.find((p) => p.id === unit.propertyId) ?? null)
@@ -139,39 +83,61 @@ function enrich(request, now) {
     property,
     tenant: data.tenants.find((t) => t.id === request.tenantId) ?? null,
     assignee: data.staff.find((s) => s.id === request.assigneeId) ?? null,
-    sla: computeSla(request, now),
-    ageHours: hoursBetween(request.createdAt, now),
   };
 }
 
+// The queue leads with the work that came in first; `newest` flips it.
 const sorters = {
-  age: (a, b) => b.ageHours - a.ageHours,
-  newest: (a, b) => a.ageHours - b.ageHours,
-  sla: (a, b) => b.sla.elapsedHours / b.sla.targetHours - a.sla.elapsedHours / a.sla.targetHours,
+  age: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+  newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
 };
+
+// Free-text match across the fields an admin actually types: the ref, the
+// unit, the tenant, and the summary.
+function matchesSearch(request, term) {
+  return [
+    request.id,
+    request.summary,
+    request.unit?.label,
+    request.property?.name,
+    request.tenant?.name,
+    request.assignee?.name,
+  ]
+    .filter(Boolean)
+    .some((field) => field.toLowerCase().includes(term));
+}
 
 export async function getRequests({
   stage,
   type,
+  category,
+  priority,
   propertyId,
-  sla,
+  unitId,
   assigneeId,
   tenantId,
   open,
+  search,
   sort = "age",
 } = {}) {
-  const now = Date.now();
+  const term = search?.trim().toLowerCase();
 
   return data.requests
-    .map((request) => enrich(request, now))
+    .map(enrich)
     .filter((request) => {
       if (stage && request.stage !== stage) return false;
       if (type && request.type !== type) return false;
+      if (category && request.category !== category) return false;
+      if (priority && request.priority !== priority) return false;
       if (propertyId && request.property?.id !== propertyId) return false;
-      if (sla && request.sla.state !== sla) return false;
-      if (assigneeId && request.assigneeId !== assigneeId) return false;
+      if (unitId && request.unitId !== unitId) return false;
+      // `unassigned` is a stage in practice but reads as an assignee filter.
+      if (assigneeId === "unassigned" && request.assigneeId) return false;
+      if (assigneeId && assigneeId !== "unassigned" && request.assigneeId !== assigneeId)
+        return false;
       if (tenantId && request.tenantId !== tenantId) return false;
       if (open && request.stage === "done") return false;
+      if (term && !matchesSearch(request, term)) return false;
       return true;
     })
     .sort(sorters[sort] ?? sorters.age);
@@ -179,7 +145,23 @@ export async function getRequests({
 
 export async function getRequestById(id) {
   const request = data.requests.find((r) => r.id === id);
-  return request ? enrich(request, Date.now()) : null;
+  return request ? enrich(request) : null;
+}
+
+// Previous / next within the queue's own order, so paging through the detail
+// screen walks the same list the admin was just looking at.
+export async function getRequestNeighbours(id, filters = {}) {
+  const list = await getRequests(filters);
+  const index = list.findIndex((request) => request.id === id);
+
+  if (index === -1) return { previous: null, next: null };
+
+  return {
+    previous: list[index - 1] ?? null,
+    next: list[index + 1] ?? null,
+    position: index + 1,
+    total: list.length,
+  };
 }
 
 export async function getRequestIds() {
@@ -189,45 +171,260 @@ export async function getRequestIds() {
 // Per-unit service history — Ops PRD §7: an admin should see what's happened
 // in a unit before assigning new work.
 export async function getUnitHistory(unitId, { excludeId } = {}) {
-  const now = Date.now();
-
   return data.requests
     .filter((r) => r.unitId === unitId && r.id !== excludeId)
-    .map((request) => enrich(request, now))
+    .map(enrich)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-export async function getDashboardStats() {
+// --- Portfolio reads -----------------------------------------------------
+// The queue answers "what needs doing now"; these answer "what is this unit,
+// this building, this technician like" — the context Ops PRD §7 wants an
+// admin to have before assigning work.
+
+// Ops PRD §7 wants how much work one person can hold to be admin-configurable
+// rather than hardcoded. Fixed for MVP, here as one number to lift into admin
+// settings later.
+export const staffCapacity = 7;
+
+// A unit that keeps failing the same way is the repair-versus-replace signal,
+// so it is flagged on sight rather than left to be read out of the history.
+export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
+
+function repeatFaultFor(requests, now) {
+  const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
+  const counts = new Map();
+
+  for (const request of requests) {
+    // Housekeeping recurring is the service working, not a fault.
+    if (request.type !== "maintenance") continue;
+    if (new Date(request.createdAt).getTime() < cutoff) continue;
+    counts.set(request.category, (counts.get(request.category) ?? 0) + 1);
+  }
+
+  const [worst] = [...counts.entries()].sort(([, a], [, b]) => b - a);
+  if (!worst || worst[1] < repeatFaultRule.occurrences) return null;
+
+  const [category, count] = worst;
+
+  return {
+    category,
+    count,
+    spend: requests
+      .filter((r) => r.category === category)
+      .reduce((sum, r) => sum + (r.charge ?? 0), 0),
+  };
+}
+
+function enrichUnit(unit, now) {
+  const requests = data.requests.filter((r) => r.unitId === unit.id);
+  const done = requests.filter((r) => r.stage === "done");
+
+  const lastServicedAt = done
+    .map((r) => stageAt(r, "done"))
+    .sort((a, b) => new Date(b) - new Date(a))[0] ?? null;
+
+  return {
+    ...unit,
+    property: data.properties.find((p) => p.id === unit.propertyId) ?? null,
+    tenant: unit.tenantId
+      ? (data.tenants.find((t) => t.id === unit.tenantId) ?? null)
+      : null,
+    requestCount: requests.length,
+    openCount: requests.filter((r) => r.stage !== "done").length,
+    lifetimeSpend: requests.reduce((sum, r) => sum + (r.charge ?? 0), 0),
+    lastServicedAt,
+    repeatFault: repeatFaultFor(requests, now),
+  };
+}
+
+export async function getUnits({ propertyId } = {}) {
   const now = Date.now();
-  const all = data.requests.map((request) => enrich(request, now));
+
+  return data.units
+    .filter((unit) => !propertyId || unit.propertyId === propertyId)
+    .map((unit) => enrichUnit(unit, now))
+    .sort(
+      (a, b) =>
+        b.openCount - a.openCount ||
+        (a.property?.name ?? "").localeCompare(b.property?.name ?? "") ||
+        a.label.localeCompare(b.label),
+    );
+}
+
+export async function getUnitById(id) {
+  const unit = data.units.find((u) => u.id === id);
+  return unit ? enrichUnit(unit, Date.now()) : null;
+}
+
+export async function getUnitIds() {
+  return data.units.map((u) => u.id);
+}
+
+// The dashboard reports over a window; the queue and the sidebar do not.
+// Anything counted as "raised" or "spent" is period-scoped, while open work
+// is open regardless of when it came in.
+export const reportPeriods = {
+  month: { label: "This month", days: 30 },
+  quarter: { label: "Quarter", days: 90 },
+  year: { label: "Year", days: 365 },
+};
+
+function raisedSince(period) {
+  const spec = reportPeriods[period];
+  return spec ? Date.now() - spec.days * 24 * HOUR : null;
+}
+
+function inPeriod(request, since) {
+  return since === null || new Date(request.createdAt).getTime() >= since;
+}
+
+// Per-building rollup — the "cost and volume by building" the ops manager
+// view reports on, and the scope list the sidebar narrows the queue by.
+export async function getPropertyRollups({ period } = {}) {
+  const since = raisedSince(period);
+
+  return data.properties
+    .map((property) => {
+      const units = data.units.filter((u) => u.propertyId === property.id);
+      const unitIds = new Set(units.map((u) => u.id));
+      const all = data.requests.filter((r) => unitIds.has(r.unitId));
+      const open = all.filter((r) => r.stage !== "done");
+      const raised = all.filter((r) => inPeriod(r, since));
+      const spend = raised.reduce((sum, r) => sum + (r.charge ?? 0), 0);
+
+      return {
+        ...property,
+        units: units.length,
+        requests: raised.length,
+        open: open.length,
+        unassigned: open.filter((r) => !r.assigneeId).length,
+        spend,
+        spendPerUnit: units.length ? spend / units.length : 0,
+      };
+    })
+    .sort((a, b) => b.spend - a.spend || b.requests - a.requests);
+}
+
+// Spend and volume by category, for the two bar blocks on the dashboard.
+export async function getCategoryRollups({ period } = {}) {
+  const since = raisedSince(period);
+  const totals = new Map();
+
+  for (const request of data.requests) {
+    if (!inPeriod(request, since)) continue;
+
+    const entry = totals.get(request.category) ?? {
+      category: request.category,
+      label: categoryLabels[request.category] ?? request.category,
+      type: request.type,
+      requests: 0,
+      spend: 0,
+    };
+
+    entry.requests += 1;
+    entry.spend += request.charge ?? 0;
+    totals.set(request.category, entry);
+  }
+
+  return [...totals.values()].sort((a, b) => b.requests - a.requests);
+}
+
+// The roster is deliberately thin: Ops PRD §9 makes the HRMS the system of
+// record for staff identity in Phase 3, so everything here is either derived
+// from request data or ops-owned (load, coverage).
+export async function getStaffRoster() {
+  return data.staff
+    .map((member) => {
+      const assigned = data.requests.filter((r) => r.assigneeId === member.id);
+      const open = assigned.filter((r) => r.stage !== "done");
+      const closed = assigned.filter((r) => r.stage === "done");
+
+      const propertyIds = new Set(
+        assigned
+          .map((r) => data.units.find((u) => u.id === r.unitId)?.propertyId)
+          .filter(Boolean),
+      );
+
+      return {
+        ...member,
+        load: open.length,
+        capacity: staffCapacity,
+        closed: closed.length,
+        properties: [...propertyIds].map((id) =>
+          data.properties.find((p) => p.id === id),
+        ),
+      };
+    })
+    .sort((a, b) => b.load - a.load || a.name.localeCompare(b.name));
+}
+
+// Ranked candidates for the assign panel. The design ranks by certification,
+// building presence, and load; ours reads those off the roster — role has to
+// match the request type, then whoever is already working that building, then
+// whoever has the most room left in their day.
+export async function getAssignmentCandidates(request) {
+  const roster = await getStaffRoster();
+  const propertyId = request.property?.id ?? null;
+
+  return roster
+    .filter((member) => member.role === request.type)
+    .map((member) => {
+      const inBuilding = member.properties.some((p) => p?.id === propertyId);
+      const atCapacity = member.load >= member.capacity;
+
+      return {
+        ...member,
+        inBuilding,
+        atCapacity,
+        isCurrent: member.id === request.assigneeId,
+        // Capacity outweighs familiarity; familiarity outweighs a lighter day.
+        score:
+          (atCapacity ? -100 : 0) + (inBuilding ? 10 : 0) - member.load,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+export async function getDashboardStats({ period } = {}) {
+  const since = raisedSince(period);
+  const all = data.requests.map(enrich);
+  const raised = all.filter((request) => inPeriod(request, since));
   const open = all.filter((r) => r.stage !== "done");
   const closed = all.filter((r) => r.stage === "done");
 
-  const resolutionHours = closed
-    .map((r) => r.sla.elapsedHours)
-    .sort((a, b) => a - b);
-  const median = resolutionHours.length
-    ? resolutionHours[Math.floor(resolutionHours.length / 2)]
-    : null;
-
   return {
     open: open.length,
-    unassigned: open.filter((r) => r.stage === "submitted").length,
+    unassigned: open.filter((r) => !r.assigneeId).length,
     inProgress: open.filter((r) => r.stage === "in-progress").length,
-    overdue: open.filter((r) => r.sla.state === "overdue").length,
-    atRisk: open.filter((r) => r.sla.state === "at-risk").length,
+    closed: closed.length,
     byStage: stages.map((stage) => ({
       stage,
       count: all.filter((r) => r.stage === stage).length,
     })),
-    slaAdherence: closed.length
-      ? closed.filter((r) => r.sla.state === "met").length / closed.length
-      : null,
-    medianResolutionHours: median,
+    // Open work only — "done" is not a place work is sitting.
+    openByStage: stages
+      .filter((stage) => stage !== "done")
+      .map((stage) => ({
+        stage,
+        label: stageLabels[stage],
+        count: open.filter((r) => r.stage === stage).length,
+      })),
+    raised: raised.length,
+    urgentOpen: open.filter((r) => r.priority === "urgent").length,
+    urgentBuildings: new Set(
+      open.filter((r) => r.priority === "urgent").map((r) => r.property?.id),
+    ).size,
+    periodSpend: raised.reduce((sum, r) => sum + (r.charge ?? 0), 0),
     costTrend: costByMonth(closed),
-    needsAttention: open
-      .filter((r) => r.sla.state === "overdue" || r.sla.state === "at-risk")
-      .sort(sorters.sla)
+    // Open emergencies, the ones nobody has picked up first.
+    emergencies: open
+      .filter((r) => r.priority === "urgent")
+      .sort(
+        (a, b) =>
+          Number(Boolean(a.assigneeId)) - Number(Boolean(b.assigneeId)) ||
+          new Date(a.createdAt) - new Date(b.createdAt),
+      )
       .slice(0, 5),
   };
 }
@@ -403,10 +600,13 @@ export function formatCharge(amount, currency = "AED") {
   }).format(amount);
 }
 
-export function formatAge(hours) {
-  if (hours < 1) return "just now";
-  if (hours < 24) return `${Math.floor(hours)}h`;
-  return `${Math.floor(hours / 24)}d`;
+// Day-level formatting for tiles and columns where a timestamp is more
+// precision than the reader needs.
+export function formatDate(iso) {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(iso));
 }
 
 export function formatDateTime(iso) {
