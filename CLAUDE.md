@@ -57,8 +57,8 @@ never reach its stylesheet.
 
 ## Data
 
-All reads go through `packages/core/src` — `operations.js` for service
-requests, staff, and dashboard rollups; `properties.js` for
+All reads and writes go through `packages/core/src` — `operations.js` for
+service requests, staff, and dashboard rollups; `properties.js` for
 listings; `site.js` for site-wide strings. They currently read JSON from
 `packages/core/data`; keep that the single seam so the source can change
 without touching pages.
@@ -79,11 +79,24 @@ off what is unassigned rather than off a clock. Do not reintroduce a duration
 without the SLA targets being real and admin-configurable first.
 
 `getSignedInTenant()` is a stub standing in for a session. There is no auth
-anywhere yet, and no write path — every app is read-only. The tenant portal's
-`/login` screens are the designed flow rendered as navigation only: they
-authenticate nobody, and every submit control on a form is disabled with the
-reason stated on screen. Wire them to a real session rather than making them
-look like they work.
+anywhere yet. The tenant portal's `/login` screens are the designed flow
+rendered as navigation only: they authenticate nobody, and every submit
+control on a form is disabled with the reason stated on screen. Wire them to a
+real session rather than making them look like they work.
+
+The ops portal does write. `operations.js` exposes `createRequest`,
+`assignRequests`, `setPriority` and `addHousekeepingRate` over
+`store.js` — one mutable copy of the seed JSON, held on `globalThis` for the
+life of the server process. `operations.json` stays the seed and is never
+written to, so a restart (or the sidebar's "Reset demo data") is the way back
+to a known state. Pages call these through the server actions in
+`apps/ops/src/app/actions.js`, which are the only place `revalidatePath` is
+allowed to live.
+
+Controls that still cannot work say so on the screen rather than being hidden:
+notifying a tenant, sending to an external vendor, publishing a rate version,
+and issuing a field-app invite all need a path that does not exist yet. Keep
+that rule — a disabled control with its reason beats one that pretends.
 
 Tenant notifications are derived from each request's `stageHistory` rather
 than stored, so "unread" is a recency window until read state has somewhere to

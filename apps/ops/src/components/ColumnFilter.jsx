@@ -5,11 +5,22 @@ import { useState } from "react";
 
 // "Filters inside the column headers" — the header label is the trigger, and
 // each option is a link, so the filter itself stays URL state.
-export default function ColumnFilter({ label, param, options, params, align = "start" }) {
+export default function ColumnFilter({
+  label,
+  param,
+  options,
+  searchParams = {},
+  align = "start",
+  basePath = "/requests",
+}) {
   const [open, setOpen] = useState(false);
+  const params = new URLSearchParams(
+    Object.entries(searchParams).filter(([, v]) => typeof v === "string"),
+  );
   const active = params.get(param);
-  // Only a real filter renames the header; the "all" option shares `null`
-  // with an absent param, and would otherwise stand in for the column name.
+  // A filter appends its choice to the column name rather than replacing it,
+  // so the header still says which column it is. The "all" option shares
+  // `null` with an absent param, hence the guard.
   const chosen = active
     ? options.find((option) => option.value === active)
     : null;
@@ -22,7 +33,7 @@ export default function ColumnFilter({ label, param, options, params, align = "s
       next.set(param, value);
     }
     const query = next.toString();
-    return query ? `/requests?${query}` : "/requests";
+    return query ? `${basePath}?${query}` : basePath;
   }
 
   return (
@@ -37,7 +48,9 @@ export default function ColumnFilter({ label, param, options, params, align = "s
           chosen ? "text-brand" : "text-ink-muted hover:text-ink-soft",
         ].join(" ")}
       >
-        <span className="truncate">{chosen ? chosen.label : label}</span>
+        <span className="truncate">
+          {chosen ? `${label} · ${chosen.label}` : label}
+        </span>
         <span className="text-[8px]">▼</span>
       </button>
 

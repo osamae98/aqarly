@@ -4,7 +4,7 @@ import { useState } from "react";
 import AssignPanel from "@/components/AssignPanel";
 
 // The Assign button and its panel — the only client state on the detail page.
-export default function AssignAction({ candidates, assigned, note }) {
+export default function AssignAction({ requestId, candidates, assigned, note }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -20,6 +20,7 @@ export default function AssignAction({ candidates, assigned, note }) {
         open={open}
         onClose={() => setOpen(false)}
         candidates={candidates}
+        requestIds={[requestId]}
         title={assigned ? "Reassign this request" : "Assign this request"}
         description="Ranked by trade, who is already working the building, and how loaded their day is."
         note={note}

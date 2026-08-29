@@ -1,3 +1,4 @@
+import InviteAction from "@/components/InviteAction";
 import PageBar from "@/components/PageBar";
 import StaffRows from "@/components/StaffRows";
 import { getStaffRoster, staffCapacity } from "@aqarly/core/operations";
@@ -25,12 +26,7 @@ export default async function StaffPage() {
         <span className="rounded-pill bg-info-tint px-3.5 py-1.5 text-[12.5px] font-semibold text-info-ink">
           Names, contracts and pay live in the HRMS
         </span>
-        <span
-          title="Inviting staff needs a write path"
-          className="cursor-not-allowed rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse opacity-45"
-        >
-          Invite to field app
-        </span>
+        <InviteAction />
       </PageBar>
 
       <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">

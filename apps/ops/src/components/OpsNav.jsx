@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@aqarly/ui/Sidebar";
+import { resetAction } from "@/app/actions";
 
 // The shell's nav. Client-side only because the active item is read off the
 // current URL — every item is still a real link, so nothing routes
@@ -59,18 +60,31 @@ export default function OpsNav({ openCount, properties, className = "" }) {
       footer={
         // No auth anywhere yet, so this names the role the screens are
         // designed for rather than a signed-in person.
-        <div className="flex items-center gap-2.5 px-1 py-0.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--green-400)] text-xs font-bold text-[var(--green-900)]">
-            PA
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-[13px] font-semibold text-[var(--sand-50)]">
-              Property admin
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2.5 px-1 py-0.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--green-400)] text-xs font-bold text-[var(--green-900)]">
+              PA
             </span>
-            <span className="block text-xs text-[var(--green-300)]">
-              No sign-in yet
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-semibold text-[var(--sand-50)]">
+                Property admin
+              </span>
+              <span className="block text-xs text-[var(--green-300)]">
+                No sign-in yet
+              </span>
             </span>
-          </span>
+          </div>
+
+          {/* Writes live in the server process, not in the seed file, so this
+            * is the way back to a known state. */}
+          <form action={resetAction}>
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-sm px-1 py-1 text-start text-[11.5px] text-[var(--green-300)] transition-colors hover:bg-white/[0.07] hover:text-[var(--green-100)]"
+            >
+              Reset demo data
+            </button>
+          </form>
         </div>
       }
     >

@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Slideout from "@aqarly/ui/Slideout";
 import Initials from "@/components/Initials";
+import { FormNote, Label, useFormAction } from "@/components/Field";
 import { MicroLabel } from "@/components/Panel";
+import Toast from "@/components/Toast";
+import { assignAction } from "@/app/actions";
 import { typeLabels } from "@aqarly/core/operations";
 
 // Why this person is the suggestion, in the order the ranking weighs it.
@@ -27,154 +30,174 @@ export default function AssignPanel({
   open,
   onClose,
   candidates = [],
+  requestIds = [],
   eyebrow,
   title,
   description,
   note,
+  onAssigned,
 }) {
   const [picked, setPicked] = useState(0);
   const choice = candidates[picked];
 
+  // The panel closes on success and the toast carries the confirmation, the
+  // same shape the mockup's flow has.
+  const { submit, pending, result } = useFormAction(assignAction, {
+    onSuccess: () => {
+      onAssigned?.();
+      onClose?.();
+    },
+  });
+
   return (
-    <Slideout
-      open={open}
-      onClose={onClose}
-      eyebrow={eyebrow}
-      title={title}
-      description={description}
-      footer={
-        <div className="flex w-full flex-col gap-3">
-          {note && (
-            <div className="flex flex-col gap-1.5">
-              <MicroLabel>Note for the technician</MicroLabel>
-              <p className="min-h-12 rounded-sm border border-border bg-page p-2.5 text-[13.5px] text-ink-muted">
-                {note}
-              </p>
-            </div>
-          )}
+    <>
+      <Slideout
+        open={open}
+        onClose={onClose}
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
+        footer={
+          <div className="flex w-full flex-col gap-3">
+            {note && (
+              <div className="flex flex-col gap-1.5">
+                <MicroLabel>Note for the technician</MicroLabel>
+                <p className="min-h-12 rounded-sm border border-border bg-page p-2.5 text-[13.5px] text-ink-muted">
+                  {note}
+                </p>
+              </div>
+            )}
 
-          {/* Same rule the tenant portal's forms follow: the flow is designed
-           * and navigable, but nothing here writes, and the screen says so. */}
-          <p className="text-xs text-ink-muted">
-            Assignment needs a write path. This portal is read-only until one
-            exists, so nothing is sent and no one is notified.
+            <p className="text-xs text-ink-muted">
+              Assigning moves the request to the chosen technician. Notifying
+              the tenant needs a messaging path, so nothing is sent yet.
+            </p>
+
+            <FormNote state={result} />
+
+            <button
+              type="submit"
+              form="assign-request"
+              disabled={!choice || pending || requestIds.length === 0}
+              className="w-full cursor-pointer rounded-pill bg-brand py-3.5 text-[15px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {pending
+                ? "Assigning…"
+                : choice
+                  ? `Assign to ${choice.name.split(" ")[0]} · notify tenant`
+                  : "Assign"}
+            </button>
+            <button
+              type="button"
+              disabled
+              title="No vendor directory yet"
+              className="w-full cursor-not-allowed rounded-pill border border-border-strong py-3 text-sm font-semibold text-ink-soft opacity-45"
+            >
+              Send to external vendor
+            </button>
+          </div>
+        }
+      >
+        {candidates.length === 0 ? (
+          <p className="text-sm text-ink-muted">
+            No one on the roster covers this kind of work yet.
           </p>
-
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-pill bg-brand py-3.5 text-[15px] font-semibold text-ink-inverse opacity-45"
+        ) : (
+          <form
+            id="assign-request"
+            action={submit}
+            className="flex flex-col gap-3"
           >
-            {choice
-              ? `Assign to ${choice.name.split(" ")[0]} · notify tenant`
-              : "Assign"}
-          </button>
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-pill border border-border-strong py-3 text-sm font-semibold text-ink-soft opacity-45"
-          >
-            Send to external vendor
-          </button>
-        </div>
-      }
-    >
-      {candidates.length === 0 ? (
-        <p className="text-sm text-ink-muted">
-          No one on the roster covers this kind of work yet.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          {candidates.map((candidate, index) =>
-            index === picked ? (
-              <Best
+            {requestIds.map((id) => (
+              <input key={id} type="hidden" name="id" value={id} />
+            ))}
+            <Label>Technician</Label>
+            {candidates.map((candidate, index) => (
+              <Candidate
                 key={candidate.id}
                 candidate={candidate}
-                first={index === 0}
+                best={index === 0}
+                picked={index === picked}
+                onPick={() => setPicked(index)}
               />
-            ) : (
-              <button
-                key={candidate.id}
-                type="button"
-                onClick={() => setPicked(index)}
-                className="flex cursor-pointer items-center gap-2.5 rounded-md border border-border p-3 text-start transition-colors hover:bg-page"
-              >
-                <Initials name={candidate.name} size={34} />
-                <span className="min-w-0 flex-1">
-                  <span
-                    className={[
-                      "block truncate text-sm font-semibold",
-                      candidate.atCapacity ? "text-ink-muted" : "text-ink",
-                    ].join(" ")}
-                  >
-                    {candidate.name}
-                  </span>
-                  <span
-                    className={[
-                      "block text-xs",
-                      candidate.atCapacity ? "text-danger" : "text-ink-soft",
-                    ].join(" ")}
-                  >
-                    {reason(candidate)}
-                  </span>
-                </span>
-              </button>
-            ),
-          )}
-        </div>
-      )}
-    </Slideout>
+            ))}
+          </form>
+        )}
+      </Slideout>
+      <Toast message={result?.ok ? result.message : null} />
+    </>
   );
 }
 
-// The chosen candidate opens out: avatar, why, and how full their day is.
-function Best({ candidate, first }) {
+// The mockup gives every candidate the same card and lets the ranking speak:
+// the best match is the one that opens out with how full their day is.
+function Candidate({ candidate, best, picked, onPick }) {
   const pct = Math.min(100, (candidate.load / candidate.capacity) * 100);
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-md border-[1.5px] border-brand bg-brand-tint p-4">
+    <label
+      className={[
+        "flex cursor-pointer flex-col gap-2.5 rounded-md p-4 transition-colors",
+        best
+          ? "border-[1.5px] border-brand bg-brand-tint"
+          : "border border-border bg-surface hover:bg-page",
+        picked ? "shadow-focus" : "",
+      ].join(" ")}
+    >
+      <input
+        type="radio"
+        name="assigneeId"
+        value={candidate.id}
+        checked={picked}
+        onChange={onPick}
+        className="sr-only"
+      />
       <div className="flex items-center gap-3">
-        <Initials name={candidate.name} size={40} tone="brand" />
+        <Initials
+          name={candidate.name}
+          size={40}
+          tone={best ? "brand" : "sand"}
+        />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-bold text-ink">
+          <div className="truncate text-base font-bold text-ink">
             {candidate.name}
           </div>
-          <div className="text-[12.5px] font-semibold text-brand">
-            {candidate.atCapacity
-              ? "Over capacity"
-              : first
-                ? "Best match"
-                : "Selected"}
+          {best && (
+            <div className="text-[13px] font-bold text-brand">Best match</div>
+          )}
+        </div>
+      </div>
+
+      <p
+        className={[
+          "text-sm",
+          candidate.atCapacity ? "text-danger" : "text-ink-soft",
+        ].join(" ")}
+      >
+        {reason(candidate)}
+      </p>
+
+      {best && (
+        <div className="flex items-center gap-2.5">
+          <div className="h-2 flex-1 overflow-hidden rounded-pill bg-surface">
+            {/* Fill is data-driven, so width has to be an inline style. */}
+            <div
+              className={[
+                "h-full rounded-pill",
+                candidate.atCapacity
+                  ? "bg-danger"
+                  : pct > 70
+                    ? "bg-warning"
+                    : "bg-success",
+              ].join(" ")}
+              style={{ width: `${pct}%` }}
+            />
           </div>
-        </div>
-        {candidate.inBuilding && (
-          <span className="shrink-0 rounded-pill bg-brand-tint-strong px-2.5 py-0.5 text-[11.5px] font-bold text-brand">
-            On site
+          <span className="shrink-0 text-[13px] text-ink-soft">
+            {candidate.load} / {candidate.capacity} jobs
           </span>
-        )}
-      </div>
-
-      <p className="text-[13px] text-ink-soft">{reason(candidate)}</p>
-
-      <div className="flex items-center gap-2.5">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-pill bg-surface">
-          {/* Fill is data-driven, so width has to be an inline style. */}
-          <div
-            className={[
-              "h-full rounded-pill",
-              candidate.atCapacity
-                ? "bg-danger"
-                : pct > 70
-                  ? "bg-warning"
-                  : "bg-success",
-            ].join(" ")}
-            style={{ width: `${pct}%` }}
-          />
         </div>
-        <span className="font-mono text-[11.5px] text-ink-soft">
-          {candidate.load} / {candidate.capacity} jobs
-        </span>
-      </div>
-    </div>
+      )}
+    </label>
   );
 }

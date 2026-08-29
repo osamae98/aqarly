@@ -88,6 +88,7 @@ export default async function RequestDetailPage({ params }) {
           )}
           <span className="mx-0.5 h-5.5 w-px bg-border" />
           <AssignAction
+            requestId={request.id}
             candidates={candidates}
             assigned={Boolean(request.assignee)}
             note={
@@ -136,7 +137,13 @@ export default async function RequestDetailPage({ params }) {
         {/* What the tenant actually said, in their words. */}
         <div className="rounded-md border border-border bg-surface p-4.5">
           <p className="text-[15px] leading-relaxed text-ink">
-            “{request.description}”
+            {request.description ? (
+              `“${request.description}”`
+            ) : (
+              <span className="text-ink-muted">
+                No description was given when this request was raised.
+              </span>
+            )}
           </p>
           <p className="mt-3 text-xs text-ink-muted">
             Photos are part of the designed flow; the tenant portal has no

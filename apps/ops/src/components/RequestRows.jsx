@@ -7,21 +7,33 @@ import Badge from "@aqarly/ui/Badge";
 import AssignPanel from "@/components/AssignPanel";
 import ColumnFilter from "@/components/ColumnFilter";
 import Initials from "@/components/Initials";
-import { categoryLabels, stageLabels } from "@aqarly/core/operations";
+import Toast from "@/components/Toast";
+import { useFormAction } from "@/components/Field";
+import { setPriorityAction } from "@/app/actions";
+import { stageLabels, tierLabels, tierTones } from "@aqarly/core/operations";
 
 // One row per request. The mockup lays these out as a grid rather than a
-// table so the unit, priority, and assignee cells can each stack two lines.
+// table so the unit and assignee cells can each stack two lines.
 const GRID =
-  "grid grid-cols-[34px_78px_minmax(0,1fr)_142px_104px_160px] items-center gap-3.5";
+  "grid grid-cols-[34px_92px_minmax(0,1fr)_158px_132px_168px] items-center gap-3.5";
 
 export default function RequestRows({ requests, staff, filters, searchParams }) {
   const router = useRouter();
   const [selected, setSelected] = useState([]);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
 
-  const params = new URLSearchParams(
-    Object.entries(searchParams).filter(([, v]) => typeof v === "string"),
-  );
+  // A finished bulk action has nothing left to act on.
+  const {
+    submit: changePriority,
+    pending: priorityPending,
+    result: priorityResult,
+  } = useFormAction(setPriorityAction, {
+    onSuccess: () => {
+      setPriorityOpen(false);
+      setSelected([]);
+    },
+  });
 
   const allOn = requests.length > 0 && selected.length === requests.length;
 
@@ -48,14 +60,44 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
           >
             Assign to technician
           </button>
-          <button
-            type="button"
-            disabled
-            title="Changing priority needs a write path"
-            className="cursor-not-allowed rounded-pill border border-[var(--green-200)] px-3.5 py-1.5 text-[13px] font-semibold text-brand opacity-45"
-          >
-            Change priority
-          </button>
+          {priorityOpen ? (
+            <form action={changePriority} className="flex items-center gap-2">
+              {selected.map((id) => (
+                <input key={id} type="hidden" name="id" value={id} />
+              ))}
+              <span className="text-[13px] text-brand">Change to</span>
+              {[
+                { value: "urgent", label: "Emergency" },
+                { value: "normal", label: "Standard" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="submit"
+                  name="priority"
+                  value={option.value}
+                  disabled={priorityPending}
+                  className="cursor-pointer rounded-pill border border-[var(--green-200)] bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-page disabled:opacity-45"
+                >
+                  {option.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPriorityOpen(false)}
+                className="cursor-pointer text-[13px] text-ink-soft hover:text-ink"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPriorityOpen(true)}
+              className="cursor-pointer rounded-pill border border-[var(--green-200)] px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-surface"
+            >
+              Change priority
+            </button>
+          )}
           <span className="flex-1" />
           <button
             type="button"
@@ -67,7 +109,7 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
         </div>
       )}
 
-      <div className="min-w-[56rem] px-4 md:px-6">
+      <div className="min-w-[62rem] px-4 md:px-6">
         <div className={`${GRID} px-3 pt-3 pb-2`}>
           <span>
             <Checkbox
@@ -83,26 +125,26 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
           </span>
           <ColumnFilter
             label="Request"
-            param="type"
-            params={params}
-            options={filters.type}
+            param="category"
+            searchParams={searchParams}
+            options={filters.category}
           />
           <ColumnFilter
             label="Unit"
             param="propertyId"
-            params={params}
+            searchParams={searchParams}
             options={filters.property}
           />
           <ColumnFilter
             label="Priority"
-            param="priority"
-            params={params}
-            options={filters.priority}
+            param="tier"
+            searchParams={searchParams}
+            options={filters.tier}
           />
           <ColumnFilter
-            label="Assignee"
+            label="Assigned to"
             param="assigneeId"
-            params={params}
+            searchParams={searchParams}
             options={filters.assignee}
           />
         </div>
@@ -138,13 +180,8 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
                 </Link>
               </span>
 
-              <span className="min-w-0">
-                <span className="block truncate text-[14.5px] font-medium text-ink">
-                  {request.summary}
-                </span>
-                <span className="block truncate text-[11.5px] text-ink-muted">
-                  {categoryLabels[request.category] ?? request.category}
-                </span>
+              <span className="min-w-0 truncate text-[14.5px] font-medium text-ink">
+                {request.summary}
               </span>
 
               <span className="min-w-0">
@@ -157,15 +194,9 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
               </span>
 
               <span>
-                {request.priority === "urgent" ? (
-                  <Badge tone="danger" dot={false}>
-                    Emergency
-                  </Badge>
-                ) : (
-                  <Badge tone="neutral" dot={false}>
-                    Standard
-                  </Badge>
-                )}
+                <Badge tone={tierTones[request.tier]} dot={false}>
+                  {tierLabels[request.tier]}
+                </Badge>
               </span>
 
               <span className="flex min-w-0 items-center gap-2.5">
@@ -194,10 +225,14 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
         candidates={staff}
+        requestIds={selected}
+        onAssigned={() => setSelected([])}
         eyebrow={`${selected.length} selected`}
         title={`Assign ${selected.length} ${selected.length === 1 ? "request" : "requests"}`}
         description="Ranked by how much room each person has left in their day."
       />
+
+      <Toast message={priorityResult?.ok ? priorityResult.message : null} />
     </>
   );
 }

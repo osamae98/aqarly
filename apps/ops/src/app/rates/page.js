@@ -1,4 +1,5 @@
 import PageBar from "@/components/PageBar";
+import RateActions from "@/components/RateActions";
 import {
   formatCharge,
   getHousekeepingRates,
@@ -36,28 +37,17 @@ export default async function RatesPage() {
         title="Housekeeping rates"
         meta={`${rates.length} services · applies to every building · read by both portals`}
       >
-        <span
-          title="Versioning needs a write path"
-          className="cursor-not-allowed rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft opacity-45"
-        >
-          Version history
-        </span>
-        <span
-          title="Editing rates needs a write path"
-          className="cursor-not-allowed rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse opacity-45"
-        >
-          New rate
-        </span>
+        <RateActions services={rates.length} />
       </PageBar>
 
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="rounded-md border border-[var(--sky-300)] bg-info-tint px-4 py-3.5 text-[13.5px] leading-relaxed text-info-ink">
           <b>Tenants see the rate before they book</b>, the technician sees it
           again before closing the job, and it appears on the statement with the
-          same wording — so a charge is never a surprise. Rates are read-only
-          here: changing one means changing the seed data in{" "}
-          <code className="font-mono">packages/core</code> until a write path
-          exists.
+          same wording — so a charge is never a surprise. A service added here
+          becomes bookable straight away; changing the price of one that is
+          already live is what needs versioning, and versioning needs somewhere
+          durable to publish to.
         </div>
 
         <div className="overflow-x-auto">

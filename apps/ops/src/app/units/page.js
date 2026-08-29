@@ -1,6 +1,5 @@
 import PageBar from "@/components/PageBar";
 import UnitRows from "@/components/UnitRows";
-import Tabs from "@aqarly/ui/Tabs";
 import { getPropertyRollups, getUnits } from "@aqarly/core/operations";
 
 export const metadata = {
@@ -18,6 +17,17 @@ export default async function UnitsPage({ searchParams }) {
   const scope = properties.find((p) => p.id === params.propertyId);
   const withWork = units.filter((unit) => unit.openCount > 0).length;
 
+  // Building scope lives in the column header, the way the queue's filters
+  // do, so the screen has one filtering idiom rather than two.
+  const buildings = [
+    { value: null, label: "All buildings", count: units.length },
+    ...properties.map((property) => ({
+      value: property.id,
+      label: property.name,
+      count: property.units,
+    })),
+  ];
+
   return (
     <>
       <PageBar
@@ -25,24 +35,8 @@ export default async function UnitsPage({ searchParams }) {
         meta={`${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`}
       />
 
-      {/* Building scope is URL state, so the tabs are links. */}
-      <div className="border-b border-border bg-surface px-4 md:px-6">
-        <Tabs
-          value={params.propertyId ?? "all"}
-          tabs={[
-            { value: "all", label: "All buildings", href: "/units" },
-            ...properties.map((property) => ({
-              value: property.id,
-              label: property.name,
-              count: property.units,
-              href: `/units?propertyId=${property.id}`,
-            })),
-          ]}
-        />
-      </div>
-
       <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
-        <UnitRows units={units} />
+        <UnitRows units={units} buildings={buildings} searchParams={params} />
       </div>
     </>
   );

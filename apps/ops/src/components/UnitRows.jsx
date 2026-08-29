@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Badge from "@aqarly/ui/Badge";
+import ColumnFilter from "@/components/ColumnFilter";
 import { formatCharge, formatDate } from "@aqarly/core/operations";
 
 const GRID =
@@ -20,7 +21,7 @@ const statusLabels = {
   "under-maintenance": "Maintenance",
 };
 
-export default function UnitRows({ units }) {
+export default function UnitRows({ units, buildings = [], searchParams = {} }) {
   const router = useRouter();
 
   return (
@@ -28,7 +29,13 @@ export default function UnitRows({ units }) {
       <div className={`${GRID} pb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}>
         <span>Unit</span>
         <span>Tenant</span>
-        <span>Building</span>
+        <ColumnFilter
+          label="Building"
+          param="propertyId"
+          searchParams={searchParams}
+          options={buildings}
+          basePath="/units"
+        />
         <span>Status · size</span>
         <span className="text-end">Open</span>
         <span className="text-end">Lifetime</span>

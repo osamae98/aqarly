@@ -1,8 +1,9 @@
-import data from "../data/operations.json";
+import { db as data, nextId, resetStore } from "./store.js";
 
 // Single seam between the ops UI and wherever operations data actually lives.
-// Today it reads a local JSON file; swap the bodies for API/DB calls later and
-// no page has to change. Mirrors the approach in `./properties`.
+// Today it reads and writes an in-process copy of a local JSON file; swap the
+// bodies for API/DB calls later and no page has to change. Mirrors the
+// approach in `./properties`.
 
 export const stages = ["submitted", "assigned", "in-progress", "done"];
 
@@ -61,6 +62,26 @@ export const maintenanceCategories = [
   "other",
 ];
 
+// The queue's priority column reads as three tiers, not two priorities:
+// housekeeping is booked into a slot rather than raced against, so it sits
+// apart from the maintenance work that is either an emergency or not.
+export const tierLabels = {
+  emergency: "Emergency",
+  standard: "Standard",
+  scheduled: "Scheduled",
+};
+
+export const tierTones = {
+  emergency: "danger",
+  standard: "neutral",
+  scheduled: "info",
+};
+
+export function tierFor(request) {
+  if (request.priority === "urgent") return "emergency";
+  return request.type === "housekeeping" ? "scheduled" : "standard";
+}
+
 const HOUR = 1000 * 60 * 60;
 
 function stageAt(request, stage) {
@@ -83,6 +104,7 @@ function enrich(request) {
     property,
     tenant: data.tenants.find((t) => t.id === request.tenantId) ?? null,
     assignee: data.staff.find((s) => s.id === request.assigneeId) ?? null,
+    tier: tierFor(request),
   };
 }
 
@@ -112,6 +134,7 @@ export async function getRequests({
   type,
   category,
   priority,
+  tier,
   propertyId,
   unitId,
   assigneeId,
@@ -129,6 +152,7 @@ export async function getRequests({
       if (type && request.type !== type) return false;
       if (category && request.category !== category) return false;
       if (priority && request.priority !== priority) return false;
+      if (tier && request.tier !== tier) return false;
       if (propertyId && request.property?.id !== propertyId) return false;
       if (unitId && request.unitId !== unitId) return false;
       // `unassigned` is a stage in practice but reads as an assignee filter.
@@ -392,6 +416,10 @@ export async function getDashboardStats({ period } = {}) {
   const raised = all.filter((request) => inPeriod(request, since));
   const open = all.filter((r) => r.stage !== "done");
   const closed = all.filter((r) => r.stage === "done");
+  const spendOf = (type) =>
+    raised
+      .filter((r) => r.type === type)
+      .reduce((sum, r) => sum + (r.charge ?? 0), 0);
 
   return {
     open: open.length,
@@ -402,30 +430,18 @@ export async function getDashboardStats({ period } = {}) {
       stage,
       count: all.filter((r) => r.stage === stage).length,
     })),
-    // Open work only — "done" is not a place work is sitting.
-    openByStage: stages
-      .filter((stage) => stage !== "done")
-      .map((stage) => ({
-        stage,
-        label: stageLabels[stage],
-        count: open.filter((r) => r.stage === stage).length,
-      })),
     raised: raised.length,
     urgentOpen: open.filter((r) => r.priority === "urgent").length,
     urgentBuildings: new Set(
       open.filter((r) => r.priority === "urgent").map((r) => r.property?.id),
     ).size,
+    // The dashboard splits spend the way the money splits: maintenance is the
+    // landlord's, housekeeping is billed on to the tenant.
+    maintenanceSpend: spendOf("maintenance"),
+    housekeepingSpend: spendOf("housekeeping"),
+    housekeepingJobs: raised.filter((r) => r.type === "housekeeping").length,
     periodSpend: raised.reduce((sum, r) => sum + (r.charge ?? 0), 0),
     costTrend: costByMonth(closed),
-    // Open emergencies, the ones nobody has picked up first.
-    emergencies: open
-      .filter((r) => r.priority === "urgent")
-      .sort(
-        (a, b) =>
-          Number(Boolean(a.assigneeId)) - Number(Boolean(b.assigneeId)) ||
-          new Date(a.createdAt) - new Date(b.createdAt),
-      )
-      .slice(0, 5),
   };
 }
 
@@ -615,4 +631,148 @@ export function formatDateTime(iso) {
     timeStyle: "short",
     timeZone: "UTC",
   }).format(new Date(iso));
+}
+
+// --- Writes --------------------------------------------------------------
+// The ops portal's forms go through here. Everything below mutates the store
+// from `./store.js`, which is seeded from the same JSON the reads use, so a
+// record created in the portal behaves exactly like one that shipped with it.
+// Callers are server actions; they revalidate, this does not.
+
+function stamp() {
+  return new Date().toISOString();
+}
+
+function find(id) {
+  return data.requests.find((request) => request.id === id) ?? null;
+}
+
+// A stage is only ever reached once, so re-reaching one moves its timestamp
+// rather than adding a second entry — `stageSteps` and the activity log both
+// read the history as one row per stage.
+function reachStage(request, stage, at) {
+  const existing = request.stageHistory.find((entry) => entry.stage === stage);
+  if (existing) {
+    existing.at = at;
+  } else {
+    request.stageHistory.push({ stage, at });
+  }
+  request.stage = stage;
+}
+
+export async function createRequest({
+  unitId,
+  category,
+  priority = "normal",
+  summary,
+  description = "",
+}) {
+  const unit = data.units.find((u) => u.id === unitId);
+  if (!unit) throw new Error(`Unknown unit ${unitId}`);
+  if (!summary?.trim()) throw new Error("A request needs a summary");
+  if (!categoryLabels[category]) throw new Error(`Unknown category ${category}`);
+
+  // The category decides the trade, and the trade decides who can be assigned
+  // and who gets billed — so it is derived here rather than asked for twice.
+  const type = maintenanceCategories.includes(category)
+    ? "maintenance"
+    : "housekeeping";
+
+  const at = stamp();
+  const request = {
+    id: nextId("requests", "REQ"),
+    unitId,
+    tenantId: unit.tenantId ?? null,
+    type,
+    category,
+    priority,
+    summary: summary.trim(),
+    description: description.trim(),
+    stage: "submitted",
+    assigneeId: null,
+    origin: "ops",
+    createdAt: at,
+    stageHistory: [{ stage: "submitted", at }],
+    charge: null,
+    completionNotes: null,
+  };
+
+  data.requests.push(request);
+  return request;
+}
+
+// Assigning is the one action that also moves a request forward: work nobody
+// holds is still "submitted", and the moment someone holds it, it is not.
+export async function assignRequests(ids, assigneeId) {
+  const member = data.staff.find((s) => s.id === assigneeId);
+  if (!member) throw new Error(`Unknown staff member ${assigneeId}`);
+
+  const at = stamp();
+  const touched = [];
+
+  for (const id of [ids].flat()) {
+    const request = find(id);
+    if (!request || request.stage === "done") continue;
+
+    request.assigneeId = assigneeId;
+
+    if (request.stage === "submitted") {
+      reachStage(request, "assigned", at);
+    } else {
+      // Already in flight: a hand-over re-dates the assignment, it does not
+      // send the request backwards.
+      const assigned = request.stageHistory.find((e) => e.stage === "assigned");
+      if (assigned) assigned.at = at;
+    }
+
+    touched.push(request);
+  }
+
+  return touched;
+}
+
+export async function setPriority(ids, priority) {
+  if (!["urgent", "normal"].includes(priority)) {
+    throw new Error(`Unknown priority ${priority}`);
+  }
+
+  const touched = [];
+  for (const id of [ids].flat()) {
+    const request = find(id);
+    if (!request) continue;
+    request.priority = priority;
+    touched.push(request);
+  }
+
+  return touched;
+}
+
+function slug(label) {
+  return label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export async function addHousekeepingRate({ label, price }) {
+  if (!label?.trim()) throw new Error("A rate needs a service name");
+
+  const serviceType = slug(label);
+  if (data.housekeepingRates.some((r) => r.serviceType === serviceType)) {
+    throw new Error(`${label} is already on the rate card`);
+  }
+
+  const rate = { serviceType, label: label.trim(), price: Number(price) || 0 };
+  data.housekeepingRates.push(rate);
+  // A rate is only a real option once the queue can categorise against it.
+  categoryLabels[serviceType] = rate.label;
+  categoryCodes[serviceType] = rate.label.slice(0, 2).toUpperCase();
+  return rate;
+}
+
+// Everything the portal has created goes back to the seed. The prototype's
+// data lives in one process, so this is the only way back to a known state.
+export async function resetOperationsData() {
+  resetStore();
 }

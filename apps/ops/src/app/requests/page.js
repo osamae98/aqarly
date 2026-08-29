@@ -1,12 +1,17 @@
 import Link from "next/link";
+import NewRequestAction from "@/components/NewRequestAction";
 import PageBar from "@/components/PageBar";
 import RequestRows from "@/components/RequestRows";
 import {
+  categoryLabels,
   getPropertyRollups,
+  getHousekeepingRates,
   getRequests,
   getStaffRoster,
+  getUnits,
+  maintenanceCategories,
   stageLabels,
-  typeLabels,
+  tierLabels,
 } from "@aqarly/core/operations";
 
 export const metadata = {
@@ -25,7 +30,8 @@ export default async function RequestQueuePage({ searchParams }) {
   const query = {
     stage: params.stage,
     type: params.type,
-    priority: params.priority,
+    category: params.category,
+    tier: params.tier,
     propertyId: params.propertyId,
     unitId: params.unitId,
     assigneeId: params.assigneeId,
@@ -33,28 +39,35 @@ export default async function RequestQueuePage({ searchParams }) {
     sort: params.sort,
   };
 
-  const [requests, unfiltered, properties, staff, unassignedUrgent] =
+  const [requests, unfiltered, properties, staff, units, rates, unassignedUrgent] =
     await Promise.all([
       getRequests(query),
       getRequests({ search: params.q }),
       getPropertyRollups(),
       getStaffRoster(),
-      getRequests({ open: true, priority: "urgent", assigneeId: "unassigned" }),
+      getUnits(),
+      getHousekeepingRates(),
+      getRequests({ open: true, tier: "emergency", assigneeId: "unassigned" }),
     ]);
 
   const scope = properties.find((p) => p.id === params.propertyId);
-  const byType = counter(unfiltered, (r) => r.type);
+  const byCategory = counter(unfiltered, (r) => r.category);
   const byProperty = counter(unfiltered, (r) => r.property?.id);
-  const byPriority = counter(unfiltered, (r) => r.priority);
+  const byTier = counter(unfiltered, (r) => r.tier);
   const byAssignee = counter(unfiltered, (r) => r.assigneeId);
 
+  // Only the categories actually in the queue, in the order they weigh on it.
+  const categories = [...new Set(unfiltered.map((r) => r.category))].sort(
+    (a, b) => byCategory(b) - byCategory(a),
+  );
+
   const filters = {
-    type: [
+    category: [
       { value: null, label: "All requests", count: unfiltered.length },
-      ...["maintenance", "housekeeping"].map((type) => ({
-        value: type,
-        label: typeLabels[type],
-        count: byType(type),
+      ...categories.map((category) => ({
+        value: category,
+        label: categoryLabels[category] ?? category,
+        count: byCategory(category),
       })),
     ],
     property: [
@@ -65,10 +78,13 @@ export default async function RequestQueuePage({ searchParams }) {
         count: byProperty(property.id),
       })),
     ],
-    priority: [
+    tier: [
       { value: null, label: "Any priority", count: unfiltered.length },
-      { value: "urgent", label: "Emergency", count: byPriority("urgent") },
-      { value: "normal", label: "Standard", count: byPriority("normal") },
+      ...["emergency", "standard", "scheduled"].map((tier) => ({
+        value: tier,
+        label: tierLabels[tier],
+        count: byTier(tier),
+      })),
     ],
     assignee: [
       { value: null, label: "Anyone", count: unfiltered.length },
@@ -93,15 +109,15 @@ export default async function RequestQueuePage({ searchParams }) {
   const chips = [
     params.q && { label: `“${params.q}”`, param: "q" },
     params.stage && { label: stageLabels[params.stage], param: "stage" },
-    params.type && { label: optionLabel(filters.type, params.type), param: "type" },
+    params.category && {
+      label: optionLabel(filters.category, params.category),
+      param: "category",
+    },
     params.propertyId && {
       label: optionLabel(filters.property, params.propertyId),
       param: "propertyId",
     },
-    params.priority && {
-      label: optionLabel(filters.priority, params.priority),
-      param: "priority",
-    },
+    params.tier && { label: optionLabel(filters.tier, params.tier), param: "tier" },
     params.assigneeId && {
       label: optionLabel(filters.assignee, params.assigneeId),
       param: "assigneeId",
@@ -133,30 +149,49 @@ export default async function RequestQueuePage({ searchParams }) {
             className="h-10 w-full rounded-pill border border-border bg-page px-4 text-[13.5px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none sm:w-62"
           />
         </form>
-        <span
-          title="Requests are raised by tenants in their own portal"
-          className="cursor-not-allowed rounded-pill bg-brand px-4.5 py-2.5 text-sm font-semibold text-ink-inverse opacity-45"
-        >
-          New request
-        </span>
+        <NewRequestAction
+          buildings={properties.map((property) => ({
+            id: property.id,
+            name: property.name,
+            units: units
+              .filter((unit) => unit.propertyId === property.id)
+              .map((unit) => ({
+                id: unit.id,
+                label: unit.label,
+                tenant: unit.tenant?.name ?? null,
+              })),
+          }))}
+          // Maintenance trades plus whatever is on the housekeeping rate
+          // card — the category is what decides which of the two a request is.
+          categories={[
+            ...maintenanceCategories.map((category) => ({
+              value: category,
+              label: categoryLabels[category] ?? category,
+            })),
+            ...rates.map((rate) => ({
+              value: rate.serviceType,
+              label: rate.label,
+            })),
+          ]}
+        />
       </PageBar>
 
       {/* The one thing that must never be scrolled past. */}
       {unassignedUrgent.length > 0 && (
         <div className="bg-surface px-4 pt-4 pb-5 md:px-6">
-          <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[var(--amber-300)] bg-warning-tint px-3.5 py-2.5">
+          <div className="flex flex-wrap items-center gap-3 rounded-md border border-[var(--amber-300)] bg-warning-tint px-4.5 py-3.5">
             <span className="flex size-4.5 shrink-0 items-center justify-center rounded-pill border-[1.5px] border-warning-ink text-[11px] leading-none font-bold text-warning-ink">
               !
             </span>
-            <span className="text-[13.5px] text-warning-ink">
+            <span className="text-sm text-warning-ink">
               {unassignedUrgent.length}{" "}
               {unassignedUrgent.length === 1 ? "emergency has" : "emergencies have"}{" "}
               nobody assigned.
             </span>
             <span className="flex-1" />
             <Link
-              href="/requests?priority=urgent&assigneeId=unassigned"
-              className="text-[13px] font-semibold text-warning-ink underline"
+              href="/requests?tier=emergency&assigneeId=unassigned"
+              className="text-[13.5px] font-bold text-warning-ink underline"
             >
               Show them
             </Link>

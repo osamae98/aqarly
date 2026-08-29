@@ -13,7 +13,6 @@ import {
   reportPeriods,
   staffCapacity,
 } from "@aqarly/core/operations";
-import Badge from "@aqarly/ui/Badge";
 
 export default async function OpsDashboardPage({ searchParams }) {
   const params = await searchParams;
@@ -30,7 +29,6 @@ export default async function OpsDashboardPage({ searchParams }) {
   const maxSpend = Math.max(...categories.map((c) => c.spend), 1);
   const maxVolume = Math.max(...categories.map((c) => c.requests), 1);
   const maxBuilding = Math.max(...buildings.map((b) => b.spend), 1);
-  const maxStage = Math.max(...stats.openByStage.map((b) => b.count), 1);
 
   return (
     <>
@@ -80,20 +78,25 @@ export default async function OpsDashboardPage({ searchParams }) {
               stats.urgentBuildings === 1 ? "building" : "buildings"
             }`}
           />
+          {/* The design splits the money the way it splits in the business:
+            * maintenance is the landlord's, housekeeping is billed on. Only
+            * housekeeping work carries a charge in the data so far, which is
+            * what the maintenance tile ends up reporting. */}
           <Stat
-            label="Charged"
-            value={formatCharge(stats.periodSpend)}
+            label="Maintenance spend"
+            value={formatCharge(stats.maintenanceSpend)}
             hint={
-              totalUnits
-                ? `${formatCharge(Math.round(stats.periodSpend / totalUnits))} per unit`
-                : "—"
+              stats.maintenanceSpend
+                ? `${formatCharge(Math.round(stats.maintenanceSpend / totalUnits))} per unit`
+                : "No maintenance charges recorded"
             }
           />
           <Stat
-            label="Nobody assigned"
-            value={stats.unassigned}
-            tone={stats.unassigned > 0 ? "warning" : "neutral"}
-            hint={`${stats.inProgress} in progress · ${stats.closed} closed`}
+            label="Housekeeping billed"
+            value={formatCharge(stats.housekeepingSpend)}
+            hint={`${stats.housekeepingJobs} ${
+              stats.housekeepingJobs === 1 ? "job" : "jobs"
+            } · billed to tenants`}
           />
         </div>
 
@@ -101,7 +104,7 @@ export default async function OpsDashboardPage({ searchParams }) {
           <Panel
             title="Spend by category"
             caption={`${reportPeriods[period].label} · ${formatCharge(
-              categories.reduce((sum, c) => sum + c.spend, 0),
+              stats.periodSpend,
             )} total`}
             bodyClassName="flex flex-col gap-3.5"
           >
@@ -231,64 +234,6 @@ export default async function OpsDashboardPage({ searchParams }) {
           </Panel>
         </div>
 
-        <div className="grid gap-3.5 lg:grid-cols-2">
-          <Panel
-            title="Where open work sits"
-            caption={`${stats.open} open · ${stats.unassigned} with nobody assigned`}
-            bodyClassName="flex flex-col gap-3.5"
-          >
-            {stats.openByStage.map((bucket) => (
-              <MeterRow
-                key={bucket.stage}
-                label={bucket.label}
-                value={String(bucket.count)}
-                pct={(bucket.count / maxStage) * 100}
-                tone={
-                  bucket.stage === "submitted"
-                    ? "danger"
-                    : bucket.stage === "assigned"
-                      ? "warning"
-                      : "brand"
-                }
-              />
-            ))}
-          </Panel>
-
-          <Panel
-            title="Emergencies open"
-            caption="Unassigned first"
-            bodyClassName="flex flex-col"
-          >
-            {stats.emergencies.length ? (
-              stats.emergencies.map((request) => (
-                <Link
-                  key={request.id}
-                  href={`/requests/${request.id}`}
-                  className="flex items-center gap-3 border-b border-sunken py-2.5 last:border-b-0 transition-colors hover:text-brand"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-medium text-ink">
-                      {request.summary}
-                    </span>
-                    <span className="block truncate text-[11.5px] text-ink-muted">
-                      {request.property?.name} · Unit {request.unit?.label}
-                    </span>
-                  </span>
-                  <Badge
-                    tone={request.assignee ? "neutral" : "danger"}
-                    dot={false}
-                  >
-                    {request.assignee?.name ?? "Unassigned"}
-                  </Badge>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-ink-muted">
-                No emergency is open right now.
-              </p>
-            )}
-          </Panel>
-        </div>
       </div>
     </>
   );
