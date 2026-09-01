@@ -145,10 +145,26 @@ export default async function RequestDetailPage({ params }) {
               </span>
             )}
           </p>
-          <p className="mt-3 text-xs text-ink-muted">
-            Photos are part of the designed flow; the tenant portal has no
-            upload path yet, so none are attached.
-          </p>
+          {request.photos?.length ? (
+            <div className="mt-3.5 flex flex-wrap gap-2.5">
+              {request.photos.map((photo) => (
+                /* Inline data URLs from the upload — nothing for
+                 * `next/image` to optimise, and no loader to point at. */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={photo.dataUrl}
+                  src={photo.dataUrl}
+                  alt={photo.name}
+                  className="size-28 rounded-sm border border-border object-cover"
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-ink-muted">
+              Photos can be attached when a request is raised here; the tenant
+              portal has no upload path yet, so none are attached to this one.
+            </p>
+          )}
         </div>
 
         <div className="grid gap-3 lg:grid-cols-3">

@@ -1,5 +1,6 @@
 import PageBar from "@/components/PageBar";
 import RateActions from "@/components/RateActions";
+import RemoveRateAction from "@/components/RemoveRateAction";
 import {
   formatCharge,
   getHousekeepingRates,
@@ -11,7 +12,7 @@ export const metadata = {
 };
 
 const GRID =
-  "grid grid-cols-[minmax(0,1fr)_104px_92px_128px_100px_92px] items-center gap-3.5";
+  "grid grid-cols-[minmax(0,1fr)_104px_92px_128px_100px_92px_40px] items-center gap-3.5";
 
 export default async function RatesPage() {
   const [rates, booked] = await Promise.all([
@@ -59,6 +60,7 @@ export default async function RatesPage() {
               <span className="text-end">Charged to date</span>
               <span>Billed to</span>
               <span>Status</span>
+              <span className="sr-only">Actions</span>
             </div>
 
             {rates.map((rate) => {
@@ -89,6 +91,13 @@ export default async function RatesPage() {
                     <span className="rounded-pill bg-success-tint px-2.5 py-[3px] text-xs font-semibold text-success-ink">
                       Live
                     </span>
+                  </span>
+                  <span>
+                    <RemoveRateAction
+                      serviceType={rate.serviceType}
+                      label={rate.label}
+                      booked={used.count}
+                    />
                   </span>
                 </div>
               );

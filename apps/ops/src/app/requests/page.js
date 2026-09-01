@@ -1,4 +1,6 @@
 import Link from "next/link";
+import DismissAlert from "@/components/DismissAlert";
+import Icon from "@aqarly/ui/Icon";
 import NewRequestAction from "@/components/NewRequestAction";
 import PageBar from "@/components/PageBar";
 import RequestRows from "@/components/RequestRows";
@@ -139,15 +141,24 @@ export default async function RequestQueuePage({ searchParams }) {
             : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
-        <form action="/requests" className="contents">
+        {/* Submitting is what applies the search, so the bar says so rather
+          * than leaving Enter as the only way in. */}
+        <form action="/requests" className="flex h-10 items-center gap-1.5 rounded-pill border border-border bg-page ps-4 pe-1 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-focus">
           <input
             type="search"
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Search ref, unit, tenant…"
             aria-label="Search requests"
-            className="h-10 w-full rounded-pill border border-border bg-page px-4 text-[13.5px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none sm:w-62"
+            className="w-full min-w-0 bg-transparent text-[13.5px] text-ink placeholder:text-ink-muted focus:outline-none sm:w-52"
           />
+          <button
+            type="submit"
+            aria-label="Search"
+            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-pill bg-brand text-ink-inverse transition-colors hover:bg-brand-hover"
+          >
+            <Icon name="search" size={15} />
+          </button>
         </form>
         <NewRequestAction
           buildings={properties.map((property) => ({
@@ -176,27 +187,23 @@ export default async function RequestQueuePage({ searchParams }) {
         />
       </PageBar>
 
-      {/* The one thing that must never be scrolled past. */}
+      {/* The one thing that must never be scrolled past — dismissable, but
+        * only until the count of what is unassigned changes. */}
       {unassignedUrgent.length > 0 && (
-        <div className="bg-surface px-4 pt-4 pb-5 md:px-6">
-          <div className="flex flex-wrap items-center gap-3 rounded-md border border-[var(--amber-300)] bg-warning-tint px-4.5 py-3.5">
-            <span className="flex size-4.5 shrink-0 items-center justify-center rounded-pill border-[1.5px] border-warning-ink text-[11px] leading-none font-bold text-warning-ink">
-              !
-            </span>
-            <span className="text-sm text-warning-ink">
-              {unassignedUrgent.length}{" "}
-              {unassignedUrgent.length === 1 ? "emergency has" : "emergencies have"}{" "}
-              nobody assigned.
-            </span>
-            <span className="flex-1" />
-            <Link
-              href="/requests?tier=emergency&assigneeId=unassigned"
-              className="text-[13.5px] font-bold text-warning-ink underline"
-            >
-              Show them
-            </Link>
-          </div>
-        </div>
+        <DismissAlert signature={`emergency-${unassignedUrgent.length}`}>
+          <span className="text-sm text-warning-ink">
+            {unassignedUrgent.length}{" "}
+            {unassignedUrgent.length === 1 ? "emergency has" : "emergencies have"}{" "}
+            nobody assigned.
+          </span>
+          <span className="flex-1" />
+          <Link
+            href="/requests?tier=emergency&assigneeId=unassigned"
+            className="text-[13.5px] font-bold text-warning-ink underline"
+          >
+            Show them
+          </Link>
+        </DismissAlert>
       )}
 
       {chips.length > 0 && (

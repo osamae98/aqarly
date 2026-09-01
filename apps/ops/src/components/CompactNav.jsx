@@ -6,7 +6,7 @@ import Icon from "@aqarly/ui/Icon";
 
 const items = [
   { href: "/requests", label: "Requests", icon: "file-text" },
-  { href: "/units", label: "Units", icon: "building" },
+  { href: "/units", label: "Buildings", icon: "building" },
   { href: "/staff", label: "Staff", icon: "users" },
   { href: "/", label: "Reports", icon: "sliders" },
   { href: "/rates", label: "Rates", icon: "receipt" },

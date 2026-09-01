@@ -4,24 +4,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Badge from "@aqarly/ui/Badge";
+import Icon from "@aqarly/ui/Icon";
 import AssignPanel from "@/components/AssignPanel";
 import ColumnFilter from "@/components/ColumnFilter";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Initials from "@/components/Initials";
 import Toast from "@/components/Toast";
 import { useFormAction } from "@/components/Field";
-import { setPriorityAction } from "@/app/actions";
+import { deleteRequestsAction, setPriorityAction } from "@/app/actions";
 import { stageLabels, tierLabels, tierTones } from "@aqarly/core/operations";
 
 // One row per request. The mockup lays these out as a grid rather than a
 // table so the unit and assignee cells can each stack two lines.
 const GRID =
-  "grid grid-cols-[34px_92px_minmax(0,1fr)_158px_132px_168px] items-center gap-3.5";
+  "grid grid-cols-[34px_92px_minmax(0,1fr)_158px_132px_168px_40px] items-center gap-3.5";
 
 export default function RequestRows({ requests, staff, filters, searchParams }) {
   const router = useRouter();
   const [selected, setSelected] = useState([]);
   const [assignOpen, setAssignOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  // What the confirm dialog is about to remove: one row's ids, or the whole
+  // selection. Removal is not recoverable, so nothing here happens on a click.
+  const [removing, setRemoving] = useState(null);
 
   // A finished bulk action has nothing left to act on.
   const {
@@ -34,6 +39,24 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
       setSelected([]);
     },
   });
+
+  const {
+    submit: removeRequests,
+    pending: removePending,
+    result: removeResult,
+    reset: resetRemove,
+  } = useFormAction(deleteRequestsAction, {
+    onSuccess: () => {
+      setRemoving(null);
+      setSelected([]);
+    },
+  });
+
+  function confirmRemove() {
+    const form = new FormData();
+    for (const id of removing.ids) form.append("id", id);
+    removeRequests(form);
+  }
 
   const allOn = requests.length > 0 && selected.length === requests.length;
 
@@ -98,6 +121,19 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
               Change priority
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              resetRemove();
+              setRemoving({
+                ids: selected,
+                label: `${selected.length} ${selected.length === 1 ? "request" : "requests"}`,
+              });
+            }}
+            className="cursor-pointer rounded-pill border border-border-strong px-3.5 py-1.5 text-[13px] font-semibold text-danger transition-colors hover:bg-surface"
+          >
+            Remove
+          </button>
           <span className="flex-1" />
           <button
             type="button"
@@ -109,7 +145,7 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
         </div>
       )}
 
-      <div className="min-w-[62rem] px-4 md:px-6">
+      <div className="min-w-[66rem] px-4 md:px-6">
         <div className={`${GRID} px-3 pt-3 pb-2`}>
           <span>
             <Checkbox
@@ -130,7 +166,7 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
             options={filters.category}
           />
           <ColumnFilter
-            label="Unit"
+            label="Building"
             param="propertyId"
             searchParams={searchParams}
             options={filters.property}
@@ -147,6 +183,7 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
             searchParams={searchParams}
             options={filters.assignee}
           />
+          <span className="sr-only">Actions</span>
         </div>
 
         <div className="border-t border-border">
@@ -184,12 +221,14 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
                 {request.summary}
               </span>
 
+              {/* The column filters by building, so the building is what the
+                * cell leads with and the unit is the detail under it. */}
               <span className="min-w-0">
                 <span className="block truncate text-[13.5px] font-semibold text-ink">
-                  Unit {request.unit?.label ?? "—"}
+                  {request.property?.name ?? "—"}
                 </span>
                 <span className="block truncate text-[11.5px] text-ink-muted">
-                  {request.property?.name ?? "—"}
+                  Unit {request.unit?.label ?? "—"}
                 </span>
               </span>
 
@@ -216,6 +255,21 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
                   <span className="text-[13px] text-ink-muted">Unassigned</span>
                 )}
               </span>
+
+              <span onClick={(event) => event.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetRemove();
+                    setRemoving({ ids: [request.id], label: request.id });
+                  }}
+                  aria-label={`Remove ${request.id}`}
+                  title={`Remove ${request.id}`}
+                  className="flex cursor-pointer rounded-pill p-1.5 text-ink-muted transition-colors hover:bg-danger-tint hover:text-danger"
+                >
+                  <Icon name="trash-2" size={15} />
+                </button>
+              </span>
             </div>
           ))}
         </div>
@@ -232,7 +286,26 @@ export default function RequestRows({ requests, staff, filters, searchParams }) 
         description="Ranked by how much room each person has left in their day."
       />
 
-      <Toast message={priorityResult?.ok ? priorityResult.message : null} />
+      <ConfirmDialog
+        open={Boolean(removing)}
+        onClose={() => setRemoving(null)}
+        title="Remove from the queue"
+        description={`${removing?.label ?? "This request"} will be taken out of the queue, and out of every rollup it was counted in.`}
+        confirmLabel="Remove"
+        pending={removePending}
+        result={removeResult}
+        onConfirm={confirmRemove}
+      />
+
+      <Toast
+        message={
+          removeResult?.ok
+            ? removeResult.message
+            : priorityResult?.ok
+              ? priorityResult.message
+              : null
+        }
+      />
     </>
   );
 }

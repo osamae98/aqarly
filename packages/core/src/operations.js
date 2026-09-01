@@ -215,6 +215,11 @@ export const staffCapacity = 7;
 // so it is flagged on sight rather than left to be read out of the history.
 export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
 
+// How many photos one request carries. They are held in memory with the
+// request, so the cap is what keeps the store a sensible size rather than a
+// business rule.
+export const maxRequestPhotos = 4;
+
 function repeatFaultFor(requests, now) {
   const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
   const counts = new Map();
@@ -666,6 +671,7 @@ export async function createRequest({
   priority = "normal",
   summary,
   description = "",
+  photos = [],
 }) {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
@@ -693,6 +699,16 @@ export async function createRequest({
     origin: "ops",
     createdAt: at,
     stageHistory: [{ stage: "submitted", at }],
+    // Photos travel with the request the way the tenant portal's flow will
+    // send them: name plus the bytes inline. There is no file store yet, so
+    // they live in the same in-process copy everything else here does.
+    photos: photos
+      .filter((photo) => photo?.dataUrl)
+      .slice(0, maxRequestPhotos)
+      .map((photo) => ({
+        name: photo.name ?? "Photo",
+        dataUrl: photo.dataUrl,
+      })),
     charge: null,
     completionNotes: null,
   };
@@ -747,6 +763,20 @@ export async function setPriority(ids, priority) {
   return touched;
 }
 
+// Removing a request takes it out of the queue entirely — the store has no
+// archive to move it to, so there is nothing softer to do than this. Its
+// charges leave the rollups with it.
+export async function deleteRequests(ids) {
+  const wanted = new Set([ids].flat().filter(Boolean));
+  const removed = data.requests.filter((request) => wanted.has(request.id));
+
+  for (const request of removed) {
+    data.requests.splice(data.requests.indexOf(request), 1);
+  }
+
+  return removed;
+}
+
 function slug(label) {
   return label
     .trim()
@@ -769,6 +799,90 @@ export async function addHousekeepingRate({ label, price }) {
   categoryLabels[serviceType] = rate.label;
   categoryCodes[serviceType] = rate.label.slice(0, 2).toUpperCase();
   return rate;
+}
+
+// A rate can only leave the card once nothing open is priced against it —
+// a booking keeps the price it was made at, but a tenant cannot be left
+// mid-service with a rate the card no longer lists.
+export async function removeHousekeepingRate(serviceType) {
+  const index = data.housekeepingRates.findIndex(
+    (rate) => rate.serviceType === serviceType,
+  );
+  if (index === -1) throw new Error(`Unknown service ${serviceType}`);
+
+  const open = data.requests.filter(
+    (request) => request.category === serviceType && request.stage !== "done",
+  );
+  if (open.length > 0) {
+    throw new Error(
+      `${open.length} open ${open.length === 1 ? "booking uses" : "bookings use"} this service — close them first`,
+    );
+  }
+
+  const [rate] = data.housekeepingRates.splice(index, 1);
+  // The label stays in the lookup so requests already charged against it keep
+  // reading as themselves in the history.
+  return rate;
+}
+
+// --- Staff ---------------------------------------------------------------
+// Ops PRD §9 makes the HRMS the record for staff identity from Phase 3. Until
+// then the roster is ops-owned and editable here, which is why only the two
+// fields ops actually decides — who they are and what they are certified for
+// — can be set.
+
+const staffRoles = ["maintenance", "housekeeping"];
+
+function staffId(name) {
+  const base = slug(name).split("-").filter(Boolean).pop() ?? "member";
+  let candidate = `stf-${base}`;
+  let suffix = 2;
+  while (data.staff.some((member) => member.id === candidate)) {
+    candidate = `stf-${base}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+export async function addStaff({ name, role }) {
+  if (!name?.trim()) throw new Error("A staff member needs a name");
+  if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
+
+  const member = { id: staffId(name), name: name.trim(), role };
+  data.staff.push(member);
+  return member;
+}
+
+export async function updateStaff(id, { name, role }) {
+  const member = data.staff.find((s) => s.id === id);
+  if (!member) throw new Error(`Unknown staff member ${id}`);
+  if (!name?.trim()) throw new Error("A staff member needs a name");
+  if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
+
+  member.name = name.trim();
+  member.role = role;
+  return member;
+}
+
+// Work that is still open has to be somewhere, so a technician holding any
+// cannot simply disappear from the roster.
+export async function removeStaff(id) {
+  const index = data.staff.findIndex((member) => member.id === id);
+  if (index === -1) throw new Error(`Unknown staff member ${id}`);
+
+  const open = data.requests.filter(
+    (request) => request.assigneeId === id && request.stage !== "done",
+  );
+  if (open.length > 0) {
+    throw new Error(
+      open.length === 1
+        ? "1 open request is still assigned — reassign it first"
+        : `${open.length} open requests are still assigned — reassign them first`,
+    );
+  }
+
+  const [member] = data.staff.splice(index, 1);
+  return member;
 }
 
 // Everything the portal has created goes back to the seed. The prototype's

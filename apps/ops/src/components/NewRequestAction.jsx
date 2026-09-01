@@ -5,12 +5,14 @@ import Modal from "@aqarly/ui/Modal";
 import Toast from "@/components/Toast";
 import {
   FormNote,
+  PhotoField,
   PillChoice,
   SelectField,
   TextField,
   useFormAction,
 } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
+import { maxRequestPhotos } from "@aqarly/core/operations";
 
 // The mockup's "New request" dialog. Tenants raise their own requests in the
 // tenant portal; this is the admin's path in for a walk-in or a phone call.
@@ -70,7 +72,7 @@ export default function NewRequestAction({ buildings = [], categories = [] }) {
               label="Building"
               name="propertyId"
               value={propertyId}
-              onChange={(event) => setPropertyId(event.target.value)}
+              onChange={setPropertyId}
               options={buildings.map((b) => ({ value: b.id, label: b.name }))}
             />
             <SelectField
@@ -105,6 +107,7 @@ export default function NewRequestAction({ buildings = [], categories = [] }) {
             textarea
             placeholder="What's happening, when it started, access notes…"
           />
+          <PhotoField label="Photos" name="photos" max={maxRequestPhotos} />
 
           <FormNote state={result} />
         </form>

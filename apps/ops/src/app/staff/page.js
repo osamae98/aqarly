@@ -1,3 +1,4 @@
+import AddStaffAction from "@/components/AddStaffAction";
 import InviteAction from "@/components/InviteAction";
 import PageBar from "@/components/PageBar";
 import StaffRows from "@/components/StaffRows";
@@ -26,15 +27,16 @@ export default async function StaffPage() {
         <span className="rounded-pill bg-info-tint px-3.5 py-1.5 text-[12.5px] font-semibold text-info-ink">
           Names, contracts and pay live in the HRMS
         </span>
+        <AddStaffAction />
         <InviteAction />
       </PageBar>
 
       <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
         <StaffRows staff={staff} />
         <p className="border-t border-border pt-3.5 text-[13px] text-ink-muted">
-          Skills, buildings and load are ops-owned. Everything else comes from
-          the HRMS once Phase 3 lands — this list is derived from who requests
-          were assigned to.
+          Name and trade are ops-owned and editable here. Buildings and load
+          are derived from who requests were assigned to; everything else
+          comes from the HRMS once Phase 3 lands.
         </p>
       </div>
     </>

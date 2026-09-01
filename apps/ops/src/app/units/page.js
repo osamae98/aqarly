@@ -3,7 +3,7 @@ import UnitRows from "@/components/UnitRows";
 import { getPropertyRollups, getUnits } from "@aqarly/core/operations";
 
 export const metadata = {
-  title: "Units",
+  title: "Buildings",
 };
 
 export default async function UnitsPage({ searchParams }) {
@@ -31,8 +31,12 @@ export default async function UnitsPage({ searchParams }) {
   return (
     <>
       <PageBar
-        title={scope ? scope.name : "Units"}
-        meta={`${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`}
+        title={scope ? scope.name : "Buildings"}
+        meta={
+          scope
+            ? `${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`
+            : `${properties.length} buildings · ${units.length} units · ${withWork} with open work`
+        }
       />
 
       <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">

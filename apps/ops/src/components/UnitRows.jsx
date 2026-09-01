@@ -7,7 +7,7 @@ import ColumnFilter from "@/components/ColumnFilter";
 import { formatCharge, formatDate } from "@aqarly/core/operations";
 
 const GRID =
-  "grid grid-cols-[80px_minmax(0,1fr)_150px_150px_56px_104px_112px] items-center gap-3.5";
+  "grid grid-cols-[150px_80px_minmax(0,1fr)_150px_56px_104px_112px] items-center gap-3.5";
 
 const statusTones = {
   occupied: "success",
@@ -27,8 +27,8 @@ export default function UnitRows({ units, buildings = [], searchParams = {} }) {
   return (
     <div className="min-w-[60rem]">
       <div className={`${GRID} pb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}>
-        <span>Unit</span>
-        <span>Tenant</span>
+        {/* The screen is read building-first, so the filtered column leads
+          * and the unit sits next to it. */}
         <ColumnFilter
           label="Building"
           param="propertyId"
@@ -36,6 +36,8 @@ export default function UnitRows({ units, buildings = [], searchParams = {} }) {
           options={buildings}
           basePath="/units"
         />
+        <span>Unit</span>
+        <span>Tenant</span>
         <span>Status · size</span>
         <span className="text-end">Open</span>
         <span className="text-end">Lifetime</span>
@@ -54,20 +56,20 @@ export default function UnitRows({ units, buildings = [], searchParams = {} }) {
           onClick={() => router.push(`/units/${unit.id}`)}
           className={`${GRID} min-h-14 cursor-pointer border-t border-border transition-colors hover:bg-surface`}
         >
+          <span className="min-w-0 truncate text-[13.5px] font-semibold text-ink">
+            {unit.property?.name ?? "—"}
+          </span>
           <span>
             <Link
               href={`/units/${unit.id}`}
               onClick={(event) => event.stopPropagation()}
-              className="font-mono text-[13.5px] font-semibold text-ink hover:text-brand"
+              className="font-mono text-[13.5px] text-ink-soft hover:text-brand"
             >
               {unit.label}
             </Link>
           </span>
           <span className="min-w-0 truncate text-[13.5px] text-ink">
             {unit.tenant?.name ?? <span className="text-ink-muted">—</span>}
-          </span>
-          <span className="min-w-0 truncate text-[13px] text-ink-soft">
-            {unit.property?.name ?? "—"}
           </span>
           <span className="flex min-w-0 items-center gap-2">
             <Badge tone={statusTones[unit.status] ?? "neutral"} dot={false}>

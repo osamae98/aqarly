@@ -60,7 +60,7 @@ export default async function UnitDetailPage({ params, searchParams }) {
         eyebrow={
           <span className="flex items-center gap-1.5">
             <Link href="/units" className="hover:text-brand">
-              Units
+              Buildings
             </Link>
             <span className="text-border-strong">/</span>
             <Link

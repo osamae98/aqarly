@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 // The form controls the mockups' dialogs are drawn with: a micro-label over a
 // bordered control. `@aqarly/ui/Input` is the design system's own field and
@@ -47,6 +47,93 @@ export function TextField({
   );
 }
 
+// Photos on a request, picked from the admin’s machine. There is no file
+// store yet, so the files post with the form and the server inlines them —
+// which is why the cap and the preview both live this close to the input.
+export function PhotoField({ label, name, max = 4, hint }) {
+  const input = useRef(null);
+  const [photos, setPhotos] = useState([]);
+
+  function read(fileList) {
+    for (const photo of photos) URL.revokeObjectURL(photo.url);
+    setPhotos(
+      [...fileList].map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    );
+  }
+
+  // The input owns the files that will post, so removing one means handing it
+  // a new list rather than tracking a second one alongside it.
+  function remove(index) {
+    const transfer = new DataTransfer();
+    [...input.current.files].forEach((file, i) => {
+      if (i !== index) transfer.items.add(file);
+    });
+    input.current.files = transfer.files;
+    read(transfer.files);
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={name}>{label}</Label>
+
+      <input
+        ref={input}
+        id={name}
+        name={name}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(event) => read(event.target.files)}
+        className="cursor-pointer rounded-sm border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
+      />
+
+      {photos.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {photos.map((photo, index) => (
+            <span
+              key={photo.url}
+              className="relative size-16 overflow-hidden rounded-sm border border-border bg-page"
+            >
+              {/* Local object URLs, so `next/image` has nothing to optimise. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.url}
+                alt={photo.name}
+                className="size-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                aria-label={`Remove ${photo.name}`}
+                className="absolute top-0.5 end-0.5 flex size-5 cursor-pointer items-center justify-center rounded-pill bg-ink/70 text-[11px] leading-none font-bold text-ink-inverse transition-colors hover:bg-ink"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p className="text-xs text-ink-muted">
+        {photos.length > max
+          ? `Up to ${max} photos — ${photos.length} selected.`
+          : (hint ?? `Up to ${max} photos, 2 MB each.`)}
+      </p>
+    </div>
+  );
+}
+
+// A menu long enough to scan for is a menu worth typing into. Short ones stay
+// a plain list — a search box over three options is furniture.
+const SEARCHABLE_FROM = 6;
+
+// A select the admin can type into. The native control cannot be searched
+// past its first letter, and these lists are buildings and units, so this is
+// a listbox with a filter over it. The value still posts through a hidden
+// input, so the form contract is exactly the native one's.
 export function SelectField({
   label,
   name,
@@ -54,25 +141,112 @@ export function SelectField({
   value,
   defaultValue,
   onChange,
+  placeholder = "Nothing to choose from",
   className = "",
 }) {
+  const [uncontrolled, setUncontrolled] = useState(
+    defaultValue ?? options[0]?.value ?? "",
+  );
+  const [open, setOpen] = useState(false);
+  const [term, setTerm] = useState("");
+
+  // A native select falls back to its first option, and so does this — which
+  // also covers the list changing under a choice that is no longer in it.
+  const current = value !== undefined ? value : uncontrolled;
+  const selected =
+    options.find((option) => option.value === current) ?? options[0] ?? null;
+
+  const needle = term.trim().toLowerCase();
+  const matches = needle
+    ? options.filter((option) => option.label.toLowerCase().includes(needle))
+    : options;
+
+  function close() {
+    setOpen(false);
+    setTerm("");
+  }
+
+  function pick(option) {
+    if (value === undefined) setUncontrolled(option.value);
+    onChange?.(option.value);
+    close();
+  }
+
   return (
-    <div className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
+    <div className={`relative flex min-w-0 flex-col gap-1.5 ${className}`}>
       <Label htmlFor={name}>{label}</Label>
-      <select
+      <input type="hidden" name={name} value={selected?.value ?? ""} />
+
+      <button
         id={name}
-        name={name}
-        value={value}
-        defaultValue={defaultValue}
-        onChange={onChange}
-        className={`${control} cursor-pointer`}
+        type="button"
+        disabled={options.length === 0}
+        onClick={() => (open ? close() : setOpen(true))}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`${control} flex cursor-pointer items-center gap-2 text-start disabled:cursor-not-allowed disabled:opacity-45`}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <span
+          className={[
+            "min-w-0 flex-1 truncate",
+            selected ? "" : "text-ink-muted",
+          ].join(" ")}
+        >
+          {selected?.label ?? placeholder}
+        </span>
+        <span className="shrink-0 text-[8px] text-ink-muted">▼</span>
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={close}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div className="absolute top-full z-20 mt-1 flex w-full flex-col gap-px rounded-md border border-border bg-surface p-1.5 shadow-lg">
+            {options.length >= SEARCHABLE_FROM && (
+              <input
+                type="search"
+                value={term}
+                autoFocus
+                onChange={(event) => setTerm(event.target.value)}
+                onKeyDown={(event) => event.key === "Escape" && close()}
+                placeholder={`Search ${label.toLowerCase()}…`}
+                aria-label={`Search ${label}`}
+                className="mb-1 rounded-sm border border-border bg-page px-2.5 py-1.5 text-[13px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none"
+              />
+            )}
+
+            <div role="listbox" className="flex max-h-56 flex-col gap-px overflow-y-auto">
+              {matches.length === 0 && (
+                <p className="px-2.5 py-3 text-center text-[13px] text-ink-muted">
+                  Nothing matches &ldquo;{term}&rdquo;.
+                </p>
+              )}
+
+              {matches.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === selected?.value}
+                  onClick={() => pick(option)}
+                  className={[
+                    "flex cursor-pointer items-center rounded-sm px-2.5 py-2 text-start text-[13px] transition-colors",
+                    option.value === selected?.value
+                      ? "bg-brand-tint font-semibold text-brand"
+                      : "text-ink hover:bg-page",
+                  ].join(" ")}
+                >
+                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -121,6 +295,9 @@ export function FormNote({ state }) {
 // flight, what came back, and a place to react to success. Deliberately not
 // `useActionState` — closing a dialog from its result belongs in the submit,
 // not in an effect that fires a render later.
+//
+// `reset` is for the dialogs that outlive what they act on: reopening one on
+// a different row must not still be showing why the last row was refused.
 export function useFormAction(action, { onSuccess } = {}) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState(null);
@@ -133,5 +310,5 @@ export function useFormAction(action, { onSuccess } = {}) {
     });
   }
 
-  return { submit, pending, result };
+  return { submit, pending, result, reset: () => setResult(null) };
 }

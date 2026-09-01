@@ -85,9 +85,17 @@ control on a form is disabled with the reason stated on screen. Wire them to a
 real session rather than making them look like they work.
 
 The ops portal does write. `operations.js` exposes `createRequest`,
-`assignRequests`, `setPriority` and `addHousekeepingRate` over
+`assignRequests`, `setPriority`, `deleteRequests`, `addHousekeepingRate`,
+`removeHousekeepingRate`, `addStaff`, `updateStaff` and `removeStaff` over
 `store.js` — one mutable copy of the seed JSON, held on `globalThis` for the
-life of the server process. `operations.json` stays the seed and is never
+life of the server process. Removals are guarded rather than soft: a rate with
+open bookings and a technician holding open work both refuse, with the reason
+carried back to the dialog.
+
+Photos on a request are inlined as data URLs by `createRequestAction` and kept
+with the request. There is no file store, which is what the count and size
+caps there are standing in for — give them somewhere real to live before
+raising either. `operations.json` stays the seed and is never
 written to, so a restart (or the sidebar's "Reset demo data") is the way back
 to a known state. Pages call these through the server actions in
 `apps/ops/src/app/actions.js`, which are the only place `revalidatePath` is
