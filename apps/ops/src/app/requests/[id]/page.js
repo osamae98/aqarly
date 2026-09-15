@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Badge from "@aqarly/ui/Badge";
+import Tabs from "@aqarly/ui/Tabs";
 import ActivityLog from "@/components/ActivityLog";
 import AssignAction from "@/components/AssignAction";
-import Panel, { MicroLabel } from "@/components/Panel";
 import {
-  categoryCodes,
   categoryLabels,
   formatCharge,
   formatDate,
@@ -29,8 +28,10 @@ export async function generateMetadata({ params }) {
   return { title: request ? `${request.id} — ${request.summary}` : "Request" };
 }
 
-export default async function RequestDetailPage({ params }) {
+export default async function RequestDetailPage({ params, searchParams }) {
   const { id } = await params;
+  const query = await searchParams;
+  const tab = query.tab === "history" ? "history" : "activity";
   const request = await getRequestById(id);
 
   if (!request) notFound();
@@ -44,10 +45,6 @@ export default async function RequestDetailPage({ params }) {
 
   const sameCategory = history.filter(
     (item) => item.category === request.category,
-  );
-  const spentHere = sameCategory.reduce(
-    (sum, item) => sum + (item.charge ?? 0),
-    0,
   );
   const categoryLabel = categoryLabels[request.category] ?? request.category;
   const repeat = unit?.repeatFault?.category === request.category
@@ -104,36 +101,30 @@ export default async function RequestDetailPage({ params }) {
       </div>
 
       <div className="flex flex-col gap-5 p-4 md:p-6">
-        <div className="flex items-start gap-4">
-          <span
+        <div className="flex flex-col gap-2">
+          <p
             className={[
-              "flex size-12 shrink-0 items-center justify-center rounded-md font-mono text-sm font-bold",
+              "font-mono text-[11px] font-bold tracking-[0.09em] uppercase",
               request.type === "housekeeping"
-                ? "bg-category-housekeeping-tint text-category-housekeeping"
-                : "bg-category-maintenance-tint text-category-maintenance",
+                ? "text-category-housekeeping"
+                : "text-category-maintenance",
             ].join(" ")}
           >
-            {categoryCodes[request.category] ?? "GN"}
-          </span>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"} ·{" "}
+            {categoryLabel} · reported {formatDateTime(request.createdAt)}
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[27px] leading-tight font-bold tracking-[-0.015em] text-ink">
               {request.summary}
             </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              {request.priority === "urgent" && (
-                <Badge tone="danger" dot={false}>
-                  Emergency
-                </Badge>
-              )}
-              <Badge tone={stageTones[request.stage]} dot={false}>
-                {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+            {request.priority === "urgent" && (
+              <Badge tone="danger" dot={false}>
+                Emergency
               </Badge>
-              <span className="text-[13.5px] text-ink-soft">
-                {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"}{" "}
-                · {categoryLabel} · reported {formatDateTime(request.createdAt)}
-              </span>
-            </div>
+            )}
+            <Badge tone={stageTones[request.stage]} dot={false}>
+              {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+            </Badge>
           </div>
         </div>
 
@@ -170,100 +161,89 @@ export default async function RequestDetailPage({ params }) {
           )}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-3">
-          <Panel label="Unit & tenant" bodyClassName="flex flex-col gap-2.5">
-            <Row label="Unit" value={unit ? `${unit.label} · ${unit.bedrooms} BR · ${unit.bathrooms} bath` : request.unit?.label} />
-            <Row label="Building" value={request.property?.name} />
-            <Row label="Tenant" value={request.tenant?.name} />
-            <Row label="Contact" value={request.tenant?.phone} />
-            <Row
-              label="Assignee"
-              value={request.assignee?.name ?? "Unassigned"}
-            />
-          </Panel>
-
-          <Panel
-            label={`This unit\u2019s ${categoryLabel} history`}
-            bodyClassName="flex flex-col gap-2.5"
-          >
-            <div className="flex items-start gap-2.5">
-              <span
-                className={[
-                  "mt-1.5 size-1.5 shrink-0 rounded-pill",
-                  repeat ? "bg-danger" : "bg-border-strong",
-                ].join(" ")}
-              />
-              <p className="text-[13.5px] leading-snug">
-                <b className="text-ink">
-                  {sameCategory.length === 0
-                    ? "First time in this unit"
-                    : `${sameCategory.length + 1}${ordinal(sameCategory.length + 1)} ${categoryLabel} call here`}
-                </b>
-                <br />
-                <span className="text-ink-soft">
-                  {sameCategory.length
-                    ? sameCategory
-                        .slice(0, 2)
-                        .map((item) => formatDateTime(item.createdAt))
-                        .join(" · ")
-                    : "Nothing else has been raised like this here."}
-                </span>
-              </p>
-            </div>
-            {repeat && (
-              <p className="rounded-sm bg-warning-tint p-2.5 text-[13px] font-medium text-warning-ink">
-                {repeatFaultRule.occurrences} or more visits inside{" "}
-                {Math.round(repeatFaultRule.withinDays / 30)} months. Consider
-                replacement over another repair.
-              </p>
-            )}
-          </Panel>
-
-          <Panel
+        {/* The facts that used to be three panels, condensed into one strip
+          * — cheap to scan on one line, with a second, quieter line under
+          * each figure carrying what used to need its own card. */}
+        <div className="grid divide-y divide-border overflow-hidden rounded-md border border-border bg-surface sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+          <StripCell
+            label="Unit"
+            value={unit ? `${unit.label} · ${unit.bedrooms} BR` : request.unit?.label}
+            sub={request.property?.name}
+          />
+          <StripCell
+            label="Tenant"
+            value={request.tenant?.name}
+            sub={request.tenant?.phone}
+          />
+          <StripCell
+            label="Assignee"
+            value={request.assignee?.name ?? "Unassigned"}
+            sub={request.assignee ? stageLabels[request.stage] : null}
+          />
+          <StripCell
+            label={`${categoryLabel} history`}
+            value={
+              sameCategory.length === 0
+                ? "First time here"
+                : `${sameCategory.length + 1}${ordinal(sameCategory.length + 1)} call here`
+            }
+            sub={
+              sameCategory.length
+                ? formatDateTime(sameCategory[0].createdAt)
+                : "Nothing else raised like this"
+            }
+            flagged={Boolean(repeat)}
+          />
+          <StripCell
             label="Cost to date"
-            className="flex flex-col"
-            bodyClassName="flex flex-1 flex-col gap-2.5"
-          >
-            <div className="font-mono text-2xl font-bold tracking-[-0.01em] text-ink">
-              {unit?.lifetimeSpend
-                ? formatCharge(unit.lifetimeSpend)
-                : "Nothing yet"}
-            </div>
-            <p className="text-[13px] text-ink-soft">
-              {spentHere
-                ? `${formatCharge(spentHere)} of it on ${categoryLabel}, across ${sameCategory.length} prior ${sameCategory.length === 1 ? "visit" : "visits"}`
-                : `No ${categoryLabel} work has been charged against this unit`}
-            </p>
-            <div className="mt-auto flex flex-col gap-2.5 pt-2">
-              <Row label="This request" value={formatCharge(request.charge)} />
-              <Row
-                label="Billed to"
-                value={request.type === "housekeeping" ? "Tenant" : "Landlord"}
-              />
-            </div>
-          </Panel>
+            value={unit?.lifetimeSpend ? formatCharge(unit.lifetimeSpend) : "Nothing yet"}
+            sub={`${formatCharge(request.charge)} this request · ${
+              request.type === "housekeeping" ? "Tenant" : "Landlord"
+            }`}
+          />
         </div>
 
-        <section className="flex flex-col gap-2">
-          <MicroLabel>Activity</MicroLabel>
-          <ActivityLog request={request} />
-        </section>
+        {repeat && (
+          <p className="rounded-md bg-warning-tint p-3 text-[13px] font-medium text-warning-ink">
+            Repeat fault — {repeatFaultRule.occurrences} or more {categoryLabel}{" "}
+            visits inside {Math.round(repeatFaultRule.withinDays / 30)} months.
+            Consider replacement over another repair.
+          </p>
+        )}
 
-        <section className="flex flex-col gap-2">
-          <div className="flex items-baseline gap-3">
-            <MicroLabel>Rest of this unit&rsquo;s history</MicroLabel>
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Tabs
+              value={tab}
+              tabs={[
+                {
+                  value: "activity",
+                  label: "Activity",
+                  count: request.stageHistory.length,
+                  href: `/requests/${request.id}`,
+                },
+                {
+                  value: "history",
+                  label: "Rest of this unit's history",
+                  count: history.length,
+                  href: `/requests/${request.id}?tab=history`,
+                },
+              ]}
+            />
             <span className="flex-1" />
             {unit && (
               <Link
                 href={`/units/${unit.id}`}
-                className="text-[13px] font-semibold text-brand hover:underline"
+                className="shrink-0 text-[13px] font-semibold text-brand hover:underline"
               >
                 Open the unit record →
               </Link>
             )}
           </div>
 
-          {history.length ? (
+          {tab === "activity" ? (
+            <ActivityLog request={request} />
+          ) : history.length ? (
             <div className="overflow-hidden rounded-md border border-border bg-surface">
               <div
                 className={`${HISTORY_GRID} border-b border-border px-3 py-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
@@ -325,11 +305,21 @@ function PageStep({ href, children }) {
   );
 }
 
-function Row({ label, value }) {
+// One column of the condensed facts strip: a label, a headline figure, and
+// a quieter second line for what used to need its own panel.
+function StripCell({ label, value, sub, flagged = false }) {
   return (
-    <div className="flex justify-between gap-4 text-sm">
-      <span className="text-ink-soft">{label}</span>
-      <span className="text-end font-semibold text-ink">{value || "—"}</span>
+    <div className="flex min-w-0 flex-col gap-1 px-4 py-3">
+      <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted">
+        {label}
+      </span>
+      <span className="flex items-center gap-1.5 truncate text-[13.5px] font-semibold text-ink">
+        {flagged && <span className="size-1.5 shrink-0 rounded-pill bg-danger" />}
+        {value || "—"}
+      </span>
+      {sub && (
+        <span className="truncate text-[12px] text-ink-muted">{sub}</span>
+      )}
     </div>
   );
 }
