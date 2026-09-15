@@ -20,8 +20,10 @@ export default function ServiceHistoryRows({
   basePath,
 }) {
   return (
-    <div className="min-w-[56rem]">
-      <div className={`${GRID} pb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}>
+    <div className="min-w-[56rem] overflow-hidden rounded-md border border-border bg-surface">
+      <div
+        className={`${GRID} border-b border-border px-3 py-3 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
+      >
         <span>Date</span>
         <span>Ref</span>
         <ColumnFilter
@@ -37,51 +39,50 @@ export default function ServiceHistoryRows({
       </div>
 
       {requests.length === 0 && (
-        <p className="border-t border-border py-16 text-center text-sm text-ink-muted">
+        <p className="py-16 text-center text-sm text-ink-muted">
           Nothing has been raised for this unit yet.
         </p>
       )}
 
-      {requests.map((request) => {
-        const open = request.stage !== "done";
+      <div className="divide-y divide-sunken">
+        {requests.map((request) => {
+          const open = request.stage !== "done";
 
-        return (
-          <div
-            key={request.id}
-            className={`border-t border-border py-3.5 ${GRID}`}
-          >
-            <span className="block min-w-0 truncate text-[13.5px] font-semibold text-ink">
-              {formatDate(request.createdAt)}
-            </span>
-            <span>
-              <Link
-                href={`/requests/${request.id}`}
-                className="font-mono text-[12.5px] text-ink-soft hover:text-brand"
-              >
-                {request.id}
-              </Link>
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[13.5px] text-ink">
-                {request.summary}
+          return (
+            <div key={request.id} className={`${GRID} px-3 py-3.5`}>
+              <span className="block min-w-0 truncate text-[13.5px] font-semibold text-ink">
+                {formatDate(request.createdAt)}
               </span>
-              <span className="block truncate text-xs text-ink-muted">
-                {categoryLabels[request.category] ?? request.category} ·{" "}
-                {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+              <span>
+                <Link
+                  href={`/requests/${request.id}`}
+                  className="font-mono text-[12.5px] text-ink-soft hover:text-brand"
+                >
+                  {request.id}
+                </Link>
               </span>
-            </span>
-            <span className="min-w-0 truncate text-[13px] text-ink-soft">
-              {request.assignee?.name ?? "—"}
-            </span>
-            <span className="text-end font-mono text-[13px] text-ink-soft">
-              {open ? "pending" : formatCharge(request.charge)}
-            </span>
-            <span className="text-[13px] text-ink-soft">
-              {request.type === "housekeeping" ? "Tenant" : "Landlord"}
-            </span>
-          </div>
-        );
-      })}
+              <span className="min-w-0">
+                <span className="block truncate text-[13.5px] text-ink">
+                  {request.summary}
+                </span>
+                <span className="block truncate text-xs text-ink-muted">
+                  {categoryLabels[request.category] ?? request.category} ·{" "}
+                  {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+                </span>
+              </span>
+              <span className="min-w-0 truncate text-[13px] text-ink-soft">
+                {request.assignee?.name ?? "—"}
+              </span>
+              <span className="text-end font-mono text-[13px] text-ink-soft">
+                {open ? "pending" : formatCharge(request.charge)}
+              </span>
+              <span className="text-[13px] text-ink-soft">
+                {request.type === "housekeeping" ? "Tenant" : "Landlord"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

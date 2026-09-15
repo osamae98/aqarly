@@ -18,22 +18,26 @@ const statusLabels = {
   "under-maintenance": "Maintenance",
 };
 
-// A unit tile under a building's card — the same facts the old table row
-// carried, laid out to be scanned as a grid.
+// A unit tile under a building's card. A unit with no history yet has
+// nothing true to say about open work, spend, or service — so the history
+// line only appears once there is one, rather than three dashes on every
+// quiet unit in the building.
 export default function UnitCard({ unit }) {
+  const hasHistory = unit.openCount > 0 || unit.lifetimeSpend > 0 || unit.lastServicedAt;
+
   return (
     <Link
       href={`/units/${unit.id}`}
-      className="flex flex-col gap-3 rounded-md border border-border bg-surface p-4 transition-colors hover:border-brand"
+      className="flex flex-col gap-2.5 rounded-md border border-border bg-surface p-4 transition-colors hover:border-brand"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-mono text-[17px] font-bold text-ink">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="font-mono text-[15px] font-bold text-ink">
             {unit.label}
-          </div>
-          <div className="text-[12px] text-ink-muted">
+          </span>
+          <span className="truncate text-[12px] text-ink-muted">
             {unit.bedrooms} BR · {unit.bathrooms} bath
-          </div>
+          </span>
         </div>
         <Badge tone={statusTones[unit.status] ?? "neutral"} dot={false}>
           {statusLabels[unit.status] ?? unit.status}
@@ -51,31 +55,17 @@ export default function UnitCard({ unit }) {
         </div>
       )}
 
-      <dl className="mt-auto grid grid-cols-[2.5rem_minmax(0,1fr)_auto] gap-2 border-t border-border pt-3 text-[11px] text-ink-muted">
-        <div>
-          <dt>Open</dt>
-          <dd
-            className={[
-              "font-mono text-[13px]",
-              unit.openCount > 0 ? "font-bold text-ink" : "text-ink-muted",
-            ].join(" ")}
-          >
-            {unit.openCount || "—"}
-          </dd>
+      {hasHistory && (
+        <div className="flex items-center gap-3 border-t border-border pt-2.5 font-mono text-[11.5px] text-ink-soft">
+          {unit.openCount > 0 && (
+            <span className="font-bold text-ink">{unit.openCount} open</span>
+          )}
+          {unit.lifetimeSpend > 0 && <span>{formatCharge(unit.lifetimeSpend)}</span>}
+          {unit.lastServicedAt && (
+            <span className="truncate">Serviced {formatDate(unit.lastServicedAt)}</span>
+          )}
         </div>
-        <div>
-          <dt>Lifetime</dt>
-          <dd className="font-mono text-[13px] text-ink-soft">
-            {formatCharge(unit.lifetimeSpend)}
-          </dd>
-        </div>
-        <div>
-          <dt>Serviced</dt>
-          <dd className="whitespace-nowrap font-mono text-[12px] text-ink-soft">
-            {unit.lastServicedAt ? formatDate(unit.lastServicedAt) : "—"}
-          </dd>
-        </div>
-      </dl>
+      )}
     </Link>
   );
 }
