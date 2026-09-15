@@ -1,5 +1,7 @@
+import Link from "next/link";
+import BuildingCard from "@/components/BuildingCard";
 import PageBar from "@/components/PageBar";
-import UnitRows from "@/components/UnitRows";
+import UnitCard from "@/components/UnitCard";
 import { getPropertyRollups, getUnits } from "@aqarly/core/operations";
 
 export const metadata = {
@@ -17,30 +19,62 @@ export default async function UnitsPage({ searchParams }) {
   const scope = properties.find((p) => p.id === params.propertyId);
   const withWork = units.filter((unit) => unit.openCount > 0).length;
 
-  // Building scope lives in the column header, the way the queue's filters
-  // do, so the screen has one filtering idiom rather than two.
-  const buildings = [
-    { value: null, label: "All buildings", count: units.length },
-    ...properties.map((property) => ({
-      value: property.id,
-      label: property.name,
-      count: property.units,
-    })),
-  ];
+  if (!scope) {
+    // Portfolio view: one card per building, alphabetical so a building is
+    // found by name rather than by where its spend happens to rank.
+    const buildings = [...properties].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+
+    return (
+      <>
+        <PageBar
+          title="Buildings"
+          meta={`${properties.length} buildings · ${units.length} units · ${withWork} with open work`}
+        />
+
+        <div className="grid gap-3.5 p-4 sm:grid-cols-2 md:p-6 xl:grid-cols-3">
+          {buildings.map((building) => (
+            <BuildingCard key={building.id} building={building} />
+          ))}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <PageBar
-        title={scope ? scope.name : "Buildings"}
-        meta={
-          scope
-            ? `${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`
-            : `${properties.length} buildings · ${units.length} units · ${withWork} with open work`
+        eyebrow={
+          <span className="flex items-center gap-1.5">
+            <Link href="/units" className="hover:text-brand">
+              Buildings
+            </Link>
+            <span className="text-border-strong">/</span>
+            <span>{scope.name}</span>
+          </span>
         }
+        title={scope.name}
+        meta={`${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`}
       />
 
-      <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
-        <UnitRows units={units} buildings={buildings} searchParams={params} />
+      <div className="flex flex-col gap-4.5 p-4 md:p-6">
+        <BuildingCard building={scope} detail />
+
+        <section className="flex flex-col gap-3">
+          <h2 className="text-base font-bold text-ink">Units</h2>
+          {units.length === 0 ? (
+            <p className="py-16 text-center text-sm text-ink-muted">
+              No units in this building.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              {units.map((unit) => (
+                <UnitCard key={unit.id} unit={unit} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </>
   );
