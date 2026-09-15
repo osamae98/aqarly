@@ -51,6 +51,9 @@ export default function BuildingCard({ building, detail = false }) {
     );
   }
 
+  // The four figures worth a full tile; spend-per-unit and lifetime request
+  // count are real but secondary, so they read as a caption rather than
+  // competing with these at the same size.
   const facts = [
     { label: "Units", value: building.units },
     {
@@ -64,18 +67,13 @@ export default function BuildingCard({ building, detail = false }) {
       tone: building.unassigned > 0 ? "text-danger" : "text-ink-muted",
     },
     { label: "Lifetime spend", value: formatCharge(building.spend) },
-    {
-      label: "Per unit",
-      value: formatCharge(Math.round(building.spendPerUnit)),
-    },
-    { label: "Requests on record", value: building.requests },
   ];
 
   return (
     <section className="flex flex-col gap-4 rounded-md border border-border bg-surface p-5">
       {header}
 
-      <dl className="grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-3 xl:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
         {facts.map((fact) => (
           <div key={fact.label} className="flex min-w-0 flex-col gap-1">
             <dt>
@@ -90,7 +88,12 @@ export default function BuildingCard({ building, detail = false }) {
         ))}
       </dl>
 
-      <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+        <p className="text-[12.5px] text-ink-muted">
+          {formatCharge(Math.round(building.spendPerUnit))} per unit ·{" "}
+          {building.requests} {building.requests === 1 ? "request" : "requests"} on
+          record
+        </p>
         <Link
           href={`/requests?propertyId=${building.id}`}
           className="rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
