@@ -20,6 +20,9 @@ import {
   stageTones,
 } from "@aqarly/core/operations";
 
+const HISTORY_GRID =
+  "grid grid-cols-[110px_minmax(0,1fr)_140px_90px] items-center gap-3.5";
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const request = await getRequestById(id);
@@ -261,29 +264,38 @@ export default async function RequestDetailPage({ params }) {
           </div>
 
           {history.length ? (
-            <ul className="flex flex-col">
-              {history.slice(0, 5).map((item) => (
-                <li key={item.id} className="border-b border-border last:border-b-0">
+            <div className="overflow-hidden rounded-md border border-border bg-surface">
+              <div
+                className={`${HISTORY_GRID} border-b border-border px-3 py-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
+              >
+                <span>Date</span>
+                <span>Request</span>
+                <span>Assigned to</span>
+                <span className="text-end">Cost</span>
+              </div>
+              <div className="divide-y divide-sunken">
+                {history.slice(0, 5).map((item) => (
                   <Link
+                    key={item.id}
                     href={`/requests/${item.id}`}
-                    className="flex items-center gap-3.5 py-2.5 transition-colors hover:text-brand"
+                    className={`${HISTORY_GRID} px-3 py-2.5 transition-colors hover:bg-page`}
                   >
-                    <span className="w-28 shrink-0 font-mono text-[12.5px] whitespace-nowrap text-ink-muted">
+                    <span className="font-mono text-[12.5px] whitespace-nowrap text-ink-muted">
                       {formatDate(item.createdAt)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">
+                    <span className="min-w-0 truncate text-[13.5px] text-ink">
                       {item.summary}
                     </span>
-                    <span className="shrink-0 text-[12.5px] text-ink-soft">
-                      {item.assignee?.name ?? "—"}
+                    <span className="min-w-0 truncate text-[12.5px] text-ink-soft">
+                      {item.assignee?.name ?? "Unassigned"}
                     </span>
-                    <span className="w-20 shrink-0 text-end font-mono text-[12.5px] text-ink-soft">
-                      {item.stage === "done" ? formatCharge(item.charge) : "open"}
+                    <span className="text-end font-mono text-[12.5px] text-ink-soft">
+                      {item.stage === "done" ? formatCharge(item.charge) : "Open"}
                     </span>
                   </Link>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
           ) : (
             <p className="text-sm text-ink-muted">
               Nothing else has been raised for this unit.
