@@ -137,7 +137,6 @@ export default async function OpsDashboardPage({ searchParams }) {
                 label={category.label}
                 value={`${Math.round((category.requests / stats.raised) * 100)}%`}
                 pct={(category.requests / maxVolume) * 100}
-                tone="warning"
               />
             ))}
           </Panel>
@@ -173,14 +172,23 @@ export default async function OpsDashboardPage({ searchParams }) {
                   )}
                 </span>
                 <span className="flex items-center gap-2.5">
-                  <span className="h-2.5 flex-1 overflow-hidden rounded-pill bg-sunken">
-                    {/* Bar length is data-driven. */}
-                    <span
-                      className="block h-full rounded-pill bg-brand"
-                      style={{ width: `${(building.spend / maxBuilding) * 100}%` }}
-                    />
-                  </span>
-                  <span className="w-16 shrink-0 text-end font-mono text-[12.5px] font-semibold text-ink">
+                  {/* An empty track for a building with nothing spent yet
+                    * reads as a bar with no data behind it — so only draw
+                    * one where there is something to show. */}
+                  {building.spend > 0 && (
+                    <span className="h-2.5 flex-1 overflow-hidden rounded-pill bg-sunken">
+                      <span
+                        className="block h-full rounded-pill bg-brand"
+                        style={{ width: `${(building.spend / maxBuilding) * 100}%` }}
+                      />
+                    </span>
+                  )}
+                  <span
+                    className={[
+                      "shrink-0 text-end font-mono text-[12.5px] font-semibold",
+                      building.spend > 0 ? "w-16 text-ink" : "flex-1 text-ink-muted",
+                    ].join(" ")}
+                  >
                     {formatCharge(building.spend)}
                   </span>
                 </span>
