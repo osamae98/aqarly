@@ -164,8 +164,11 @@ export default function RequestRows({
       <div className="min-w-[70rem] px-4 md:px-6">
         {/* One bordered, rounded card around the header and every row, the
           * way every other surface in the app reads — rather than the queue
-          * bleeding straight into the page. */}
-        <div className="overflow-hidden rounded-md border border-border bg-surface">
+          * bleeding straight into the page. Only the rows/pagination below
+          * clip to the radius: the header holds the filter dropdowns, and
+          * those have to be able to overhang the card rather than get cut
+          * off by it. */}
+        <div className="rounded-md border border-border bg-surface">
           <div className={`${GRID} border-b border-border px-3 py-3`}>
             <span>
               <Checkbox
@@ -212,6 +215,7 @@ export default function RequestRows({
             <span className="sr-only">Actions</span>
           </div>
 
+          <div className="overflow-hidden rounded-b-md">
           <div className="divide-y divide-sunken">
             {requests.length === 0 && (
               <p className="px-3 py-16 text-center text-sm text-ink-muted">
@@ -315,6 +319,7 @@ export default function RequestRows({
               searchParams={searchParams}
             />
           )}
+          </div>
         </div>
       </div>
 

@@ -12,7 +12,13 @@ import {
   useFormAction,
 } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
-import { maintenanceCategories, maxRequestPhotos } from "@aqarly/core/operations";
+import {
+  maintenanceCategories,
+  maxRequestPhotos,
+  timeSlots,
+} from "@aqarly/core/operations";
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
 
 // The mockup's "New request" dialog. Tenants raise their own requests in the
 // tenant portal; this is the admin's path in for a walk-in or a phone call.
@@ -127,6 +133,23 @@ export default function NewRequestAction({
             textarea
             placeholder="What's happening, when it started, access notes…"
           />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Date"
+              name="scheduledDate"
+              type="date"
+              min={todayIso()}
+            />
+            <SelectField
+              label="Time slot"
+              name="scheduledSlot"
+              placeholder="No slot booked"
+              options={[
+                { value: "", label: "No slot booked" },
+                ...timeSlots.map((slot) => ({ value: slot, label: slot })),
+              ]}
+            />
+          </div>
           <SelectField
             label="Assign to"
             name="assigneeId"
@@ -138,7 +161,7 @@ export default function NewRequestAction({
               })),
             ]}
           />
-          <PhotoField label="Photos" name="photos" max={maxRequestPhotos} />
+          <PhotoField label="Attachments" name="photos" max={maxRequestPhotos} />
 
           <FormNote state={result} />
         </form>

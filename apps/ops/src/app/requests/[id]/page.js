@@ -1,26 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Badge from "@aqarly/ui/Badge";
-import Tabs from "@aqarly/ui/Tabs";
 import ActivityLog from "@/components/ActivityLog";
 import AssignAction from "@/components/AssignAction";
+import { MicroLabel } from "@/components/Panel";
+import PhotoCarousel from "@/components/PhotoCarousel";
 import {
   categoryLabels,
   formatCharge,
   formatDate,
-  formatDateTime,
   getAssignmentCandidates,
   getRequestById,
   getRequestNeighbours,
   getUnitById,
-  getUnitHistory,
   repeatFaultRule,
   stageLabels,
   stageTones,
 } from "@aqarly/core/operations";
-
-const HISTORY_GRID =
-  "grid grid-cols-[110px_minmax(0,1fr)_140px_90px] items-center gap-3.5";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -28,24 +24,18 @@ export async function generateMetadata({ params }) {
   return { title: request ? `${request.id} — ${request.summary}` : "Request" };
 }
 
-export default async function RequestDetailPage({ params, searchParams }) {
+export default async function RequestDetailPage({ params }) {
   const { id } = await params;
-  const query = await searchParams;
-  const tab = query.tab === "history" ? "history" : "activity";
   const request = await getRequestById(id);
 
   if (!request) notFound();
 
-  const [history, unit, candidates, neighbours] = await Promise.all([
-    getUnitHistory(request.unitId, { excludeId: request.id }),
+  const [unit, candidates, neighbours] = await Promise.all([
     getUnitById(request.unitId),
     getAssignmentCandidates(request),
     getRequestNeighbours(request.id),
   ]);
 
-  const sameCategory = history.filter(
-    (item) => item.category === request.category,
-  );
   const categoryLabel = categoryLabels[request.category] ?? request.category;
   const repeat = unit?.repeatFault?.category === request.category
     ? unit.repeatFault
@@ -111,7 +101,7 @@ export default async function RequestDetailPage({ params, searchParams }) {
             ].join(" ")}
           >
             {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"} ·{" "}
-            {categoryLabel} · reported {formatDateTime(request.createdAt)}
+            {categoryLabel}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[27px] leading-tight font-bold tracking-[-0.015em] text-ink">
@@ -125,6 +115,11 @@ export default async function RequestDetailPage({ params, searchParams }) {
             <Badge tone={stageTones[request.stage]} dot={false}>
               {request.assignee ? stageLabels[request.stage] : "Unassigned"}
             </Badge>
+            {request.schedule && (
+              <Badge tone="neutral" dot={false}>
+                {formatDate(request.schedule.date)} · {request.schedule.slot}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -139,32 +134,13 @@ export default async function RequestDetailPage({ params, searchParams }) {
               </span>
             )}
           </p>
-          {request.photos?.length ? (
-            <div className="mt-3.5 flex flex-wrap gap-2.5">
-              {request.photos.map((photo) => (
-                /* Inline data URLs from the upload — nothing for
-                 * `next/image` to optimise, and no loader to point at. */
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  key={photo.dataUrl}
-                  src={photo.dataUrl}
-                  alt={photo.name}
-                  className="size-28 rounded-sm border border-border object-cover"
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-ink-muted">
-              Photos can be attached when a request is raised here; the tenant
-              portal has no upload path yet, so none are attached to this one.
-            </p>
-          )}
+          <PhotoCarousel photos={request.photos} />
         </div>
 
         {/* The facts that used to be three panels, condensed into one strip
           * — cheap to scan on one line, with a second, quieter line under
           * each figure carrying what used to need its own card. */}
-        <div className="grid divide-y divide-border overflow-hidden rounded-md border border-border bg-surface sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+        <div className="grid divide-y divide-border overflow-hidden rounded-md border border-border bg-surface sm:grid-cols-4 sm:divide-x sm:divide-y-0">
           <StripCell
             label="Unit"
             value={unit ? `${unit.label} · ${unit.bedrooms} BR` : request.unit?.label}
@@ -179,20 +155,6 @@ export default async function RequestDetailPage({ params, searchParams }) {
             label="Assignee"
             value={request.assignee?.name ?? "Unassigned"}
             sub={request.assignee ? stageLabels[request.stage] : null}
-          />
-          <StripCell
-            label={`${categoryLabel} history`}
-            value={
-              sameCategory.length === 0
-                ? "First time here"
-                : `${sameCategory.length + 1}${ordinal(sameCategory.length + 1)} call here`
-            }
-            sub={
-              sameCategory.length
-                ? formatDateTime(sameCategory[0].createdAt)
-                : "Nothing else raised like this"
-            }
-            flagged={Boolean(repeat)}
           />
           <StripCell
             label="Cost to date"
@@ -211,25 +173,9 @@ export default async function RequestDetailPage({ params, searchParams }) {
           </p>
         )}
 
-        <section className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Tabs
-              value={tab}
-              tabs={[
-                {
-                  value: "activity",
-                  label: "Activity",
-                  count: request.stageHistory.length,
-                  href: `/requests/${request.id}`,
-                },
-                {
-                  value: "history",
-                  label: "Rest of this unit's history",
-                  count: history.length,
-                  href: `/requests/${request.id}?tab=history`,
-                },
-              ]}
-            />
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <MicroLabel>Activity</MicroLabel>
             <span className="flex-1" />
             {unit && (
               <Link
@@ -240,56 +186,11 @@ export default async function RequestDetailPage({ params, searchParams }) {
               </Link>
             )}
           </div>
-
-          {tab === "activity" ? (
-            <ActivityLog request={request} />
-          ) : history.length ? (
-            <div className="overflow-hidden rounded-md border border-border bg-surface">
-              <div
-                className={`${HISTORY_GRID} border-b border-border px-3 py-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
-              >
-                <span>Date</span>
-                <span>Request</span>
-                <span>Assigned to</span>
-                <span className="text-end">Cost</span>
-              </div>
-              <div className="divide-y divide-sunken">
-                {history.slice(0, 5).map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/requests/${item.id}`}
-                    className={`${HISTORY_GRID} px-3 py-2.5 transition-colors hover:bg-page`}
-                  >
-                    <span className="font-mono text-[12.5px] whitespace-nowrap text-ink-muted">
-                      {formatDate(item.createdAt)}
-                    </span>
-                    <span className="min-w-0 truncate text-[13.5px] text-ink">
-                      {item.summary}
-                    </span>
-                    <span className="min-w-0 truncate text-[12.5px] text-ink-soft">
-                      {item.assignee?.name ?? "Unassigned"}
-                    </span>
-                    <span className="text-end font-mono text-[12.5px] text-ink-soft">
-                      {item.stage === "done" ? formatCharge(item.charge) : "Open"}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-ink-muted">
-              Nothing else has been raised for this unit.
-            </p>
-          )}
+          <ActivityLog request={request} />
         </section>
       </div>
     </>
   );
-}
-
-function ordinal(n) {
-  if (n % 100 >= 11 && n % 100 <= 13) return "th";
-  return ["th", "st", "nd", "rd"][n % 10] ?? "th";
 }
 
 function PageStep({ href, children }) {
