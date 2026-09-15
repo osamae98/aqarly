@@ -23,10 +23,6 @@ export default async function StaffPage() {
           staff.length * staffCapacity
         } slots in use`}
       >
-        {/* Ops PRD §9: this roster is a Phase 1 stand-in, not the record. */}
-        <span className="rounded-pill bg-info-tint px-3.5 py-1.5 text-[12.5px] font-semibold text-info-ink">
-          Names, contracts and pay live in the HRMS
-        </span>
         <AddStaffAction />
         <InviteAction />
       </PageBar>
