@@ -67,6 +67,7 @@ export async function createRequestAction(formData) {
       summary: formData.get("summary"),
       description: formData.get("description") ?? "",
       photos: await readPhotos(formData),
+      assigneeId: formData.get("assigneeId") || null,
     });
 
     revalidateAll();

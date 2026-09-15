@@ -62,24 +62,20 @@ export const maintenanceCategories = [
   "other",
 ];
 
-// The queue's priority column reads as three tiers, not two priorities:
-// housekeeping is booked into a slot rather than raced against, so it sits
-// apart from the maintenance work that is either an emergency or not.
+// The queue's priority column reads off the two statuses there are:
+// emergency, or not.
 export const tierLabels = {
   emergency: "Emergency",
   standard: "Standard",
-  scheduled: "Scheduled",
 };
 
 export const tierTones = {
   emergency: "danger",
   standard: "neutral",
-  scheduled: "info",
 };
 
 export function tierFor(request) {
-  if (request.priority === "urgent") return "emergency";
-  return request.type === "housekeeping" ? "scheduled" : "standard";
+  return request.priority === "urgent" ? "emergency" : "standard";
 }
 
 const HOUR = 1000 * 60 * 60;
@@ -672,6 +668,7 @@ export async function createRequest({
   summary,
   description = "",
   photos = [],
+  assigneeId = null,
 }) {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
@@ -714,6 +711,12 @@ export async function createRequest({
   };
 
   data.requests.push(request);
+
+  // Assigning here is the same move as assigning from the queue, just made
+  // at creation time — so it goes through the one path that knows how to
+  // validate a technician and carry the request into "assigned".
+  if (assigneeId) await assignRequests(request.id, assigneeId);
+
   return request;
 }
 
