@@ -1,9 +1,9 @@
 import Link from "next/link";
 import DismissAlert from "@/components/DismissAlert";
-import Icon from "@aqarly/ui/Icon";
 import NewRequestAction from "@/components/NewRequestAction";
 import PageBar from "@/components/PageBar";
 import RequestRows from "@/components/RequestRows";
+import SearchField from "@/components/SearchField";
 import {
   categoryLabels,
   getPropertyRollups,
@@ -82,7 +82,7 @@ export default async function RequestQueuePage({ searchParams }) {
     ],
     tier: [
       { value: null, label: "Any priority", count: unfiltered.length },
-      ...["emergency", "standard", "scheduled"].map((tier) => ({
+      ...["emergency", "standard"].map((tier) => ({
         value: tier,
         label: tierLabels[tier],
         count: byTier(tier),
@@ -141,25 +141,7 @@ export default async function RequestQueuePage({ searchParams }) {
             : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
-        {/* Submitting is what applies the search, so the bar says so rather
-          * than leaving Enter as the only way in. */}
-        <form action="/requests" className="flex h-10 items-center gap-1.5 rounded-pill border border-border bg-page ps-4 pe-1 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-focus">
-          <input
-            type="search"
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Search ref, unit, tenant…"
-            aria-label="Search requests"
-            className="w-full min-w-0 bg-transparent text-[13.5px] text-ink placeholder:text-ink-muted focus:outline-none sm:w-52"
-          />
-          <button
-            type="submit"
-            aria-label="Search"
-            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-pill bg-brand text-ink-inverse transition-colors hover:bg-brand-hover"
-          >
-            <Icon name="search" size={15} />
-          </button>
-        </form>
+        <SearchField searchParams={params} />
         <NewRequestAction
           buildings={properties.map((property) => ({
             id: property.id,
@@ -184,6 +166,13 @@ export default async function RequestQueuePage({ searchParams }) {
               label: rate.label,
             })),
           ]}
+          staff={staff.map((member) => ({
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            load: member.load,
+            capacity: member.capacity,
+          }))}
         />
       </PageBar>
 

@@ -12,13 +12,18 @@ import {
   useFormAction,
 } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
-import { maxRequestPhotos } from "@aqarly/core/operations";
+import { maintenanceCategories, maxRequestPhotos } from "@aqarly/core/operations";
 
 // The mockup's "New request" dialog. Tenants raise their own requests in the
 // tenant portal; this is the admin's path in for a walk-in or a phone call.
-export default function NewRequestAction({ buildings = [], categories = [] }) {
+export default function NewRequestAction({
+  buildings = [],
+  categories = [],
+  staff = [],
+}) {
   const [open, setOpen] = useState(false);
   const [propertyId, setPropertyId] = useState(buildings[0]?.id ?? "");
+  const [category, setCategory] = useState(categories[0]?.value ?? "");
   // Closes on success; the toast carries the confirmation from there.
   const { submit, pending, result } = useFormAction(createRequestAction, {
     onSuccess: () => setOpen(false),
@@ -26,6 +31,15 @@ export default function NewRequestAction({ buildings = [], categories = [] }) {
 
   const building = buildings.find((b) => b.id === propertyId) ?? buildings[0];
   const units = building?.units ?? [];
+
+  // Assigning here is a shortcut for a request whose technician is already
+  // known — the queue's own assign flow still ranks candidates once it
+  // exists as a request. Left off, the request is unassigned, same as one
+  // raised anywhere else.
+  const type = maintenanceCategories.includes(category)
+    ? "maintenance"
+    : "housekeeping";
+  const eligibleStaff = staff.filter((member) => member.role === type);
 
   return (
     <>
@@ -85,7 +99,13 @@ export default function NewRequestAction({ buildings = [], categories = [] }) {
             />
           </div>
 
-          <PillChoice label="Category" name="category" options={categories} />
+          <PillChoice
+            label="Category"
+            name="category"
+            options={categories}
+            value={category}
+            onChange={setCategory}
+          />
           <PillChoice
             label="Priority"
             name="priority"
@@ -106,6 +126,17 @@ export default function NewRequestAction({ buildings = [], categories = [] }) {
             name="description"
             textarea
             placeholder="What's happening, when it started, access notes…"
+          />
+          <SelectField
+            label="Assign to"
+            name="assigneeId"
+            options={[
+              { value: "", label: "Unassigned" },
+              ...eligibleStaff.map((member) => ({
+                value: member.id,
+                label: `${member.name} · ${member.load}/${member.capacity} jobs`,
+              })),
+            ]}
           />
           <PhotoField label="Photos" name="photos" max={maxRequestPhotos} />
 

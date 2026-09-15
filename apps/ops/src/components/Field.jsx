@@ -252,9 +252,20 @@ export function SelectField({
 }
 
 // The pill row the dialogs use for a fixed choice — a real radio group, so it
-// posts with the form and reaches the keyboard.
-export function PillChoice({ label, name, options = [], defaultValue }) {
-  const selected = defaultValue ?? options[0]?.value;
+// posts with the form and reaches the keyboard. Uncontrolled by default;
+// pass `value`/`onChange` when another field needs to react to the choice.
+export function PillChoice({
+  label,
+  name,
+  options = [],
+  value,
+  defaultValue,
+  onChange,
+}) {
+  const [uncontrolled, setUncontrolled] = useState(
+    defaultValue ?? options[0]?.value,
+  );
+  const selected = value !== undefined ? value : uncontrolled;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -267,7 +278,11 @@ export function PillChoice({ label, name, options = [], defaultValue }) {
               name={name}
               value={option.value}
               aria-label={option.label}
-              defaultChecked={option.value === selected}
+              checked={selected === option.value}
+              onChange={() => {
+                if (value === undefined) setUncontrolled(option.value);
+                onChange?.(option.value);
+              }}
               className="peer sr-only"
             />
             <span className="inline-flex rounded-pill border border-border-strong px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft transition-colors peer-checked:border-[1.5px] peer-checked:border-brand peer-checked:bg-brand-tint peer-checked:font-bold peer-checked:text-brand peer-focus-visible:shadow-focus">
