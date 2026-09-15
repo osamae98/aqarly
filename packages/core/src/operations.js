@@ -216,6 +216,12 @@ export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
 // business rule.
 export const maxRequestPhotos = 4;
 
+// The fixed windows a visit can be booked into — the same three the tenant
+// portal's (read-only) booking mockup already shows, now real on the ops
+// side. A request's schedule is an absolute, chosen slot, not a derived
+// duration, so it carries no SLA meaning on its own.
+export const timeSlots = ["9AM–12PM", "12PM–3PM", "3PM–6PM"];
+
 function repeatFaultFor(requests, now) {
   const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
   const counts = new Map();
@@ -669,11 +675,16 @@ export async function createRequest({
   description = "",
   photos = [],
   assigneeId = null,
+  scheduledDate = null,
+  scheduledSlot = null,
 }) {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
   if (!summary?.trim()) throw new Error("A request needs a summary");
   if (!categoryLabels[category]) throw new Error(`Unknown category ${category}`);
+  if (scheduledSlot && !timeSlots.includes(scheduledSlot)) {
+    throw new Error(`Unknown time slot ${scheduledSlot}`);
+  }
 
   // The category decides the trade, and the trade decides who can be assigned
   // and who gets billed — so it is derived here rather than asked for twice.
@@ -708,6 +719,12 @@ export async function createRequest({
       })),
     charge: null,
     completionNotes: null,
+    // Both or neither — a date with no window, or a window with no date,
+    // isn't a booking.
+    schedule:
+      scheduledDate && scheduledSlot
+        ? { date: scheduledDate, slot: scheduledSlot }
+        : null,
   };
 
   data.requests.push(request);

@@ -23,8 +23,10 @@ export function Label({ htmlFor, children }) {
 export function TextField({
   label,
   name,
+  type = "text",
   placeholder,
   defaultValue,
+  min,
   required = false,
   textarea = false,
   className = "",
@@ -37,9 +39,11 @@ export function TextField({
       <Element
         id={name}
         name={name}
+        type={textarea ? undefined : type}
         required={required}
         placeholder={placeholder}
         defaultValue={defaultValue}
+        min={min}
         rows={textarea ? 3 : undefined}
         className={`${control} ${textarea ? "resize-y" : ""}`}
       />
@@ -47,19 +51,47 @@ export function TextField({
   );
 }
 
-// Photos on a request, picked from the admin’s machine. There is no file
-// store yet, so the files post with the form and the server inlines them —
-// which is why the cap and the preview both live this close to the input.
+// A file's kind, read off what the browser reports rather than its name —
+// drives both the accept filter and which preview a thumbnail gets.
+function kindOf(file) {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type === "application/pdf") return "pdf";
+  if (file.type.startsWith("video/")) return "video";
+  return "other";
+}
+
+const KIND_LABEL = { pdf: "PDF", video: "Video", other: "File" };
+
+// Attachments on a request — photos, PDFs, and short video clips — picked
+// from the admin’s machine. There is no file store yet, so the files post
+// with the form and the server inlines them, which is why the cap and the
+// preview both live this close to the input.
 export function PhotoField({ label, name, max = 4, hint }) {
   const input = useRef(null);
   const [photos, setPhotos] = useState([]);
+  const [trimmed, setTrimmed] = useState(false);
 
+  // The cap has to hold on the client too, not just when the server rejects
+  // an over-sized submit — so a selection past `max` is trimmed here, and
+  // what's left is written back to the input itself, so what previews is
+  // exactly what will post.
   function read(fileList) {
     for (const photo of photos) URL.revokeObjectURL(photo.url);
+
+    const files = [...fileList].slice(0, max);
+    setTrimmed(fileList.length > max);
+
+    if (fileList.length > max) {
+      const transfer = new DataTransfer();
+      files.forEach((file) => transfer.items.add(file));
+      input.current.files = transfer.files;
+    }
+
     setPhotos(
-      [...fileList].map((file) => ({
+      files.map((file) => ({
         name: file.name,
         url: URL.createObjectURL(file),
+        kind: kindOf(file),
       })),
     );
   }
@@ -84,7 +116,7 @@ export function PhotoField({ label, name, max = 4, hint }) {
         id={name}
         name={name}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf,video/*"
         multiple
         onChange={(event) => read(event.target.files)}
         className="cursor-pointer rounded-sm border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
@@ -97,13 +129,24 @@ export function PhotoField({ label, name, max = 4, hint }) {
               key={photo.url}
               className="relative size-16 overflow-hidden rounded-sm border border-border bg-page"
             >
-              {/* Local object URLs, so `next/image` has nothing to optimise. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo.url}
-                alt={photo.name}
-                className="size-full object-cover"
-              />
+              {photo.kind === "image" ? (
+                /* Local object URLs, so `next/image` has nothing to optimise. */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={photo.url}
+                  alt={photo.name}
+                  className="size-full object-cover"
+                />
+              ) : (
+                <span className="flex size-full flex-col items-center justify-center gap-1 bg-sunken px-1.5 text-center">
+                  <span className="text-[10px] font-bold tracking-[0.06em] text-ink-muted uppercase">
+                    {KIND_LABEL[photo.kind]}
+                  </span>
+                  <span className="w-full truncate text-[10.5px] text-ink-soft">
+                    {photo.name}
+                  </span>
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => remove(index)}
@@ -117,10 +160,12 @@ export function PhotoField({ label, name, max = 4, hint }) {
         </div>
       )}
 
-      <p className="text-xs text-ink-muted">
-        {photos.length > max
-          ? `Up to ${max} photos — ${photos.length} selected.`
-          : (hint ?? `Up to ${max} photos, 2 MB each.`)}
+      <p className={`text-xs ${trimmed ? "font-medium text-warning-ink" : "text-ink-muted"}`}>
+        {trimmed
+          ? `Only the first ${max} were kept — up to ${max} attachments per request.`
+          : photos.length === max
+            ? `${max} of ${max} attachments selected — that's the limit.`
+            : (hint ?? `Up to ${max} photos, PDFs, or videos — 2 MB each (50 MB for video).`)}
       </p>
     </div>
   );
