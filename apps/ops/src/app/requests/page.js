@@ -13,6 +13,7 @@ import {
   getUnits,
   maintenanceCategories,
   stageLabels,
+  stages,
   tierLabels,
 } from "@aqarly/core/operations";
 
@@ -25,6 +26,10 @@ export const metadata = {
 function counter(all, key) {
   return (value) => all.filter((request) => key(request) === value).length;
 }
+
+// Paged rather than infinite — the queue is filtered and sorted server-side
+// already, so a page is just a slice of that same, stable order.
+const PAGE_SIZE = 10;
 
 export default async function RequestQueuePage({ searchParams }) {
   const params = await searchParams;
@@ -52,11 +57,19 @@ export default async function RequestQueuePage({ searchParams }) {
       getRequests({ open: true, tier: "emergency", assigneeId: "unassigned" }),
     ]);
 
+  // Every filter above already narrowed and sorted `requests`; paging just
+  // windows that same list, so changing filters always lands back on page 1
+  // rather than an index that no longer means anything.
+  const pageCount = Math.max(1, Math.ceil(requests.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Number(params.page) || 1), pageCount);
+  const pageRequests = requests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const scope = properties.find((p) => p.id === params.propertyId);
   const byCategory = counter(unfiltered, (r) => r.category);
   const byProperty = counter(unfiltered, (r) => r.property?.id);
   const byTier = counter(unfiltered, (r) => r.tier);
   const byAssignee = counter(unfiltered, (r) => r.assigneeId);
+  const byStage = counter(unfiltered, (r) => r.stage);
 
   // Only the categories actually in the queue, in the order they weigh on it.
   const categories = [...new Set(unfiltered.map((r) => r.category))].sort(
@@ -86,6 +99,14 @@ export default async function RequestQueuePage({ searchParams }) {
         value: tier,
         label: tierLabels[tier],
         count: byTier(tier),
+      })),
+    ],
+    stage: [
+      { value: null, label: "Any status", count: unfiltered.length },
+      ...stages.map((stage) => ({
+        value: stage,
+        label: stageLabels[stage],
+        count: byStage(stage),
       })),
     ],
     assignee: [
@@ -203,12 +224,16 @@ export default async function RequestQueuePage({ searchParams }) {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-x-auto pb-6">
+      <div className="min-h-0 flex-1 overflow-x-auto py-4 md:py-6">
         <RequestRows
-          requests={requests}
+          requests={pageRequests}
           staff={staff}
           filters={filters}
           searchParams={params}
+          page={page}
+          pageCount={pageCount}
+          pageSize={PAGE_SIZE}
+          total={requests.length}
         />
       </div>
     </>
