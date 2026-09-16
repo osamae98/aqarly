@@ -7,7 +7,6 @@ import RequestRows from "@/components/RequestRows";
 import {
   categoryLabels,
   getPropertyRollups,
-  getHousekeepingRates,
   getRequests,
   getStaffRoster,
   getUnits,
@@ -29,9 +28,11 @@ function counter(all, key) {
 export default async function RequestQueuePage({ searchParams }) {
   const params = await searchParams;
 
+  // The ops portal is maintenance-only, so every read here is scoped to it —
+  // housekeeping bookings never surface in this queue.
   const query = {
+    type: "maintenance",
     stage: params.stage,
-    type: params.type,
     category: params.category,
     tier: params.tier,
     propertyId: params.propertyId,
@@ -41,15 +42,19 @@ export default async function RequestQueuePage({ searchParams }) {
     sort: params.sort,
   };
 
-  const [requests, unfiltered, properties, staff, units, rates, unassignedUrgent] =
+  const [requests, unfiltered, properties, staff, units, unassignedUrgent] =
     await Promise.all([
       getRequests(query),
-      getRequests({ search: params.q }),
+      getRequests({ type: "maintenance", search: params.q }),
       getPropertyRollups(),
       getStaffRoster(),
       getUnits(),
-      getHousekeepingRates(),
-      getRequests({ open: true, tier: "emergency", assigneeId: "unassigned" }),
+      getRequests({
+        type: "maintenance",
+        open: true,
+        tier: "emergency",
+        assigneeId: "unassigned",
+      }),
     ]);
 
   const scope = properties.find((p) => p.id === params.propertyId);
@@ -82,7 +87,7 @@ export default async function RequestQueuePage({ searchParams }) {
     ],
     tier: [
       { value: null, label: "Any priority", count: unfiltered.length },
-      ...["emergency", "standard", "scheduled"].map((tier) => ({
+      ...["emergency", "standard"].map((tier) => ({
         value: tier,
         label: tierLabels[tier],
         count: byTier(tier),
@@ -172,18 +177,10 @@ export default async function RequestQueuePage({ searchParams }) {
                 tenant: unit.tenant?.name ?? null,
               })),
           }))}
-          // Maintenance trades plus whatever is on the housekeeping rate
-          // card — the category is what decides which of the two a request is.
-          categories={[
-            ...maintenanceCategories.map((category) => ({
-              value: category,
-              label: categoryLabels[category] ?? category,
-            })),
-            ...rates.map((rate) => ({
-              value: rate.serviceType,
-              label: rate.label,
-            })),
-          ]}
+          categories={maintenanceCategories.map((category) => ({
+            value: category,
+            label: categoryLabels[category] ?? category,
+          }))}
         />
       </PageBar>
 

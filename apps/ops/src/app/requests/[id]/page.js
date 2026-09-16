@@ -30,13 +30,15 @@ export default async function RequestDetailPage({ params }) {
   const { id } = await params;
   const request = await getRequestById(id);
 
-  if (!request) notFound();
+  // The ops portal is maintenance-only — a housekeeping request has nothing
+  // to show here.
+  if (!request || request.type !== "maintenance") notFound();
 
   const [history, unit, candidates, neighbours] = await Promise.all([
     getUnitHistory(request.unitId, { excludeId: request.id }),
     getUnitById(request.unitId),
     getAssignmentCandidates(request),
-    getRequestNeighbours(request.id),
+    getRequestNeighbours(request.id, { type: "maintenance" }),
   ]);
 
   const sameCategory = history.filter(
@@ -102,14 +104,7 @@ export default async function RequestDetailPage({ params }) {
 
       <div className="flex flex-col gap-5 p-4 md:p-6">
         <div className="flex items-start gap-4">
-          <span
-            className={[
-              "flex size-12 shrink-0 items-center justify-center rounded-md font-mono text-sm font-bold",
-              request.type === "housekeeping"
-                ? "bg-category-housekeeping-tint text-category-housekeeping"
-                : "bg-category-maintenance-tint text-category-maintenance",
-            ].join(" ")}
-          >
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-category-maintenance-tint font-mono text-sm font-bold text-category-maintenance">
             {categoryCodes[request.category] ?? "GN"}
           </span>
 
@@ -127,8 +122,8 @@ export default async function RequestDetailPage({ params }) {
                 {request.assignee ? stageLabels[request.stage] : "Unassigned"}
               </Badge>
               <span className="text-[13.5px] text-ink-soft">
-                {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"}{" "}
-                · {categoryLabel} · reported {formatDateTime(request.createdAt)}
+                Maintenance · {categoryLabel} · reported{" "}
+                {formatDateTime(request.createdAt)}
               </span>
             </div>
           </div>
@@ -233,10 +228,7 @@ export default async function RequestDetailPage({ params }) {
             </p>
             <div className="mt-auto flex flex-col gap-2.5 pt-2">
               <Row label="This request" value={formatCharge(request.charge)} />
-              <Row
-                label="Billed to"
-                value={request.type === "housekeeping" ? "Tenant" : "Landlord"}
-              />
+              <Row label="Billed to" value="Landlord" />
             </div>
           </Panel>
         </div>

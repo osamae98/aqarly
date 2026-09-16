@@ -52,9 +52,7 @@ export default function ChargeRows({ requests }) {
             <span className="text-end font-mono text-[13px] font-semibold text-ink">
               {formatCharge(request.charge)}
             </span>
-            <span className="text-[13px] text-ink-soft">
-              {request.type === "housekeeping" ? "Tenant" : "Landlord"}
-            </span>
+            <span className="text-[13px] text-ink-soft">Landlord</span>
             <span>
               <Badge tone={settled ? "success" : "warning"} dot={false}>
                 {settled ? "Charged" : "Pending"}

@@ -13,13 +13,13 @@ export const metadata = {
     default: "Operations",
     template: "%s — Operations",
   },
-  description: "Maintenance and housekeeping across the portfolio.",
+  description: "Maintenance requests across the portfolio.",
 };
 
 export default async function RootLayout({ children }) {
   // The rail carries a live count, so the shell reads it rather than the
   // pages passing it up.
-  const open = await getRequests({ open: true });
+  const open = await getRequests({ open: true, type: "maintenance" });
 
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`}>

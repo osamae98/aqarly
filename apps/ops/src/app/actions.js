@@ -2,13 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  addHousekeepingRate,
   addStaff,
   assignRequests,
   createRequest,
   deleteRequests,
   maxRequestPhotos,
-  removeHousekeepingRate,
   removeStaff,
   resetOperationsData,
   setPriority,
@@ -127,31 +125,6 @@ export async function deleteRequestsAction(formData) {
       ok: true,
       message: `${removed.length} ${removed.length === 1 ? "request" : "requests"} removed`,
     };
-  } catch (error) {
-    return fail(error);
-  }
-}
-
-export async function addRateAction(formData) {
-  try {
-    const rate = await addHousekeepingRate({
-      label: formData.get("label"),
-      price: formData.get("price"),
-    });
-
-    revalidateAll();
-    return { ok: true, message: `${rate.label} added to the rate card` };
-  } catch (error) {
-    return fail(error);
-  }
-}
-
-export async function removeRateAction(formData) {
-  try {
-    const rate = await removeHousekeepingRate(formData.get("serviceType"));
-
-    revalidateAll();
-    return { ok: true, message: `${rate.label} removed from the rate card` };
   } catch (error) {
     return fail(error);
   }

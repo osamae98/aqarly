@@ -27,7 +27,11 @@ export default async function UnitDetailPage({ params, searchParams }) {
 
   if (!unit) notFound();
 
-  const all = await getRequests({ unitId: id, sort: "newest" });
+  const all = await getRequests({
+    unitId: id,
+    type: "maintenance",
+    sort: "newest",
+  });
 
   const tab = query.tab === "charges" ? "charges" : "history";
   const charged = all.filter((request) => request.charge);

@@ -2,13 +2,13 @@
 
 import Modal from "@aqarly/ui/Modal";
 import Toast from "@/components/Toast";
-import { FormNote, PillChoice, TextField, useFormAction } from "@/components/Field";
+import { FormNote, TextField, useFormAction } from "@/components/Field";
 import { addStaffAction, updateStaffAction } from "@/app/actions";
 
-// One form for both halves of the roster's write path. Only the two fields
-// ops actually owns are here: Ops PRD §9 puts contracts, pay and the rest in
-// the HRMS from Phase 3, so asking for them now would be inventing a record
-// this portal is not allowed to keep.
+// One form for both halves of the roster's write path. Every technician here
+// is maintenance crew, so name is the only field ops owns: Ops PRD §9 puts
+// contracts, pay and the rest in the HRMS from Phase 3, so asking for them
+// now would be inventing a record this portal is not allowed to keep.
 export default function StaffDialog({ open, onClose, member = null }) {
   const editing = Boolean(member);
   const { submit, pending, result } = useFormAction(
@@ -48,6 +48,7 @@ export default function StaffDialog({ open, onClose, member = null }) {
       >
         <form id="staff-form" action={submit} className="flex flex-col gap-3.5">
           {editing && <input type="hidden" name="id" value={member.id} />}
+          <input type="hidden" name="role" value="maintenance" />
 
           <TextField
             label="Name"
@@ -55,18 +56,6 @@ export default function StaffDialog({ open, onClose, member = null }) {
             required
             defaultValue={member?.name}
             placeholder="Full name"
-          />
-
-          {/* The trade decides which requests they can be assigned, so it is
-            * the one field the queue reads back off the roster. */}
-          <PillChoice
-            label="Trade"
-            name="role"
-            options={[
-              { value: "maintenance", label: "Maintenance" },
-              { value: "housekeeping", label: "Housekeeping" },
-            ]}
-            defaultValue={member?.role ?? "maintenance"}
           />
 
           <p className="text-xs text-ink-muted">

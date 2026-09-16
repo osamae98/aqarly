@@ -44,12 +44,6 @@ export default function OpsNav({ openCount, className = "" }) {
             { value: "/units", label: "Buildings", icon: "building", href: "/units" },
             { value: "/staff", label: "Staff", icon: "users", href: "/staff" },
             { value: "/", label: "Reports", icon: "sliders", href: "/" },
-            {
-              value: "/rates",
-              label: "Housekeeping rates",
-              icon: "receipt",
-              href: "/rates",
-            },
           ],
         },
       ]}
