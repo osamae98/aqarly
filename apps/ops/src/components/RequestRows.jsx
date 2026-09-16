@@ -168,7 +168,7 @@ export default function RequestRows({
           * clip to the radius: the header holds the filter dropdowns, and
           * those have to be able to overhang the card rather than get cut
           * off by it. */}
-        <div className="rounded-md border border-border bg-surface">
+        <div className="rounded-t-md border border-b-0 border-border bg-surface">
           <div className={`${GRID} border-b border-border px-3 py-3`}>
             <span>
               <Checkbox
@@ -215,7 +215,7 @@ export default function RequestRows({
             <span className="sr-only">Actions</span>
           </div>
 
-          <div className="overflow-hidden rounded-b-md">
+          <div className="overflow-hidden">
           <div className="max-h-[60vh] divide-y divide-sunken overflow-y-auto">
             {requests.length === 0 && (
               <p className="px-3 py-16 text-center text-sm text-ink-muted">
@@ -315,7 +315,9 @@ export default function RequestRows({
 
       {/* Outside the horizontally-scrolling card on purpose — the count and
         * the prev/next controls need to stay on screen no matter how far
-        * right the table itself has been scrolled. */}
+        * right the table itself has been scrolled. Sits flush against the
+        * card above (its own top border is the seam) rather than reading as
+        * a second, separate box. */}
       {requests.length > 0 && (
         <div className="px-4 md:px-6">
           <Pagination
@@ -398,7 +400,7 @@ function Pagination({ page, pageCount, pageSize, total, searchParams }) {
   const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-md border border-border bg-surface px-3 py-3">
       <span className="text-[12.5px] text-ink-muted">
         {from}–{to} of {total} requests
       </span>
