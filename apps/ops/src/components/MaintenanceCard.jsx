@@ -28,23 +28,23 @@ export default function MaintenanceCard({ request }) {
   return (
     <Link
       href={`/requests/${request.id}`}
-      className="flex flex-col gap-3 rounded-md border border-border bg-surface p-4 transition-colors hover:border-brand"
+      className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-brand md:p-6"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] leading-snug font-bold text-ink">{request.summary}</h3>
+        <h3 className="text-base leading-snug font-bold text-ink">{request.summary}</h3>
         <Badge tone={unassigned ? "danger" : stageTones[request.stage]} dot={false}>
           {unassigned ? "Unassigned" : stageLabels[request.stage]}
         </Badge>
       </div>
 
-      <dl className="grid grid-cols-3 gap-x-3.5 gap-y-3 border-t border-sunken pt-3">
+      <dl className="grid grid-cols-3 gap-x-4 gap-y-4 border-t border-sunken pt-4">
         {fields.map((field) => (
           <div key={field.label} className="min-w-0">
-            <dt className="text-[10.5px] font-bold tracking-[0.08em] uppercase text-ink-muted">
+            <dt className="text-[11px] font-bold tracking-[0.08em] uppercase text-ink-muted">
               {field.label}
             </dt>
             <dd
-              className={`mt-0.5 text-[13px] leading-snug break-words ${field.className || "text-ink"}`}
+              className={`mt-1 text-[14px] leading-snug break-words ${field.className || "text-ink"}`}
             >
               {field.value}
             </dd>

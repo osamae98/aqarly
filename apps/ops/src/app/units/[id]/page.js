@@ -102,7 +102,7 @@ export default async function UnitDetailPage({ params }) {
               No open maintenance on this unit.
             </p>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
               {open.map((request) => (
                 <MaintenanceCard key={request.id} request={request} />
               ))}
