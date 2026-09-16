@@ -28,15 +28,17 @@ function fail(error) {
 }
 
 // There is no file store yet, so an uploaded file is inlined as a data URL
-// and kept with the request. That only stays reasonable while files are
-// small — a photo or a PDF comfortably is; video only barely is, which is
-// why it gets its own, much tighter cap, and why raising either further has
-// to wait for somewhere real for these to live.
+// and kept with the record it belongs to. That only stays reasonable while
+// files are small — a photo or a PDF comfortably is; video only barely is,
+// which is why it gets its own, much tighter cap, and why raising either
+// further has to wait for somewhere real for these to live.
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
+const IMAGE_KIND = { test: (type) => type.startsWith("image/"), max: MAX_IMAGE_BYTES };
+
 const ACCEPTED_KINDS = [
-  { test: (type) => type.startsWith("image/"), max: MAX_IMAGE_BYTES },
+  IMAGE_KIND,
   { test: (type) => type === "application/pdf", max: MAX_IMAGE_BYTES },
   { test: (type) => type.startsWith("video/"), max: MAX_VIDEO_BYTES },
 ];
@@ -51,32 +53,45 @@ function playableType(type) {
   return type === "video/quicktime" ? "video/mp4" : type;
 }
 
-async function readPhotos(formData) {
-  const files = formData
-    .getAll("photos")
+function uploadedFiles(formData, name) {
+  return formData
+    .getAll(name)
     .filter((file) => file && typeof file.arrayBuffer === "function" && file.size > 0);
+}
+
+async function inlineFile(file, kinds, expected) {
+  const kind = kinds.find((k) => k.test(file.type));
+  if (!kind) {
+    throw new Error(`${file.name} isn't ${expected}`);
+  }
+  if (file.size > kind.max) {
+    throw new Error(
+      `${file.name} is larger than ${Math.round(kind.max / (1024 * 1024))} MB`,
+    );
+  }
+
+  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  return `data:${playableType(file.type)};base64,${base64}`;
+}
+
+async function readPhotos(formData) {
+  const files = uploadedFiles(formData, "photos");
 
   if (files.length > maxRequestPhotos) {
     throw new Error(`Up to ${maxRequestPhotos} attachments per request`);
   }
 
   return Promise.all(
-    files.map(async (file) => {
-      const kind = ACCEPTED_KINDS.find((k) => k.test(file.type));
-      if (!kind) {
-        throw new Error(`${file.name} isn't a photo, PDF, or video`);
-      }
-      if (file.size > kind.max) {
-        throw new Error(
-          `${file.name} is larger than ${Math.round(kind.max / (1024 * 1024))} MB`,
-        );
-      }
-
-      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-      const type = playableType(file.type);
-      return { name: file.name, dataUrl: `data:${type};base64,${base64}` };
-    }),
+    files.map(async (file) => ({
+      name: file.name,
+      dataUrl: await inlineFile(file, ACCEPTED_KINDS, "a photo, PDF, or video"),
+    })),
   );
+}
+
+async function readStaffPhoto(formData) {
+  const [file] = uploadedFiles(formData, "photo");
+  return file ? inlineFile(file, [IMAGE_KIND], "an image") : null;
 }
 
 export async function createRequestAction(formData) {
@@ -160,7 +175,9 @@ export async function addStaffAction(formData) {
   try {
     const member = await addStaff({
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();
@@ -174,7 +191,9 @@ export async function updateStaffAction(formData) {
   try {
     const member = await updateStaff(formData.get("id"), {
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();

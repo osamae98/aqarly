@@ -403,6 +403,7 @@ export async function getStaffRoster() {
         ...member,
         load: open.length,
         capacity: staffCapacity,
+        inProgress: open.filter((r) => r.stage === "in-progress").length,
         closed: closed.length,
         properties: [...propertyIds].map((id) =>
           data.properties.find((p) => p.id === id),
@@ -826,11 +827,22 @@ function slug(label) {
 
 // --- Staff ---------------------------------------------------------------
 // Ops PRD §9 makes the HRMS the record for staff identity from Phase 3. Until
-// then the roster is ops-owned and editable here, which is why only the two
-// fields ops actually decides — who they are and what they are certified for
-// — can be set. Maintenance is the only trade the ops portal manages.
+// then the roster is ops-owned and editable here, which is why only what ops
+// actually decides — who they are and how to reach them — can be set.
+// Maintenance is the only trade the ops portal manages.
 
 const staffRoles = ["maintenance"];
+
+// Loose on purpose: numbers arrive in local and international formats, so
+// this only refuses what cannot be dialled at all.
+function cleanPhone(phone) {
+  const trimmed = phone?.trim() ?? "";
+  const digits = trimmed.replace(/\D/g, "");
+  if (!/^\+?[\d\s()-]+$/.test(trimmed) || digits.length < 7 || digits.length > 15) {
+    throw new Error("Enter a valid mobile number");
+  }
+  return trimmed;
+}
 
 function staffId(name) {
   const base = slug(name).split("-").filter(Boolean).pop() ?? "member";
@@ -843,23 +855,34 @@ function staffId(name) {
   return candidate;
 }
 
-export async function addStaff({ name, role }) {
+// `photo` is a data URL, held with the member the way request photos are —
+// there is no file store for either yet.
+export async function addStaff({ name, phone, role, photo = null }) {
   if (!name?.trim()) throw new Error("A staff member needs a name");
   if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
 
-  const member = { id: staffId(name), name: name.trim(), role };
+  const member = {
+    id: staffId(name),
+    name: name.trim(),
+    phone: cleanPhone(phone),
+    role,
+    photo,
+  };
   data.staff.push(member);
   return member;
 }
 
-export async function updateStaff(id, { name, role }) {
+// Leaving `photo` out keeps the one they have.
+export async function updateStaff(id, { name, phone, role, photo }) {
   const member = data.staff.find((s) => s.id === id);
   if (!member) throw new Error(`Unknown staff member ${id}`);
   if (!name?.trim()) throw new Error("A staff member needs a name");
   if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
 
   member.name = name.trim();
+  member.phone = cleanPhone(phone);
   member.role = role;
+  if (photo) member.photo = photo;
   return member;
 }
 

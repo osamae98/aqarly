@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "@aqarly/ui/Badge";
 import Icon from "@aqarly/ui/Icon";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -12,11 +12,12 @@ import { removeStaffAction } from "@/app/actions";
 import { typeLabels } from "@aqarly/core/operations";
 
 const GRID =
-  "grid grid-cols-[220px_128px_minmax(0,1fr)_72px_150px_104px] items-center gap-3.5";
+  "grid grid-cols-[minmax(0,1fr)_160px_128px_96px_72px_104px] items-center gap-3.5";
 
 export default function StaffRows({ staff }) {
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
+  const [previewing, setPreviewing] = useState(null);
 
   const { submit, pending, result, reset } = useFormAction(removeStaffAction, {
     onSuccess: () => setRemoving(null),
@@ -29,23 +30,34 @@ export default function StaffRows({ staff }) {
   }
 
   return (
-    <div className="min-w-[58rem]">
-      <div className={`${GRID} pb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}>
+    <div className="min-w-[58rem] overflow-hidden rounded-md border border-border bg-surface">
+      <div
+        className={`${GRID} border-b border-border px-3 py-3 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
+      >
         <span>Name · staff id</span>
+        <span>Mobile</span>
         <span>Trade</span>
-        <span>Buildings</span>
-        <span className="text-end">Closed</span>
-        <span>Current load</span>
+        <span className="text-center">In progress</span>
+        <span className="text-center">Closed</span>
         <span className="sr-only">Actions</span>
       </div>
 
-      {staff.map((member) => {
-        const pct = Math.min(100, (member.load / member.capacity) * 100);
-
-        return (
-          <div key={member.id} className={`${GRID} border-t border-border py-3.5`}>
+      <div className="divide-y divide-sunken">
+        {staff.map((member) => (
+          <div key={member.id} className={`${GRID} px-3 py-3.5`}>
             <span className="flex min-w-0 items-center gap-2.5">
-              <Initials name={member.name} size={34} />
+              {member.photo ? (
+                <button
+                  type="button"
+                  onClick={() => setPreviewing(member)}
+                  aria-label={`View photo of ${member.name}`}
+                  className="flex shrink-0 cursor-zoom-in rounded-pill transition-opacity hover:opacity-85"
+                >
+                  <Initials name={member.name} src={member.photo} size={34} />
+                </button>
+              ) : (
+                <Initials name={member.name} size={34} />
+              )}
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-ink">
                   {member.name}
@@ -57,36 +69,36 @@ export default function StaffRows({ staff }) {
               </span>
             </span>
 
+            <span className="min-w-0 truncate">
+              {member.phone ? (
+                <a
+                  href={`tel:${member.phone.replace(/[^\d+]/g, "")}`}
+                  className="font-mono text-[13px] text-ink-soft hover:text-brand"
+                >
+                  {member.phone}
+                </a>
+              ) : (
+                <span className="text-[13px] text-ink-muted">—</span>
+              )}
+            </span>
+
             <span>
               <Badge tone={member.role} dot={false}>
                 {typeLabels[member.role] ?? member.role}
               </Badge>
             </span>
 
-            <span className="min-w-0 truncate text-[13px] text-ink-soft">
-              {member.properties.length
-                ? member.properties.map((p) => p?.name).filter(Boolean).join(", ")
-                : "No work yet"}
+            <span
+              className={[
+                "text-center font-mono text-[13px]",
+                member.inProgress ? "font-semibold text-ink" : "text-ink-soft",
+              ].join(" ")}
+            >
+              {member.inProgress}
             </span>
 
-            <span className="text-end font-mono text-[13px] text-ink-soft">
+            <span className="text-center font-mono text-[13px] text-ink-soft">
               {member.closed}
-            </span>
-
-            <span className="flex items-center gap-2">
-              <span className="h-1.5 flex-1 overflow-hidden rounded-pill bg-sunken">
-                {/* Fill is data-driven. */}
-                <span
-                  className={[
-                    "block h-full rounded-pill",
-                    pct >= 100 ? "bg-danger" : pct > 70 ? "bg-warning" : "bg-brand",
-                  ].join(" ")}
-                  style={{ width: `${pct}%` }}
-                />
-              </span>
-              <span className="shrink-0 font-mono text-[11.5px] text-ink-soft">
-                {member.load}/{member.capacity}
-              </span>
             </span>
 
             <span className="flex items-center justify-end gap-1">
@@ -111,12 +123,16 @@ export default function StaffRows({ staff }) {
               </button>
             </span>
           </div>
-        );
-      })}
+        ))}
+      </div>
 
       {/* Mounted per member, so the fields carry that member's values. */}
       {editing && (
         <StaffDialog open member={editing} onClose={() => setEditing(null)} />
+      )}
+
+      {previewing && (
+        <PhotoPreview member={previewing} onClose={() => setPreviewing(null)} />
       )}
 
       <ConfirmDialog
@@ -135,6 +151,52 @@ export default function StaffRows({ staff }) {
       />
 
       <Toast message={result?.ok ? result.message : null} />
+    </div>
+  );
+}
+
+// The row's photo at full size — the same dark overlay the request
+// attachments open into, without the zoom and paging a single headshot
+// has no use for.
+function PhotoPreview({ member, onClose }) {
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo of ${member.name}`}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/85 p-4 sm:p-10"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 end-4 flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--sand-50)] transition-colors hover:bg-white/20"
+      >
+        <Icon name="x" size={18} />
+      </button>
+
+      {/* Inline data URL from the upload, so `next/image` has nothing to
+        * optimise. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={member.photo}
+        alt={member.name}
+        onClick={(event) => event.stopPropagation()}
+        className="max-h-[75vh] max-w-full rounded-md object-contain shadow-lg"
+      />
+
+      <span className="text-sm font-semibold text-[var(--sand-50)]">
+        {member.name}
+      </span>
     </div>
   );
 }

@@ -2,13 +2,20 @@
 
 import Modal from "@aqarly/ui/Modal";
 import Toast from "@/components/Toast";
-import { FormNote, TextField, useFormAction } from "@/components/Field";
+import Initials from "@/components/Initials";
+import {
+  FormNote,
+  PhotoField,
+  TextField,
+  useFormAction,
+} from "@/components/Field";
 import { addStaffAction, updateStaffAction } from "@/app/actions";
 
 // One form for both halves of the roster's write path. Every technician here
-// is maintenance crew, so name is the only field ops owns: Ops PRD §9 puts
-// contracts, pay and the rest in the HRMS from Phase 3, so asking for them
-// now would be inventing a record this portal is not allowed to keep.
+// is maintenance crew, so only what ops actually owns is asked for — who they
+// are and how to reach them. Ops PRD §9 puts contracts, pay and the rest in
+// the HRMS from Phase 3, so asking for them now would be inventing a record
+// this portal is not allowed to keep.
 export default function StaffDialog({ open, onClose, member = null }) {
   const editing = Boolean(member);
   const { submit, pending, result } = useFormAction(
@@ -58,10 +65,42 @@ export default function StaffDialog({ open, onClose, member = null }) {
             placeholder="Full name"
           />
 
+          <TextField
+            label="Mobile number"
+            name="phone"
+            type="tel"
+            required
+            defaultValue={member?.phone}
+            placeholder="+971 50 123 4567"
+          />
+
+          {editing && member.photo ? (
+            <div className="flex items-end gap-3">
+              <Initials name={member.name} src={member.photo} size={64} />
+              <div className="min-w-0 flex-1">
+                <PhotoField
+                  label="Photo"
+                  name="photo"
+                  max={1}
+                  accept="image/*"
+                  hint="Choose a new photo to replace this one, 2 MB max."
+                />
+              </div>
+            </div>
+          ) : (
+            <PhotoField
+              label="Photo"
+              name="photo"
+              max={1}
+              accept="image/*"
+              hint="Optional · one photo, 2 MB max."
+            />
+          )}
+
           <p className="text-xs text-ink-muted">
-            Load and buildings are derived from the work assigned to them, so
-            there is nothing to set here. Contract, pay and contact details
-            belong to the HRMS from Phase 3.
+            Jobs in progress and closed are derived from the work assigned to
+            them, so there is nothing to set here. Contract and pay belong to
+            the HRMS from Phase 3.
           </p>
 
           <FormNote state={result} />
