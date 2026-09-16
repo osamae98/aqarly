@@ -1,11 +1,11 @@
 import Link from "next/link";
+import MaintenanceCard from "@/components/MaintenanceCard";
 import PageBar from "@/components/PageBar";
 import ReplacementAction from "@/components/ReplacementAction";
-import ServiceHistoryRows from "@/components/ServiceHistoryRows";
+import UnitCrumb from "@/components/UnitCrumb";
 import {
   categoryLabels,
   formatCharge,
-  formatDate,
   getRequests,
   getUnitById,
   repeatFaultRule,
@@ -18,30 +18,15 @@ export async function generateMetadata({ params }) {
   return { title: unit ? `Unit ${unit.label}` : "Unit" };
 }
 
-export default async function UnitDetailPage({ params, searchParams }) {
+export default async function UnitDetailPage({ params }) {
   const { id } = await params;
-  const query = await searchParams;
   const unit = await getUnitById(id);
 
   if (!unit) notFound();
 
   const all = await getRequests({ unitId: id, sort: "newest" });
-
-  const categoryKeys = [...new Set(all.map((request) => request.category))];
-  const category = categoryKeys.includes(query.category) ? query.category : null;
-
-  const scoped = all.filter(
-    (request) => !category || request.category === category,
-  );
-
-  const categories = [
-    { value: null, label: "All work", count: all.length },
-    ...categoryKeys.map((key) => ({
-      value: key,
-      label: categoryLabels[key] ?? key,
-      count: all.filter((request) => request.category === key).length,
-    })),
-  ];
+  const open = all.filter((request) => request.stage !== "done");
+  const hasHistory = all.length > open.length;
 
   const repeatLabel = unit.repeatFault
     ? (categoryLabels[unit.repeatFault.category] ?? unit.repeatFault.category)
@@ -50,27 +35,15 @@ export default async function UnitDetailPage({ params, searchParams }) {
   return (
     <>
       <PageBar
-        eyebrow={
-          <span className="flex items-center gap-1.5">
-            <Link href="/units" className="hover:text-brand">
-              Buildings
-            </Link>
-            <span className="text-border-strong">/</span>
-            <Link
-              href={`/units?propertyId=${unit.propertyId}`}
-              className="hover:text-brand"
-            >
-              {unit.property?.name}
-            </Link>
-            <span className="text-border-strong">/</span>
-            <span className="font-mono">{unit.label}</span>
-          </span>
-        }
+        eyebrow={<UnitCrumb unit={unit} />}
         title={`Unit ${unit.label} · ${unit.property?.name ?? ""}`}
         meta={`${unit.bedrooms} BR · ${unit.bathrooms} bath · ${unit.tenant?.name ?? "no tenant"}`}
         stats={
-          <div className="flex gap-6">
-            <HeadStat value={unit.requestCount} label="requests on record" />
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="font-mono text-[22px] leading-none font-bold text-ink">
+              {open.length}
+            </span>
+            <span className="text-[11.5px] text-ink-muted">open now</span>
           </div>
         }
       />
@@ -111,32 +84,32 @@ export default async function UnitDetailPage({ params, searchParams }) {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <ServiceHistoryRows
-            requests={scoped}
-            categories={categories}
-            searchParams={query}
-            basePath={`/units/${unit.id}`}
-          />
-        </div>
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-ink">Current maintenance</h2>
+            {hasHistory && (
+              <Link
+                href={`/units/${unit.id}/history`}
+                className="rounded-pill border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+              >
+                View maintenance history →
+              </Link>
+            )}
+          </div>
 
-        {unit.lastServicedAt && (
-          <p className="text-[13px] text-ink-muted">
-            Last completed visit {formatDate(unit.lastServicedAt)}.
-          </p>
-        )}
+          {open.length === 0 ? (
+            <p className="rounded-md border border-dashed border-border-strong py-10 text-center text-sm text-ink-muted">
+              No open maintenance on this unit.
+            </p>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+              {open.map((request) => (
+                <MaintenanceCard key={request.id} request={request} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </>
-  );
-}
-
-function HeadStat({ value, label }) {
-  return (
-    <div className="flex flex-col items-end gap-0.5">
-      <span className="font-mono text-[22px] leading-none font-bold text-ink">
-        {value}
-      </span>
-      <span className="text-[11.5px] text-ink-muted">{label}</span>
-    </div>
   );
 }
