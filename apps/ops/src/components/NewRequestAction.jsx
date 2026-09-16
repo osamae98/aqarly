@@ -13,7 +13,6 @@ import {
 } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
 import {
-  maintenanceCategories,
   maxRequestPhotos,
   visitHours,
 } from "@aqarly/core/operations";
@@ -43,9 +42,8 @@ export default function NewRequestAction({
   // Assigning here is a shortcut for a request whose technician is already
   // known — the queue's own assign flow still ranks candidates once it
   // exists as a request. Left off, the request is unassigned, same as one
-  // raised anywhere else. The roster is maintenance crew only, so everyone
-  // on it is eligible.
-  const eligibleStaff = staff;
+  // raised anywhere else.
+  const eligibleStaff = staff.filter((member) => member.role === "maintenance");
 
   // From and To move independently — picking one never touches the other.
   // A slot only posts once the pair is a real span (from before to); an

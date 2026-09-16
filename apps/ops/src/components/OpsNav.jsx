@@ -53,19 +53,18 @@ export default function OpsNav({ openCount, className = "" }) {
       onToggleCollapse={toggle}
       className={className}
       brand={
-        <span
-          className={[
-            "flex items-center",
-            collapsed ? "w-full justify-center" : "gap-2.5",
-          ].join(" ")}
-        >
-          <OpsMark className="size-7 shrink-0" />
-          {!collapsed && (
+        collapsed ? (
+          <span className="flex w-full items-center justify-center">
+            <OpsMark className="size-7 shrink-0" />
+          </span>
+        ) : (
+          <span className="flex items-center gap-2.5">
+            <OpsMark className="size-7 shrink-0" />
             <span className="truncate text-[15px] font-semibold text-[var(--sand-50)]">
               Aqarly Ops
             </span>
-          )}
-        </span>
+          </span>
+        )
       }
       activeItem={activeItem}
       sections={[

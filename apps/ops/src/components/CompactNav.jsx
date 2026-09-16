@@ -10,7 +10,6 @@ const items = [
   { href: "/units", label: "Buildings", icon: "building" },
   { href: "/staff", label: "Staff", icon: "users" },
   { href: "/", label: "Reports", icon: "sliders" },
-  { href: "/rates", label: "Rates", icon: "receipt" },
 ];
 
 // Stands in for the rail below its breakpoint — the building scope stays a

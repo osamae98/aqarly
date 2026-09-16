@@ -93,7 +93,7 @@ export default async function RequestDetailPage({ params }) {
 
       <div className="flex flex-col gap-5 p-4 md:p-6">
         <div className="flex flex-col gap-2">
-          <p className="font-mono text-[11px] font-bold tracking-[0.09em] uppercase text-category-maintenance">
+          <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-category-maintenance uppercase">
             Maintenance · {categoryLabel}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">

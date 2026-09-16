@@ -12,9 +12,10 @@ import {
 import { addStaffAction, updateStaffAction } from "@/app/actions";
 
 // One form for both halves of the roster's write path. Every technician here
-// is maintenance crew, so only name, mobile and photo are ops-owned: Ops PRD
-// §9 puts contracts, pay and the rest in the HRMS from Phase 3, so asking for
-// them now would be inventing a record this portal is not allowed to keep.
+// is maintenance crew, so only what ops actually owns is asked for — who they
+// are and how to reach them. Ops PRD §9 puts contracts, pay and the rest in
+// the HRMS from Phase 3, so asking for them now would be inventing a record
+// this portal is not allowed to keep.
 export default function StaffDialog({ open, onClose, member = null }) {
   const editing = Boolean(member);
   const { submit, pending, result } = useFormAction(

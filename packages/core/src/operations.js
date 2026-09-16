@@ -62,8 +62,8 @@ export const maintenanceCategories = [
   "other",
 ];
 
-// The queue's priority column reads off the two statuses there are:
-// emergency, or not.
+// The ops queue's priority column: an emergency jumps the line, everything
+// else is standard.
 export const tierLabels = {
   emergency: "Emergency",
   standard: "Standard",
