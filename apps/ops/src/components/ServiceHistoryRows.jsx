@@ -79,9 +79,7 @@ export default function ServiceHistoryRows({
               <span className="text-end font-mono text-[13px] text-ink-soft">
                 {open ? "pending" : formatCharge(request.charge)}
               </span>
-              <span className="text-[13px] text-ink-soft">
-                {request.type === "housekeeping" ? "Tenant" : "Landlord"}
-              </span>
+              <span className="text-[13px] text-ink-soft">Landlord</span>
             </Link>
           );
         })}

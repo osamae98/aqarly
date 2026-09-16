@@ -189,10 +189,14 @@ export async function getRequestIds() {
 }
 
 // Per-unit service history — Ops PRD §7: an admin should see what's happened
-// in a unit before assigning new work.
+// in a unit before assigning new work. Maintenance only, since that is all
+// the ops portal manages.
 export async function getUnitHistory(unitId, { excludeId } = {}) {
   return data.requests
-    .filter((r) => r.unitId === unitId && r.id !== excludeId)
+    .filter(
+      (r) =>
+        r.unitId === unitId && r.id !== excludeId && r.type === "maintenance",
+    )
     .map(enrich)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
@@ -238,8 +242,6 @@ function repeatFaultFor(requests, now) {
   const counts = new Map();
 
   for (const request of requests) {
-    // Housekeeping recurring is the service working, not a fault.
-    if (request.type !== "maintenance") continue;
     if (new Date(request.createdAt).getTime() < cutoff) continue;
     counts.set(request.category, (counts.get(request.category) ?? 0) + 1);
   }
@@ -258,8 +260,12 @@ function repeatFaultFor(requests, now) {
   };
 }
 
+// The ops portal is maintenance-only, so a unit's counts and history read
+// off its maintenance work alone.
 function enrichUnit(unit, now) {
-  const requests = data.requests.filter((r) => r.unitId === unit.id);
+  const requests = data.requests.filter(
+    (r) => r.unitId === unit.id && r.type === "maintenance",
+  );
   const done = requests.filter((r) => r.stage === "done");
 
   const lastServicedAt = done
@@ -330,7 +336,9 @@ export async function getPropertyRollups({ period } = {}) {
     .map((property) => {
       const units = data.units.filter((u) => u.propertyId === property.id);
       const unitIds = new Set(units.map((u) => u.id));
-      const all = data.requests.filter((r) => unitIds.has(r.unitId));
+      const all = data.requests.filter(
+        (r) => unitIds.has(r.unitId) && r.type === "maintenance",
+      );
       const open = all.filter((r) => r.stage !== "done");
       const raised = all.filter((r) => inPeriod(r, since));
       const spend = raised.reduce((sum, r) => sum + (r.charge ?? 0), 0);
@@ -349,17 +357,18 @@ export async function getPropertyRollups({ period } = {}) {
 }
 
 // Spend and volume by category, for the two bar blocks on the dashboard.
+// Maintenance only, since that is all the ops portal manages.
 export async function getCategoryRollups({ period } = {}) {
   const since = raisedSince(period);
   const totals = new Map();
 
   for (const request of data.requests) {
+    if (request.type !== "maintenance") continue;
     if (!inPeriod(request, since)) continue;
 
     const entry = totals.get(request.category) ?? {
       category: request.category,
       label: categoryLabels[request.category] ?? request.category,
-      type: request.type,
       requests: 0,
       spend: 0,
     };
@@ -374,9 +383,11 @@ export async function getCategoryRollups({ period } = {}) {
 
 // The roster is deliberately thin: Ops PRD §9 makes the HRMS the system of
 // record for staff identity in Phase 3, so everything here is either derived
-// from request data or ops-owned (load, coverage).
+// from request data or ops-owned (load, coverage). Maintenance only, since
+// the ops portal no longer manages a housekeeping crew.
 export async function getStaffRoster() {
   return data.staff
+    .filter((member) => member.role === "maintenance")
     .map((member) => {
       const assigned = data.requests.filter((r) => r.assigneeId === member.id);
       const open = assigned.filter((r) => r.stage !== "done");
@@ -428,16 +439,17 @@ export async function getAssignmentCandidates(request) {
     .sort((a, b) => b.score - a.score);
 }
 
+// Maintenance only, since that is all the ops portal manages — housekeeping
+// spend is billed on to tenants and never lands on this dashboard.
 export async function getDashboardStats({ period } = {}) {
   const since = raisedSince(period);
-  const all = data.requests.map(enrich);
+  const all = data.requests
+    .filter((r) => r.type === "maintenance")
+    .map(enrich);
   const raised = all.filter((request) => inPeriod(request, since));
   const open = all.filter((r) => r.stage !== "done");
   const closed = all.filter((r) => r.stage === "done");
-  const spendOf = (type) =>
-    raised
-      .filter((r) => r.type === type)
-      .reduce((sum, r) => sum + (r.charge ?? 0), 0);
+  const spend = raised.reduce((sum, r) => sum + (r.charge ?? 0), 0);
 
   return {
     open: open.length,
@@ -453,17 +465,13 @@ export async function getDashboardStats({ period } = {}) {
     urgentBuildings: new Set(
       open.filter((r) => r.priority === "urgent").map((r) => r.property?.id),
     ).size,
-    // The dashboard splits spend the way the money splits: maintenance is the
-    // landlord's, housekeeping is billed on to the tenant.
-    maintenanceSpend: spendOf("maintenance"),
-    housekeepingSpend: spendOf("housekeeping"),
-    housekeepingJobs: raised.filter((r) => r.type === "housekeeping").length,
-    periodSpend: raised.reduce((sum, r) => sum + (r.charge ?? 0), 0),
+    maintenanceSpend: spend,
+    periodSpend: spend,
     costTrend: costByMonth(closed),
   };
 }
 
-// Housekeeping charges rolled up by month — the "cost trends over time" the
+// Maintenance charges rolled up by month — the "cost trends over time" the
 // ops manager view calls for.
 function costByMonth(closed) {
   const buckets = new Map();
@@ -816,53 +824,13 @@ function slug(label) {
     .replace(/^-|-$/g, "");
 }
 
-export async function addHousekeepingRate({ label, price }) {
-  if (!label?.trim()) throw new Error("A rate needs a service name");
-
-  const serviceType = slug(label);
-  if (data.housekeepingRates.some((r) => r.serviceType === serviceType)) {
-    throw new Error(`${label} is already on the rate card`);
-  }
-
-  const rate = { serviceType, label: label.trim(), price: Number(price) || 0 };
-  data.housekeepingRates.push(rate);
-  // A rate is only a real option once the queue can categorise against it.
-  categoryLabels[serviceType] = rate.label;
-  categoryCodes[serviceType] = rate.label.slice(0, 2).toUpperCase();
-  return rate;
-}
-
-// A rate can only leave the card once nothing open is priced against it —
-// a booking keeps the price it was made at, but a tenant cannot be left
-// mid-service with a rate the card no longer lists.
-export async function removeHousekeepingRate(serviceType) {
-  const index = data.housekeepingRates.findIndex(
-    (rate) => rate.serviceType === serviceType,
-  );
-  if (index === -1) throw new Error(`Unknown service ${serviceType}`);
-
-  const open = data.requests.filter(
-    (request) => request.category === serviceType && request.stage !== "done",
-  );
-  if (open.length > 0) {
-    throw new Error(
-      `${open.length} open ${open.length === 1 ? "booking uses" : "bookings use"} this service — close them first`,
-    );
-  }
-
-  const [rate] = data.housekeepingRates.splice(index, 1);
-  // The label stays in the lookup so requests already charged against it keep
-  // reading as themselves in the history.
-  return rate;
-}
-
 // --- Staff ---------------------------------------------------------------
 // Ops PRD §9 makes the HRMS the record for staff identity from Phase 3. Until
 // then the roster is ops-owned and editable here, which is why only the two
 // fields ops actually decides — who they are and what they are certified for
-// — can be set.
+// — can be set. Maintenance is the only trade the ops portal manages.
 
-const staffRoles = ["maintenance", "housekeeping"];
+const staffRoles = ["maintenance"];
 
 function staffId(name) {
   const base = slug(name).split("-").filter(Boolean).pop() ?? "member";

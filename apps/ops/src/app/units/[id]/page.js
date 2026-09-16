@@ -24,7 +24,11 @@ export default async function UnitDetailPage({ params }) {
 
   if (!unit) notFound();
 
-  const all = await getRequests({ unitId: id, sort: "newest" });
+  const all = await getRequests({
+    unitId: id,
+    type: "maintenance",
+    sort: "newest",
+  });
   const open = all.filter((request) => request.stage !== "done");
   const hasHistory = all.length > open.length;
 

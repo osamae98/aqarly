@@ -23,7 +23,12 @@ export default async function UnitHistoryPage({ params, searchParams }) {
 
   if (!unit) notFound();
 
-  const done = await getRequests({ unitId: id, stage: "done", sort: "newest" });
+  const done = await getRequests({
+    unitId: id,
+    type: "maintenance",
+    stage: "done",
+    sort: "newest",
+  });
 
   const categoryKeys = [...new Set(done.map((request) => request.category))];
   const category = categoryKeys.includes(query.category) ? query.category : null;

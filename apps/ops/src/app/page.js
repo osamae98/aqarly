@@ -64,7 +64,7 @@ export default async function OpsDashboardPage({ searchParams }) {
       </PageBar>
 
       <div className="flex flex-col gap-4.5 p-4 md:p-6">
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <Stat
             label="Open requests"
             value={stats.open}
@@ -78,10 +78,6 @@ export default async function OpsDashboardPage({ searchParams }) {
               stats.urgentBuildings === 1 ? "building" : "buildings"
             }`}
           />
-          {/* The design splits the money the way it splits in the business:
-            * maintenance is the landlord's, housekeeping is billed on. Only
-            * housekeeping work carries a charge in the data so far, which is
-            * what the maintenance tile ends up reporting. */}
           <Stat
             label="Maintenance spend"
             value={formatCharge(stats.maintenanceSpend)}
@@ -90,13 +86,6 @@ export default async function OpsDashboardPage({ searchParams }) {
                 ? `${formatCharge(Math.round(stats.maintenanceSpend / totalUnits))} per unit`
                 : "No maintenance charges recorded"
             }
-          />
-          <Stat
-            label="Housekeeping billed"
-            value={formatCharge(stats.housekeepingSpend)}
-            hint={`${stats.housekeepingJobs} ${
-              stats.housekeepingJobs === 1 ? "job" : "jobs"
-            } · billed to tenants`}
           />
         </div>
 
