@@ -29,7 +29,7 @@ function counter(all, key) {
 
 // Paged rather than infinite — the queue is filtered and sorted server-side
 // already, so a page is just a slice of that same, stable order.
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 
 export default async function RequestQueuePage({ searchParams }) {
   const params = await searchParams;
@@ -224,7 +224,7 @@ export default async function RequestQueuePage({ searchParams }) {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-x-auto py-4 md:py-6">
+      <div className="min-h-0 flex-1 overflow-x-auto py-4 [scrollbar-width:thin] md:py-6 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border-strong [&::-webkit-scrollbar-track]:bg-transparent">
         <RequestRows
           requests={pageRequests}
           staff={staff}

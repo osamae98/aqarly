@@ -216,7 +216,7 @@ export default function RequestRows({
           </div>
 
           <div className="overflow-hidden rounded-b-md">
-          <div className="divide-y divide-sunken">
+          <div className="max-h-[60vh] divide-y divide-sunken overflow-y-auto">
             {requests.length === 0 && (
               <p className="px-3 py-16 text-center text-sm text-ink-muted">
                 No requests match these filters.
@@ -309,19 +309,24 @@ export default function RequestRows({
               </div>
             ))}
           </div>
-
-          {pageCount > 1 && (
-            <Pagination
-              page={page}
-              pageCount={pageCount}
-              pageSize={pageSize}
-              total={total}
-              searchParams={searchParams}
-            />
-          )}
           </div>
         </div>
       </div>
+
+      {/* Outside the horizontally-scrolling card on purpose — the count and
+        * the prev/next controls need to stay on screen no matter how far
+        * right the table itself has been scrolled. */}
+      {requests.length > 0 && (
+        <div className="px-4 md:px-6">
+          <Pagination
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            total={total}
+            searchParams={searchParams}
+          />
+        </div>
+      )}
 
       <AssignPanel
         open={assignOpen}
@@ -393,7 +398,7 @@ function Pagination({ page, pageCount, pageSize, total, searchParams }) {
   const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-3 py-3">
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-3">
       <span className="text-[12.5px] text-ink-muted">
         {from}–{to} of {total} requests
       </span>
@@ -407,25 +412,26 @@ function Pagination({ page, pageCount, pageSize, total, searchParams }) {
           <Icon name="chevron-right" size={14} className="rotate-180" />
         </PageLink>
 
-        {pageNumbers(page, pageCount).map((entry, index) =>
-          entry === "…" ? (
-            <span
-              key={`ellipsis-${index}`}
-              className="px-1.5 text-[12.5px] text-ink-muted"
-            >
-              …
-            </span>
-          ) : (
-            <PageLink
-              key={entry}
-              href={pageHref(entry, searchParams)}
-              current={entry === page}
-              label={`Page ${entry}`}
-            >
-              {entry}
-            </PageLink>
-          ),
-        )}
+        {pageCount > 1 &&
+          pageNumbers(page, pageCount).map((entry, index) =>
+            entry === "…" ? (
+              <span
+                key={`ellipsis-${index}`}
+                className="px-1.5 text-[12.5px] text-ink-muted"
+              >
+                …
+              </span>
+            ) : (
+              <PageLink
+                key={entry}
+                href={pageHref(entry, searchParams)}
+                current={entry === page}
+                label={`Page ${entry}`}
+              >
+                {entry}
+              </PageLink>
+            ),
+          )}
 
         <PageLink
           href={pageHref(page + 1, searchParams)}
