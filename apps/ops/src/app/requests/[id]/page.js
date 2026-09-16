@@ -168,18 +168,7 @@ export default async function RequestDetailPage({ params }) {
         )}
 
         <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <MicroLabel>Activity</MicroLabel>
-            <span className="flex-1" />
-            {unit && (
-              <Link
-                href={`/units/${unit.id}`}
-                className="shrink-0 text-[13px] font-semibold text-brand hover:underline"
-              >
-                Open the unit record →
-              </Link>
-            )}
-          </div>
+          <MicroLabel>Activity</MicroLabel>
           <ActivityLog request={request} />
         </section>
       </div>
