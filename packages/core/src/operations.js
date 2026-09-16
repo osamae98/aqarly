@@ -216,11 +216,22 @@ export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
 // business rule.
 export const maxRequestPhotos = 4;
 
-// The fixed windows a visit can be booked into — the same three the tenant
-// portal's (read-only) booking mockup already shows, now real on the ops
-// side. A request's schedule is an absolute, chosen slot, not a derived
+// The hour marks a visit's window can start or end on. A request's schedule
+// is an absolute, chosen from–to pair typed by the admin, not a derived
 // duration, so it carries no SLA meaning on its own.
-export const timeSlots = ["9AM–12PM", "12PM–3PM", "3PM–6PM"];
+export const visitHours = [
+  "8AM", "9AM", "10AM", "11AM", "12PM",
+  "1PM", "2PM", "3PM", "4PM", "5PM", "6PM", "7PM", "8PM",
+];
+
+// A slot is "<from>–<to>", both hour marks above, with the visit starting
+// before it ends — any span the admin picks, not one of a fixed few.
+export function isValidScheduledSlot(slot) {
+  const [from, to] = slot.split("–");
+  const fromIndex = visitHours.indexOf(from);
+  const toIndex = visitHours.indexOf(to);
+  return fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
+}
 
 function repeatFaultFor(requests, now) {
   const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
@@ -682,7 +693,7 @@ export async function createRequest({
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
   if (!summary?.trim()) throw new Error("A request needs a summary");
   if (!categoryLabels[category]) throw new Error(`Unknown category ${category}`);
-  if (scheduledSlot && !timeSlots.includes(scheduledSlot)) {
+  if (scheduledSlot && !isValidScheduledSlot(scheduledSlot)) {
     throw new Error(`Unknown time slot ${scheduledSlot}`);
   }
 

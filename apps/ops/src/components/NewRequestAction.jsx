@@ -15,7 +15,7 @@ import { createRequestAction } from "@/app/actions";
 import {
   maintenanceCategories,
   maxRequestPhotos,
-  timeSlots,
+  visitHours,
 } from "@aqarly/core/operations";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -30,6 +30,8 @@ export default function NewRequestAction({
   const [open, setOpen] = useState(false);
   const [propertyId, setPropertyId] = useState(buildings[0]?.id ?? "");
   const [category, setCategory] = useState(categories[0]?.value ?? "");
+  const [scheduledFrom, setScheduledFrom] = useState("");
+  const [scheduledTo, setScheduledTo] = useState("");
   // Closes on success; the toast carries the confirmation from there.
   const { submit, pending, result } = useFormAction(createRequestAction, {
     onSuccess: () => setOpen(false),
@@ -46,6 +48,19 @@ export default function NewRequestAction({
     ? "maintenance"
     : "housekeeping";
   const eligibleStaff = staff.filter((member) => member.role === type);
+
+  // From and To move independently — picking one never touches the other.
+  // A slot only posts once the pair is a real span (from before to); an
+  // out-of-order pair just doesn't compose one yet, rather than snapping
+  // either field back.
+  const fromIndex = visitHours.indexOf(scheduledFrom);
+  const toIndex = visitHours.indexOf(scheduledTo);
+  const rangeIsBackwards =
+    scheduledFrom && scheduledTo && fromIndex >= toIndex;
+  const scheduledSlot =
+    scheduledFrom && scheduledTo && !rangeIsBackwards
+      ? `${scheduledFrom}–${scheduledTo}`
+      : "";
 
   return (
     <>
@@ -133,7 +148,7 @@ export default function NewRequestAction({
             textarea
             placeholder="What's happening, when it started, access notes…"
           />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <TextField
               label="Date"
               name="scheduledDate"
@@ -141,15 +156,34 @@ export default function NewRequestAction({
               min={todayIso()}
             />
             <SelectField
-              label="Time slot"
-              name="scheduledSlot"
+              label="From"
+              name="scheduledFromDisplay"
               placeholder="No slot booked"
+              value={scheduledFrom}
+              onChange={setScheduledFrom}
               options={[
                 { value: "", label: "No slot booked" },
-                ...timeSlots.map((slot) => ({ value: slot, label: slot })),
+                ...visitHours.map((hour) => ({ value: hour, label: hour })),
               ]}
             />
+            <SelectField
+              label="To"
+              name="scheduledToDisplay"
+              placeholder="No slot booked"
+              value={scheduledTo}
+              onChange={setScheduledTo}
+              options={[
+                { value: "", label: "No slot booked" },
+                ...visitHours.map((hour) => ({ value: hour, label: hour })),
+              ]}
+            />
+            <input type="hidden" name="scheduledSlot" value={scheduledSlot} />
           </div>
+          {rangeIsBackwards && (
+            <p className="-mt-2 text-xs text-danger">
+              &ldquo;To&rdquo; must be after &ldquo;From&rdquo;.
+            </p>
+          )}
           <SelectField
             label="Assign to"
             name="assigneeId"
