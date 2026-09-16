@@ -6,18 +6,6 @@ import {
   formatDate,
 } from "@aqarly/core/operations";
 
-const statusTones = {
-  occupied: "success",
-  vacant: "neutral",
-  "under-maintenance": "warning",
-};
-
-const statusLabels = {
-  occupied: "Occupied",
-  vacant: "Vacant",
-  "under-maintenance": "Maintenance",
-};
-
 // A unit tile under a building's card. A unit with no history yet has
 // nothing true to say about open work, spend, or service — so the history
 // line only appears once there is one, rather than three dashes on every
@@ -39,9 +27,11 @@ export default function UnitCard({ unit }) {
             {unit.bedrooms} BR · {unit.bathrooms} bath
           </span>
         </div>
-        <Badge tone={statusTones[unit.status] ?? "neutral"} dot={false}>
-          {statusLabels[unit.status] ?? unit.status}
-        </Badge>
+        {unit.status === "under-maintenance" && (
+          <Badge tone="warning" dot={false}>
+            Maintenance
+          </Badge>
+        )}
       </div>
 
       <div className="truncate text-[13.5px] text-ink">
