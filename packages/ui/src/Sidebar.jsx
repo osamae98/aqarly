@@ -2,11 +2,12 @@ import Link from "next/link";
 import Icon from "./Icon";
 
 // Ported from the design system's `components/navigation/Sidebar.jsx`, with
-// three additions the ops chrome needs, all supersets of the documented API:
+// four additions the ops chrome needs, all supersets of the documented API:
 // `tone="brand"` for the dark rail the portal is drawn with, `children` for
-// domain content below the nav (the building scope tree), and `href` on an
-// item so an app-router shell renders real links rather than routing
-// imperatively.
+// domain content below the nav (the building scope tree), `href` on an item
+// so an app-router shell renders real links rather than routing
+// imperatively, and `onToggleCollapse` for the edge handle that makes
+// `collapsed` a choice the person at the keyboard gets to make.
 const chrome = {
   surface: {
     aside: "border-e border-border bg-surface",
@@ -18,6 +19,7 @@ const chrome = {
     footer: "border-t border-border",
     countIdle: "bg-sunken text-ink-muted",
     countActive: "bg-brand-tint-strong text-brand",
+    handle: "border-border bg-surface text-ink-muted hover:border-brand hover:text-brand",
   },
   brand: {
     aside: "border-e border-[var(--green-800)] bg-[var(--green-700)]",
@@ -29,6 +31,8 @@ const chrome = {
     footer: "border-t border-white/10",
     countIdle: "bg-white/10 text-[var(--green-200)]",
     countActive: "bg-white/15 text-[var(--sand-50)]",
+    handle:
+      "border-[var(--green-800)] bg-[var(--green-600)] text-[var(--green-200)] hover:bg-[var(--green-500)] hover:text-[var(--sand-50)]",
   },
 };
 
@@ -44,6 +48,13 @@ function Item({ item, active, collapsed, onNavigate, skin }) {
       {active && !collapsed && (
         <span
           className={`absolute inset-y-2 start-0 w-[3px] rounded-pill ${skin.rail}`}
+        />
+      )}
+      {/* Collapsed loses the room for a left rail, so the same accent comes
+        * back as a dot under the icon instead of disappearing. */}
+      {active && collapsed && (
+        <span
+          className={`absolute bottom-1 start-1/2 size-1 -translate-x-1/2 rounded-pill ${skin.rail}`}
         />
       )}
       {item.icon && <Icon name={item.icon} size={18} />}
@@ -98,6 +109,7 @@ export default function Sidebar({
   activeItem,
   onNavigate,
   collapsed = false,
+  onToggleCollapse,
   tone = "surface",
   footer,
   className = "",
@@ -108,7 +120,7 @@ export default function Sidebar({
   return (
     <aside
       className={[
-        "flex h-full shrink-0 flex-col font-sans",
+        "relative flex h-full shrink-0 flex-col font-sans transition-[width] duration-200 ease-in-out",
         skin.aside,
         collapsed
           ? "w-[var(--sidebar-width-collapsed)]"
@@ -116,6 +128,28 @@ export default function Sidebar({
         className,
       ].join(" ")}
     >
+      {onToggleCollapse && (
+        // Straddles the border rather than living inside the header, so it
+        // stays in the same spot and keeps working whether or not `brand`
+        // has room left for it.
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={[
+            "absolute top-[var(--topbar-height)] end-0 z-30 flex size-6 -translate-y-1/2 translate-x-1/2 cursor-pointer items-center justify-center rounded-pill border shadow-sm transition-colors",
+            skin.handle,
+          ].join(" ")}
+        >
+          <Icon
+            name="chevron-right"
+            size={13}
+            className={`transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`}
+          />
+        </button>
+      )}
+
       {brand && (
         <div
           className={`flex h-[var(--topbar-height)] items-center overflow-hidden px-4 ${skin.header}`}
