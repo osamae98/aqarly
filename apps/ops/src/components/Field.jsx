@@ -66,7 +66,13 @@ const KIND_LABEL = { pdf: "PDF", video: "Video", other: "File" };
 // from the admin’s machine. There is no file store yet, so the files post
 // with the form and the server inlines them, which is why the cap and the
 // preview both live this close to the input.
-export function PhotoField({ label, name, max = 4, hint }) {
+export function PhotoField({
+  label,
+  name,
+  max = 4,
+  hint,
+  accept = "image/*,application/pdf,video/*",
+}) {
   const input = useRef(null);
   const [photos, setPhotos] = useState([]);
   const [trimmed, setTrimmed] = useState(false);
@@ -116,8 +122,8 @@ export function PhotoField({ label, name, max = 4, hint }) {
         id={name}
         name={name}
         type="file"
-        accept="image/*,application/pdf,video/*"
-        multiple
+        accept={accept}
+        multiple={max > 1}
         onChange={(event) => read(event.target.files)}
         className="cursor-pointer rounded-sm border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
       />

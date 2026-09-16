@@ -51,10 +51,14 @@ function playableType(type) {
   return type === "video/quicktime" ? "video/mp4" : type;
 }
 
-async function readPhotos(formData) {
-  const files = formData
-    .getAll("photos")
+function uploadedFiles(formData, name) {
+  return formData
+    .getAll(name)
     .filter((file) => file && typeof file.arrayBuffer === "function" && file.size > 0);
+}
+
+async function readPhotos(formData) {
+  const files = uploadedFiles(formData, "photos");
 
   if (files.length > maxRequestPhotos) {
     throw new Error(`Up to ${maxRequestPhotos} attachments per request`);
@@ -77,6 +81,23 @@ async function readPhotos(formData) {
       return { name: file.name, dataUrl: `data:${type};base64,${base64}` };
     }),
   );
+}
+
+// A staff photo is an avatar, so unlike a request's attachments it has to be
+// an image.
+async function readStaffPhoto(formData) {
+  const [file] = uploadedFiles(formData, "photo");
+  if (!file) return null;
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error(`${file.name} is not an image`);
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`${file.name} is larger than 2 MB`);
+  }
+
+  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  return `data:${file.type};base64,${base64}`;
 }
 
 export async function createRequestAction(formData) {
@@ -160,7 +181,9 @@ export async function addStaffAction(formData) {
   try {
     const member = await addStaff({
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();
@@ -174,7 +197,9 @@ export async function updateStaffAction(formData) {
   try {
     const member = await updateStaff(formData.get("id"), {
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();
