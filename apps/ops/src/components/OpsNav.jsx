@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@aqarly/ui/Sidebar";
 import { resetAction } from "@/app/actions";
+import OpsMark from "@/components/OpsMark";
 
 // Remembered across visits — a rail an admin collapsed yesterday should stay
 // collapsed, the same way a window's size does.
@@ -52,22 +53,19 @@ export default function OpsNav({ openCount, className = "" }) {
       onToggleCollapse={toggle}
       className={className}
       brand={
-        collapsed ? (
-          <span className="flex w-full items-center justify-center">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-              A
-            </span>
-          </span>
-        ) : (
-          <span className="flex items-center gap-2.5">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-              A
-            </span>
+        <span
+          className={[
+            "flex items-center",
+            collapsed ? "w-full justify-center" : "gap-2.5",
+          ].join(" ")}
+        >
+          <OpsMark className="size-7 shrink-0" />
+          {!collapsed && (
             <span className="truncate text-[15px] font-semibold text-[var(--sand-50)]">
               Aqarly Ops
             </span>
-          </span>
-        )
+          )}
+        </span>
       }
       activeItem={activeItem}
       sections={[
