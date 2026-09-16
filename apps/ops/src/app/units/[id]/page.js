@@ -1,13 +1,11 @@
 import Link from "next/link";
-import ChargeRows from "@/components/ChargeRows";
+import MaintenanceCard from "@/components/MaintenanceCard";
 import PageBar from "@/components/PageBar";
 import ReplacementAction from "@/components/ReplacementAction";
-import ServiceHistoryRows from "@/components/ServiceHistoryRows";
-import Tabs from "@aqarly/ui/Tabs";
+import UnitCrumb from "@/components/UnitCrumb";
 import {
   categoryLabels,
   formatCharge,
-  formatDate,
   getRequests,
   getUnitById,
   repeatFaultRule,
@@ -20,9 +18,8 @@ export async function generateMetadata({ params }) {
   return { title: unit ? `Unit ${unit.label}` : "Unit" };
 }
 
-export default async function UnitDetailPage({ params, searchParams }) {
+export default async function UnitDetailPage({ params }) {
   const { id } = await params;
-  const query = await searchParams;
   const unit = await getUnitById(id);
 
   if (!unit) notFound();
@@ -32,28 +29,9 @@ export default async function UnitDetailPage({ params, searchParams }) {
     type: "maintenance",
     sort: "newest",
   });
+  const open = all.filter((request) => request.stage !== "done");
+  const hasHistory = all.length > open.length;
 
-  const tab = query.tab === "charges" ? "charges" : "history";
-  const charged = all.filter((request) => request.charge);
-  const pool = tab === "charges" ? charged : all;
-
-  const categoryKeys = [...new Set(all.map((request) => request.category))];
-  const category = categoryKeys.includes(query.category) ? query.category : null;
-
-  const scoped = pool.filter(
-    (request) => !category || request.category === category,
-  );
-
-  const categories = [
-    { value: null, label: "All work", count: pool.length },
-    ...categoryKeys.map((key) => ({
-      value: key,
-      label: categoryLabels[key] ?? key,
-      count: pool.filter((request) => request.category === key).length,
-    })),
-  ];
-
-  const chargedTotal = charged.reduce((sum, r) => sum + (r.charge ?? 0), 0);
   const repeatLabel = unit.repeatFault
     ? (categoryLabels[unit.repeatFault.category] ?? unit.repeatFault.category)
     : null;
@@ -61,44 +39,15 @@ export default async function UnitDetailPage({ params, searchParams }) {
   return (
     <>
       <PageBar
-        eyebrow={
-          <span className="flex items-center gap-1.5">
-            <Link href="/units" className="hover:text-brand">
-              Buildings
-            </Link>
-            <span className="text-border-strong">/</span>
-            <Link
-              href={`/units?propertyId=${unit.propertyId}`}
-              className="hover:text-brand"
-            >
-              {unit.property?.name}
-            </Link>
-            <span className="text-border-strong">/</span>
-            <span className="font-mono">{unit.label}</span>
-          </span>
-        }
+        eyebrow={<UnitCrumb unit={unit} />}
         title={`Unit ${unit.label} · ${unit.property?.name ?? ""}`}
         meta={`${unit.bedrooms} BR · ${unit.bathrooms} bath · ${unit.tenant?.name ?? "no tenant"}`}
         stats={
-          // The header counts what the open tab is about.
-          <div className="flex gap-6">
-            {tab === "charges" ? (
-              <>
-                <HeadStat value={charged.length} label="charges on record" />
-                <HeadStat
-                  value={formatCharge(chargedTotal)}
-                  label="charged to date"
-                />
-              </>
-            ) : (
-              <>
-                <HeadStat value={unit.requestCount} label="requests on record" />
-                <HeadStat
-                  value={formatCharge(unit.lifetimeSpend)}
-                  label="lifetime spend"
-                />
-              </>
-            )}
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="font-mono text-[22px] leading-none font-bold text-ink">
+              {open.length}
+            </span>
+            <span className="text-[11.5px] text-ink-muted">open now</span>
           </div>
         }
       />
@@ -139,54 +88,32 @@ export default async function UnitDetailPage({ params, searchParams }) {
           </div>
         )}
 
-        <Tabs
-          value={tab}
-          tabs={[
-            {
-              value: "history",
-              label: "Service history",
-              count: all.length,
-              href: `/units/${unit.id}${category ? `?category=${category}` : ""}`,
-            },
-            {
-              value: "charges",
-              label: "Charges",
-              count: charged.length,
-              href: `/units/${unit.id}?tab=charges${category ? `&category=${category}` : ""}`,
-            },
-          ]}
-        />
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-ink">Current maintenance</h2>
+            {hasHistory && (
+              <Link
+                href={`/units/${unit.id}/history`}
+                className="rounded-pill border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+              >
+                View maintenance history →
+              </Link>
+            )}
+          </div>
 
-        <div className="overflow-x-auto">
-          {tab === "charges" ? (
-            <ChargeRows requests={scoped} />
+          {open.length === 0 ? (
+            <p className="rounded-md border border-dashed border-border-strong py-10 text-center text-sm text-ink-muted">
+              No open maintenance on this unit.
+            </p>
           ) : (
-            <ServiceHistoryRows
-              requests={scoped}
-              categories={categories}
-              searchParams={query}
-              basePath={`/units/${unit.id}`}
-            />
+            <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+              {open.map((request) => (
+                <MaintenanceCard key={request.id} request={request} />
+              ))}
+            </div>
           )}
-        </div>
-
-        {unit.lastServicedAt && (
-          <p className="text-[13px] text-ink-muted">
-            Last completed visit {formatDate(unit.lastServicedAt)}.
-          </p>
-        )}
+        </section>
       </div>
     </>
-  );
-}
-
-function HeadStat({ value, label }) {
-  return (
-    <div className="flex flex-col items-end gap-0.5">
-      <span className="font-mono text-[22px] leading-none font-bold text-ink">
-        {value}
-      </span>
-      <span className="text-[11.5px] text-ink-muted">{label}</span>
-    </div>
   );
 }

@@ -220,6 +220,23 @@ export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
 // business rule.
 export const maxRequestPhotos = 4;
 
+// The hour marks a visit's window can start or end on. A request's schedule
+// is an absolute, chosen from–to pair typed by the admin, not a derived
+// duration, so it carries no SLA meaning on its own.
+export const visitHours = [
+  "8AM", "9AM", "10AM", "11AM", "12PM",
+  "1PM", "2PM", "3PM", "4PM", "5PM", "6PM", "7PM", "8PM",
+];
+
+// A slot is "<from>–<to>", both hour marks above, with the visit starting
+// before it ends — any span the admin picks, not one of a fixed few.
+export function isValidScheduledSlot(slot) {
+  const [from, to] = slot.split("–");
+  const fromIndex = visitHours.indexOf(from);
+  const toIndex = visitHours.indexOf(to);
+  return fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
+}
+
 function repeatFaultFor(requests, now) {
   const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
   const counts = new Map();
@@ -676,11 +693,17 @@ export async function createRequest({
   summary,
   description = "",
   photos = [],
+  assigneeId = null,
+  scheduledDate = null,
+  scheduledSlot = null,
 }) {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
   if (!summary?.trim()) throw new Error("A request needs a summary");
   if (!categoryLabels[category]) throw new Error(`Unknown category ${category}`);
+  if (scheduledSlot && !isValidScheduledSlot(scheduledSlot)) {
+    throw new Error(`Unknown time slot ${scheduledSlot}`);
+  }
 
   // The category decides the trade, and the trade decides who can be assigned
   // and who gets billed — so it is derived here rather than asked for twice.
@@ -715,9 +738,21 @@ export async function createRequest({
       })),
     charge: null,
     completionNotes: null,
+    // Both or neither — a date with no window, or a window with no date,
+    // isn't a booking.
+    schedule:
+      scheduledDate && scheduledSlot
+        ? { date: scheduledDate, slot: scheduledSlot }
+        : null,
   };
 
   data.requests.push(request);
+
+  // Assigning here is the same move as assigning from the queue, just made
+  // at creation time — so it goes through the one path that knows how to
+  // validate a technician and carry the request into "assigned".
+  if (assigneeId) await assignRequests(request.id, assigneeId);
+
   return request;
 }
 

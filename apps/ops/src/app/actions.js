@@ -27,10 +27,29 @@ function fail(error) {
   return { ok: false, error: error.message ?? "Something went wrong" };
 }
 
-// There is no file store yet, so an uploaded photo is inlined as a data URL
-// and kept with the request. That only stays reasonable while the files are
-// small, which is what the cap is for.
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+// There is no file store yet, so an uploaded file is inlined as a data URL
+// and kept with the request. That only stays reasonable while files are
+// small — a photo or a PDF comfortably is; video only barely is, which is
+// why it gets its own, much tighter cap, and why raising either further has
+// to wait for somewhere real for these to live.
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+
+const ACCEPTED_KINDS = [
+  { test: (type) => type.startsWith("image/"), max: MAX_IMAGE_BYTES },
+  { test: (type) => type === "application/pdf", max: MAX_IMAGE_BYTES },
+  { test: (type) => type.startsWith("video/"), max: MAX_VIDEO_BYTES },
+];
+
+// A phone's "regular" camera recording is H.264/AAC in a QuickTime
+// container — decodable by every browser's mp4 support, just labelled
+// video/quicktime. Browsers only check the label, not the bytes, and won't
+// play that label at all, so it's relabelled to the mp4 they'd otherwise
+// have accepted without complaint. A clip actually encoded as HEVC still
+// won't decode; the viewer's own fallback catches that case.
+function playableType(type) {
+  return type === "video/quicktime" ? "video/mp4" : type;
+}
 
 async function readPhotos(formData) {
   const files = formData
@@ -38,20 +57,24 @@ async function readPhotos(formData) {
     .filter((file) => file && typeof file.arrayBuffer === "function" && file.size > 0);
 
   if (files.length > maxRequestPhotos) {
-    throw new Error(`Up to ${maxRequestPhotos} photos per request`);
+    throw new Error(`Up to ${maxRequestPhotos} attachments per request`);
   }
 
   return Promise.all(
     files.map(async (file) => {
-      if (!file.type.startsWith("image/")) {
-        throw new Error(`${file.name} is not an image`);
+      const kind = ACCEPTED_KINDS.find((k) => k.test(file.type));
+      if (!kind) {
+        throw new Error(`${file.name} isn't a photo, PDF, or video`);
       }
-      if (file.size > MAX_PHOTO_BYTES) {
-        throw new Error(`${file.name} is larger than 2 MB`);
+      if (file.size > kind.max) {
+        throw new Error(
+          `${file.name} is larger than ${Math.round(kind.max / (1024 * 1024))} MB`,
+        );
       }
 
       const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-      return { name: file.name, dataUrl: `data:${file.type};base64,${base64}` };
+      const type = playableType(file.type);
+      return { name: file.name, dataUrl: `data:${type};base64,${base64}` };
     }),
   );
 }
@@ -65,6 +88,9 @@ export async function createRequestAction(formData) {
       summary: formData.get("summary"),
       description: formData.get("description") ?? "",
       photos: await readPhotos(formData),
+      assigneeId: formData.get("assigneeId") || null,
+      scheduledDate: formData.get("scheduledDate") || null,
+      scheduledSlot: formData.get("scheduledSlot") || null,
     });
 
     revalidateAll();

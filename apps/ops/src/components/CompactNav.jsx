@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@aqarly/ui/Icon";
+import OpsMark from "@/components/OpsMark";
 
 const items = [
   { href: "/requests", label: "Requests", icon: "file-text" },
   { href: "/units", label: "Buildings", icon: "building" },
   { href: "/staff", label: "Staff", icon: "users" },
   { href: "/", label: "Reports", icon: "sliders" },
-  { href: "/rates", label: "Rates", icon: "receipt" },
 ];
 
 // Stands in for the rail below its breakpoint — the building scope stays a
@@ -19,9 +19,7 @@ export default function CompactNav({ openCount }) {
 
   return (
     <header className="flex shrink-0 items-center gap-2 bg-[var(--green-700)] px-3 py-2 md:hidden">
-      <span className="flex size-7 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-        A
-      </span>
+      <OpsMark className="size-7 shrink-0" />
       <nav className="flex flex-1 items-center justify-end gap-1">
         {items.map((item) => {
           const active =
