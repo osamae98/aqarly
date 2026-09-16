@@ -50,17 +50,16 @@ export default function ServiceHistoryRows({
           const open = request.stage !== "done";
 
           return (
-            <div key={request.id} className={`${GRID} px-3 py-3.5`}>
+            <Link
+              key={request.id}
+              href={`/requests/${request.id}`}
+              className={`${GRID} group px-3 py-3.5 transition-colors hover:bg-page focus-visible:bg-page focus-visible:outline-none`}
+            >
               <span className="block min-w-0 truncate text-[13.5px] font-semibold text-ink">
                 {formatDate(request.createdAt)}
               </span>
-              <span>
-                <Link
-                  href={`/requests/${request.id}`}
-                  className="font-mono text-[12.5px] text-ink-soft hover:text-brand"
-                >
-                  {request.id}
-                </Link>
+              <span className="font-mono text-[12.5px] text-ink-soft group-hover:text-brand">
+                {request.id}
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-[13.5px] text-ink">
@@ -83,7 +82,7 @@ export default function ServiceHistoryRows({
               <span className="text-[13px] text-ink-soft">
                 {request.type === "housekeeping" ? "Tenant" : "Landlord"}
               </span>
-            </div>
+            </Link>
           );
         })}
       </div>
