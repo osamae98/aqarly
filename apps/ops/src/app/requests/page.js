@@ -162,7 +162,10 @@ export default async function RequestQueuePage({ searchParams }) {
             : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
-        <SearchField searchParams={params} />
+        <SearchField
+          placeholder="Search ref, unit, tenant…"
+          ariaLabel="Search requests"
+        />
         <NewRequestAction
           buildings={properties.map((property) => ({
             id: property.id,

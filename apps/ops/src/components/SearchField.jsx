@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Icon from "@aqarly/ui/Icon";
 
@@ -9,40 +9,40 @@ const DEBOUNCE_MS = 800;
 // wait for something worth filtering on.
 const MIN_QUERY_LENGTH = 2;
 
-// The queue's search box. Typing itself applies the filter — a submit button
-// with nothing to submit to would be furniture — so this only debounces the
-// navigation rather than waiting on an Enter or a click.
-export default function SearchField({
-  searchParams = {},
-  basePath = "/requests",
-}) {
+// A search box that filters as you type. Typing itself applies the filter — a
+// submit button with nothing to submit to would be furniture — so this only
+// debounces the navigation rather than waiting on an Enter or a click.
+export default function SearchField({ param = "q", placeholder, ariaLabel }) {
   const router = useRouter();
-  const [term, setTerm] = useState(searchParams.q ?? "");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const current = searchParams.get(param) ?? "";
+  const [term, setTerm] = useState(current);
   const timer = useRef(null);
-  // What we last sent the router — if the URL's `q` differs from this, the
+  // What we last sent the router — if the URL's param differs from this, the
   // change came from outside (the back button, a filter cleared elsewhere),
   // so the box should pick it up rather than keep showing a stale query.
-  const [lastSubmitted, setLastSubmitted] = useState(searchParams.q ?? "");
+  const [lastSubmitted, setLastSubmitted] = useState(current);
 
-  if ((searchParams.q ?? "") !== lastSubmitted) {
-    setLastSubmitted(searchParams.q ?? "");
-    setTerm(searchParams.q ?? "");
+  if (current !== lastSubmitted) {
+    setLastSubmitted(current);
+    setTerm(current);
   }
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
   function go(value) {
     setLastSubmitted(value.trim() ? value : "");
-    const params = new URLSearchParams(
-      Object.entries(searchParams).filter(([, v]) => typeof v === "string"),
-    );
+    const next = new URLSearchParams(searchParams);
     if (value.trim()) {
-      params.set("q", value);
+      next.set(param, value);
     } else {
-      params.delete("q");
+      next.delete(param);
     }
-    const query = params.toString();
-    router.replace(query ? `${basePath}?${query}` : basePath);
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
   }
 
   function onChange(event) {
@@ -65,8 +65,8 @@ export default function SearchField({
         type="search"
         value={term}
         onChange={onChange}
-        placeholder="Search ref, unit, tenant…"
-        aria-label="Search requests"
+        placeholder={placeholder}
+        aria-label={ariaLabel}
         className="w-full min-w-0 bg-transparent text-[13.5px] text-ink placeholder:text-ink-muted focus:outline-none sm:w-52"
       />
       <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-brand text-ink-inverse">
