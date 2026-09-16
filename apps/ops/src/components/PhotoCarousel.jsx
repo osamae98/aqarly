@@ -27,11 +27,18 @@ export default function PhotoCarousel({ photos = [] }) {
   const [index, setIndex] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const viewerRef = useRef(null);
-  const dragRef = useRef(null);
   const open = index !== null;
   const current = open ? photos[index] : null;
   const kind = current ? kindOf(current.dataUrl) : null;
+
+  // A codec the browser can't decode (an iPhone .mov clip is the usual
+  // culprit) leaves the <video> sitting frozen with no visible error, so the
+  // viewer needs to notice for itself and offer the download fallback below.
+  useEffect(() => {
+    setVideoError(false);
+  }, [current]);
 
   useEffect(() => {
     if (!open) return;
@@ -87,27 +94,6 @@ export default function PhotoCarousel({ photos = [] }) {
     } else {
       viewerRef.current?.requestFullscreen?.();
     }
-  }
-
-  // Plain click-and-drag panning once zoomed past 1x — the scrollable frame
-  // does the actual work, this just turns a drag into a scroll.
-  function onDragStart(event) {
-    if (zoom <= 1) return;
-    dragRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      left: event.currentTarget.scrollLeft,
-      top: event.currentTarget.scrollTop,
-    };
-  }
-  function onDragMove(event) {
-    if (!dragRef.current) return;
-    const frame = event.currentTarget;
-    frame.scrollLeft = dragRef.current.left - (event.clientX - dragRef.current.x);
-    frame.scrollTop = dragRef.current.top - (event.clientY - dragRef.current.y);
-  }
-  function onDragEnd() {
-    dragRef.current = null;
   }
 
   return (
@@ -202,14 +188,7 @@ export default function PhotoCarousel({ photos = [] }) {
           {kind === "image" ? (
             <div
               onClick={(event) => event.stopPropagation()}
-              onMouseDown={onDragStart}
-              onMouseMove={onDragMove}
-              onMouseUp={onDragEnd}
-              onMouseLeave={onDragEnd}
-              className={[
-                "flex max-h-[75vh] max-w-full items-center justify-center overflow-auto rounded-md",
-                zoom > 1 ? "cursor-grab active:cursor-grabbing" : "",
-              ].join(" ")}
+              className="flex max-h-[75vh] max-w-full items-center justify-center overflow-auto rounded-md"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -220,15 +199,34 @@ export default function PhotoCarousel({ photos = [] }) {
                 className="max-h-[75vh] max-w-full origin-center select-none object-contain shadow-lg transition-transform"
               />
             </div>
-          ) : kind === "video" ? (
+          ) : kind === "video" && !videoError ? (
             <video
               key={current.dataUrl}
               src={current.dataUrl}
               controls
               autoPlay
               onClick={(event) => event.stopPropagation()}
+              onError={() => setVideoError(true)}
               className="max-h-[75vh] max-w-full rounded-md shadow-lg"
             />
+          ) : kind === "video" ? (
+            <div
+              onClick={(event) => event.stopPropagation()}
+              className="flex w-full max-w-md flex-col items-center gap-3 rounded-md bg-surface p-8 text-center shadow-lg"
+            >
+              <Icon name="camera" size={28} className="text-ink-muted" />
+              <p className="text-sm text-ink">
+                This browser can&rsquo;t play {current.name} — its format
+                isn&rsquo;t supported for inline playback.
+              </p>
+              <a
+                href={current.dataUrl}
+                download={current.name}
+                className="rounded-pill bg-brand px-4 py-2 text-[13px] font-semibold text-ink-inverse hover:bg-brand-hover"
+              >
+                Download {current.name}
+              </a>
+            </div>
           ) : (
             <div
               onClick={(event) => event.stopPropagation()}

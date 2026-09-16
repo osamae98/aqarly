@@ -43,6 +43,16 @@ const ACCEPTED_KINDS = [
   { test: (type) => type.startsWith("video/"), max: MAX_VIDEO_BYTES },
 ];
 
+// A phone's "regular" camera recording is H.264/AAC in a QuickTime
+// container — decodable by every browser's mp4 support, just labelled
+// video/quicktime. Browsers only check the label, not the bytes, and won't
+// play that label at all, so it's relabelled to the mp4 they'd otherwise
+// have accepted without complaint. A clip actually encoded as HEVC still
+// won't decode; the viewer's own fallback catches that case.
+function playableType(type) {
+  return type === "video/quicktime" ? "video/mp4" : type;
+}
+
 async function readPhotos(formData) {
   const files = formData
     .getAll("photos")
@@ -65,7 +75,8 @@ async function readPhotos(formData) {
       }
 
       const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-      return { name: file.name, dataUrl: `data:${file.type};base64,${base64}` };
+      const type = playableType(file.type);
+      return { name: file.name, dataUrl: `data:${type};base64,${base64}` };
     }),
   );
 }
