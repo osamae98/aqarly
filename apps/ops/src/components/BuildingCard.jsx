@@ -51,7 +51,7 @@ export default function BuildingCard({ building, detail = false }) {
     );
   }
 
-  // The four figures worth a full tile; spend-per-unit and lifetime request
+  // The three figures worth a full tile; spend-per-unit and lifetime request
   // count are real but secondary, so they read as a caption rather than
   // competing with these at the same size.
   const facts = [
@@ -66,14 +66,13 @@ export default function BuildingCard({ building, detail = false }) {
       value: building.unassigned,
       tone: building.unassigned > 0 ? "text-danger" : "text-ink-muted",
     },
-    { label: "Lifetime spend", value: formatCharge(building.spend) },
   ];
 
   return (
     <section className="flex flex-col gap-4 rounded-md border border-border bg-surface p-5">
       {header}
 
-      <dl className="grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
+      <dl className="grid grid-cols-3 gap-3 border-t border-border pt-4">
         {facts.map((fact) => (
           <div key={fact.label} className="flex min-w-0 flex-col gap-1">
             <dt>

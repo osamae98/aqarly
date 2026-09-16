@@ -11,7 +11,7 @@ import {
 // it cost, and who it was billed to. The category filter sits in the Work
 // header, the same idiom the queue uses.
 const GRID =
-  "grid grid-cols-[132px_84px_minmax(0,1fr)_140px_100px_100px] items-center gap-3.5";
+  "grid grid-cols-[132px_84px_minmax(0,1fr)_140px_140px_100px_100px] items-center gap-3.5";
 
 export default function ServiceHistoryRows({
   requests,
@@ -20,7 +20,7 @@ export default function ServiceHistoryRows({
   basePath,
 }) {
   return (
-    <div className="min-w-[56rem] overflow-hidden rounded-md border border-border bg-surface">
+    <div className="min-w-[62rem] overflow-hidden rounded-md border border-border bg-surface">
       <div
         className={`${GRID} border-b border-border px-3 py-3 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
       >
@@ -34,6 +34,7 @@ export default function ServiceHistoryRows({
           basePath={basePath}
         />
         <span>Technician</span>
+        <span>Tenant</span>
         <span className="text-end">Cost</span>
         <span>Billed to</span>
       </div>
@@ -72,6 +73,9 @@ export default function ServiceHistoryRows({
               </span>
               <span className="min-w-0 truncate text-[13px] text-ink-soft">
                 {request.assignee?.name ?? "—"}
+              </span>
+              <span className="min-w-0 truncate text-[13px] text-ink-soft">
+                {request.tenant?.name ?? "—"}
               </span>
               <span className="text-end font-mono text-[13px] text-ink-soft">
                 {open ? "pending" : formatCharge(request.charge)}

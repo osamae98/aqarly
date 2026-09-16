@@ -1,9 +1,7 @@
 import Link from "next/link";
-import ChargeRows from "@/components/ChargeRows";
 import PageBar from "@/components/PageBar";
 import ReplacementAction from "@/components/ReplacementAction";
 import ServiceHistoryRows from "@/components/ServiceHistoryRows";
-import Tabs from "@aqarly/ui/Tabs";
 import {
   categoryLabels,
   formatCharge,
@@ -29,27 +27,22 @@ export default async function UnitDetailPage({ params, searchParams }) {
 
   const all = await getRequests({ unitId: id, sort: "newest" });
 
-  const tab = query.tab === "charges" ? "charges" : "history";
-  const charged = all.filter((request) => request.charge);
-  const pool = tab === "charges" ? charged : all;
-
   const categoryKeys = [...new Set(all.map((request) => request.category))];
   const category = categoryKeys.includes(query.category) ? query.category : null;
 
-  const scoped = pool.filter(
+  const scoped = all.filter(
     (request) => !category || request.category === category,
   );
 
   const categories = [
-    { value: null, label: "All work", count: pool.length },
+    { value: null, label: "All work", count: all.length },
     ...categoryKeys.map((key) => ({
       value: key,
       label: categoryLabels[key] ?? key,
-      count: pool.filter((request) => request.category === key).length,
+      count: all.filter((request) => request.category === key).length,
     })),
   ];
 
-  const chargedTotal = charged.reduce((sum, r) => sum + (r.charge ?? 0), 0);
   const repeatLabel = unit.repeatFault
     ? (categoryLabels[unit.repeatFault.category] ?? unit.repeatFault.category)
     : null;
@@ -76,25 +69,8 @@ export default async function UnitDetailPage({ params, searchParams }) {
         title={`Unit ${unit.label} · ${unit.property?.name ?? ""}`}
         meta={`${unit.bedrooms} BR · ${unit.bathrooms} bath · ${unit.tenant?.name ?? "no tenant"}`}
         stats={
-          // The header counts what the open tab is about.
           <div className="flex gap-6">
-            {tab === "charges" ? (
-              <>
-                <HeadStat value={charged.length} label="charges on record" />
-                <HeadStat
-                  value={formatCharge(chargedTotal)}
-                  label="charged to date"
-                />
-              </>
-            ) : (
-              <>
-                <HeadStat value={unit.requestCount} label="requests on record" />
-                <HeadStat
-                  value={formatCharge(unit.lifetimeSpend)}
-                  label="lifetime spend"
-                />
-              </>
-            )}
+            <HeadStat value={unit.requestCount} label="requests on record" />
           </div>
         }
       />
@@ -135,35 +111,13 @@ export default async function UnitDetailPage({ params, searchParams }) {
           </div>
         )}
 
-        <Tabs
-          value={tab}
-          tabs={[
-            {
-              value: "history",
-              label: "Service history",
-              count: all.length,
-              href: `/units/${unit.id}${category ? `?category=${category}` : ""}`,
-            },
-            {
-              value: "charges",
-              label: "Charges",
-              count: charged.length,
-              href: `/units/${unit.id}?tab=charges${category ? `&category=${category}` : ""}`,
-            },
-          ]}
-        />
-
         <div className="overflow-x-auto">
-          {tab === "charges" ? (
-            <ChargeRows requests={scoped} />
-          ) : (
-            <ServiceHistoryRows
-              requests={scoped}
-              categories={categories}
-              searchParams={query}
-              basePath={`/units/${unit.id}`}
-            />
-          )}
+          <ServiceHistoryRows
+            requests={scoped}
+            categories={categories}
+            searchParams={query}
+            basePath={`/units/${unit.id}`}
+          />
         </div>
 
         {unit.lastServicedAt && (
