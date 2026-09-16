@@ -116,6 +116,24 @@ export default function PhotoCarousel({ photos = [] }) {
                   alt={photo.name}
                   className="size-full object-cover"
                 />
+              ) : photoKind === "video" ? (
+                <span className="relative size-full">
+                  {/* muted + preload="metadata" is enough for the browser to
+                    * paint the clip's first frame as a thumbnail on its own,
+                    * no poster image to generate or store. */}
+                  <video
+                    src={photo.dataUrl}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="size-full object-cover"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="flex size-8 items-center justify-center rounded-pill bg-black/55 text-[var(--sand-50)]">
+                      <PlayIcon size={12} />
+                    </span>
+                  </span>
+                </span>
               ) : (
                 <span className="flex flex-col items-center gap-1.5 px-2 text-center">
                   <Icon
@@ -334,6 +352,22 @@ export default function PhotoCarousel({ photos = [] }) {
 // No "maximize" glyph in the shared icon set yet — four corner brackets is
 // the universal one, cheap enough to draw inline rather than add there for
 // a single caller.
+// A solid play triangle — the shared icon set is stroke-only, and a play
+// glyph reads as a play button only filled in.
+function PlayIcon({ size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="ms-0.5"
+    >
+      <path d="M6 4.5v15l14-7.5z" />
+    </svg>
+  );
+}
+
 function MaximizeIcon({ exit }) {
   return (
     <svg
