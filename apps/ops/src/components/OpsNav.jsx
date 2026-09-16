@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Sidebar from "@aqarly/ui/Sidebar";
 import { resetAction } from "@/app/actions";
+import OpsMark from "@/components/OpsMark";
 
 // The shell's nav. Client-side only because the active item is read off the
 // current URL — every item is still a real link, so nothing routes
@@ -19,9 +20,7 @@ export default function OpsNav({ openCount, className = "" }) {
       className={className}
       brand={
         <span className="flex items-center gap-2.5">
-          <span className="flex size-7 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-            A
-          </span>
+          <OpsMark className="size-7 shrink-0" />
           <span className="text-[15px] font-semibold text-[var(--sand-50)]">
             Aqarly Ops
           </span>
