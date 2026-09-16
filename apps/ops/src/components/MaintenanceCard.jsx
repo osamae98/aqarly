@@ -22,7 +22,7 @@ export default function MaintenanceCard({ request }) {
       className: unassigned ? "font-semibold text-danger" : null,
     },
     { label: "Tenant", value: request.tenant?.name ?? "—" },
-    { label: "Billed to", value: request.type === "housekeeping" ? "Tenant" : "Landlord" },
+    { label: "Billed to", value: "Landlord" },
   ];
 
   return (

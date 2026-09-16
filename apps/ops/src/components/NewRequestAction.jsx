@@ -13,7 +13,6 @@ import {
 } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
 import {
-  maintenanceCategories,
   maxRequestPhotos,
   visitHours,
 } from "@aqarly/core/operations";
@@ -44,10 +43,7 @@ export default function NewRequestAction({
   // known — the queue's own assign flow still ranks candidates once it
   // exists as a request. Left off, the request is unassigned, same as one
   // raised anywhere else.
-  const type = maintenanceCategories.includes(category)
-    ? "maintenance"
-    : "housekeeping";
-  const eligibleStaff = staff.filter((member) => member.role === type);
+  const eligibleStaff = staff.filter((member) => member.role === "maintenance");
 
   // From and To move independently — picking one never touches the other.
   // A slot only posts once the pair is a real span (from before to); an

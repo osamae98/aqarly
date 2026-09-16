@@ -27,12 +27,14 @@ export default async function RequestDetailPage({ params }) {
   const { id } = await params;
   const request = await getRequestById(id);
 
-  if (!request) notFound();
+  // The ops portal is maintenance-only — a housekeeping request has nothing
+  // to show here.
+  if (!request || request.type !== "maintenance") notFound();
 
   const [unit, candidates, neighbours] = await Promise.all([
     getUnitById(request.unitId),
     getAssignmentCandidates(request),
-    getRequestNeighbours(request.id),
+    getRequestNeighbours(request.id, { type: "maintenance" }),
   ]);
 
   const categoryLabel = categoryLabels[request.category] ?? request.category;
@@ -91,16 +93,8 @@ export default async function RequestDetailPage({ params }) {
 
       <div className="flex flex-col gap-5 p-4 md:p-6">
         <div className="flex flex-col gap-2">
-          <p
-            className={[
-              "font-mono text-[11px] font-bold tracking-[0.09em] uppercase",
-              request.type === "housekeeping"
-                ? "text-category-housekeeping"
-                : "text-category-maintenance",
-            ].join(" ")}
-          >
-            {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"} ·{" "}
-            {categoryLabel}
+          <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-category-maintenance uppercase">
+            Maintenance · {categoryLabel}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[27px] leading-tight font-bold tracking-[-0.015em] text-ink">
