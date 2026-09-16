@@ -7,7 +7,6 @@ import { MicroLabel } from "@/components/Panel";
 import PhotoCarousel from "@/components/PhotoCarousel";
 import {
   categoryLabels,
-  formatCharge,
   formatDate,
   getAssignmentCandidates,
   getRequestById,
@@ -115,11 +114,6 @@ export default async function RequestDetailPage({ params }) {
             <Badge tone={stageTones[request.stage]} dot={false}>
               {request.assignee ? stageLabels[request.stage] : "Unassigned"}
             </Badge>
-            {request.schedule && (
-              <Badge tone="neutral" dot={false}>
-                {formatDate(request.schedule.date)} · {request.schedule.slot}
-              </Badge>
-            )}
           </div>
         </div>
 
@@ -157,11 +151,11 @@ export default async function RequestDetailPage({ params }) {
             sub={request.assignee ? stageLabels[request.stage] : null}
           />
           <StripCell
-            label="Cost to date"
-            value={unit?.lifetimeSpend ? formatCharge(unit.lifetimeSpend) : "Nothing yet"}
-            sub={`${formatCharge(request.charge)} this request · ${
-              request.type === "housekeeping" ? "Tenant" : "Landlord"
-            }`}
+            label="Scheduled"
+            value={
+              request.schedule ? formatDate(request.schedule.date) : "Not scheduled"
+            }
+            sub={request.schedule?.slot}
           />
         </div>
 
