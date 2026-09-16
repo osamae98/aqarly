@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@aqarly/ui/Sidebar";
 import { resetAction } from "@/app/actions";
+import OpsMark from "@/components/OpsMark";
 
 // Remembered across visits — a rail an admin collapsed yesterday should stay
 // collapsed, the same way a window's size does.
@@ -54,15 +55,11 @@ export default function OpsNav({ openCount, className = "" }) {
       brand={
         collapsed ? (
           <span className="flex w-full items-center justify-center">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-              A
-            </span>
+            <OpsMark className="size-7 shrink-0" />
           </span>
         ) : (
           <span className="flex items-center gap-2.5">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-              A
-            </span>
+            <OpsMark className="size-7 shrink-0" />
             <span className="truncate text-[15px] font-semibold text-[var(--sand-50)]">
               Aqarly Ops
             </span>
@@ -86,12 +83,6 @@ export default function OpsNav({ openCount, className = "" }) {
             { value: "/units", label: "Buildings", icon: "building", href: "/units" },
             { value: "/staff", label: "Staff", icon: "users", href: "/staff" },
             { value: "/", label: "Reports", icon: "sliders", href: "/" },
-            {
-              value: "/rates",
-              label: "Housekeeping rates",
-              icon: "receipt",
-              href: "/rates",
-            },
           ],
         },
       ]}

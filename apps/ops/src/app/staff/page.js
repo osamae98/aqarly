@@ -11,15 +11,13 @@ export const metadata = {
 export default async function StaffPage() {
   const staff = await getStaffRoster();
 
-  const maintenance = staff.filter((m) => m.role === "maintenance").length;
-  const housekeeping = staff.filter((m) => m.role === "housekeeping").length;
   const totalLoad = staff.reduce((sum, member) => sum + member.load, 0);
 
   return (
     <>
       <PageBar
         title="Field staff"
-        meta={`${maintenance} maintenance · ${housekeeping} housekeeping · ${totalLoad} of ${
+        meta={`${staff.length} technicians · ${totalLoad} of ${
           staff.length * staffCapacity
         } slots in use`}
       >
