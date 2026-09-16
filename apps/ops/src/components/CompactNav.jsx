@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@aqarly/ui/Icon";
+import OpsMark from "@/components/OpsMark";
 
 const items = [
   { href: "/requests", label: "Requests", icon: "file-text" },
@@ -19,9 +20,7 @@ export default function CompactNav({ openCount }) {
 
   return (
     <header className="flex shrink-0 items-center gap-2 bg-[var(--green-700)] px-3 py-2 md:hidden">
-      <span className="flex size-7 items-center justify-center rounded-sm bg-[var(--green-400)] text-sm font-bold text-[var(--green-900)]">
-        A
-      </span>
+      <OpsMark className="size-7 shrink-0" />
       <nav className="flex flex-1 items-center justify-end gap-1">
         {items.map((item) => {
           const active =
