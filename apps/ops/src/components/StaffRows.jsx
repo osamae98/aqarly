@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "@aqarly/ui/Badge";
 import Icon from "@aqarly/ui/Icon";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -17,6 +17,7 @@ const GRID =
 export default function StaffRows({ staff }) {
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
+  const [previewing, setPreviewing] = useState(null);
 
   const { submit, pending, result, reset } = useFormAction(removeStaffAction, {
     onSuccess: () => setRemoving(null),
@@ -45,7 +46,18 @@ export default function StaffRows({ staff }) {
         {staff.map((member) => (
           <div key={member.id} className={`${GRID} px-3 py-3.5`}>
             <span className="flex min-w-0 items-center gap-2.5">
-              <Initials name={member.name} src={member.photo} size={34} />
+              {member.photo ? (
+                <button
+                  type="button"
+                  onClick={() => setPreviewing(member)}
+                  aria-label={`View photo of ${member.name}`}
+                  className="flex shrink-0 cursor-zoom-in rounded-pill transition-opacity hover:opacity-85"
+                >
+                  <Initials name={member.name} src={member.photo} size={34} />
+                </button>
+              ) : (
+                <Initials name={member.name} size={34} />
+              )}
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-ink">
                   {member.name}
@@ -119,6 +131,10 @@ export default function StaffRows({ staff }) {
         <StaffDialog open member={editing} onClose={() => setEditing(null)} />
       )}
 
+      {previewing && (
+        <PhotoPreview member={previewing} onClose={() => setPreviewing(null)} />
+      )}
+
       <ConfirmDialog
         open={Boolean(removing)}
         onClose={() => setRemoving(null)}
@@ -135,6 +151,52 @@ export default function StaffRows({ staff }) {
       />
 
       <Toast message={result?.ok ? result.message : null} />
+    </div>
+  );
+}
+
+// The row's photo at full size — the same dark overlay the request
+// attachments open into, without the zoom and paging a single headshot
+// has no use for.
+function PhotoPreview({ member, onClose }) {
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo of ${member.name}`}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/85 p-4 sm:p-10"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 end-4 flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--sand-50)] transition-colors hover:bg-white/20"
+      >
+        <Icon name="x" size={18} />
+      </button>
+
+      {/* Inline data URL from the upload, so `next/image` has nothing to
+        * optimise. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={member.photo}
+        alt={member.name}
+        onClick={(event) => event.stopPropagation()}
+        className="max-h-[75vh] max-w-full rounded-md object-contain shadow-lg"
+      />
+
+      <span className="text-sm font-semibold text-[var(--sand-50)]">
+        {member.name}
+      </span>
     </div>
   );
 }
