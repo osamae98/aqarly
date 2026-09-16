@@ -51,7 +51,7 @@ export default function StaffRows({ staff }) {
                   type="button"
                   onClick={() => setPreviewing(member)}
                   aria-label={`View photo of ${member.name}`}
-                  className="flex shrink-0 cursor-zoom-in rounded-pill transition-opacity hover:opacity-85"
+                  className="flex shrink-0 cursor-pointer rounded-pill transition-opacity hover:opacity-85"
                 >
                   <Initials name={member.name} src={member.photo} size={34} />
                 </button>
