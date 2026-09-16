@@ -9,6 +9,14 @@ const nextConfig = {
   turbopack: {
     root: join(dirname(import.meta.dirname), ".."),
   },
+  experimental: {
+    serverActions: {
+      // Server Actions default to a 1MB body, which the per-file caps in
+      // apps/ops/src/app/actions.js already guard against — this just keeps
+      // the framework's own cap from being the thing that rejects a request.
+      bodySizeLimit: "1gb",
+    },
+  },
 };
 
 export default nextConfig;

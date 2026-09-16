@@ -3,18 +3,15 @@ import { notFound } from "next/navigation";
 import Badge from "@aqarly/ui/Badge";
 import ActivityLog from "@/components/ActivityLog";
 import AssignAction from "@/components/AssignAction";
-import Panel, { MicroLabel } from "@/components/Panel";
+import { MicroLabel } from "@/components/Panel";
+import PhotoCarousel from "@/components/PhotoCarousel";
 import {
-  categoryCodes,
   categoryLabels,
-  formatCharge,
   formatDate,
-  formatDateTime,
   getAssignmentCandidates,
   getRequestById,
   getRequestNeighbours,
   getUnitById,
-  getUnitHistory,
   repeatFaultRule,
   stageLabels,
   stageTones,
@@ -30,22 +27,16 @@ export default async function RequestDetailPage({ params }) {
   const { id } = await params;
   const request = await getRequestById(id);
 
-  if (!request) notFound();
+  // The ops portal is maintenance-only — a housekeeping request has nothing
+  // to show here.
+  if (!request || request.type !== "maintenance") notFound();
 
-  const [history, unit, candidates, neighbours] = await Promise.all([
-    getUnitHistory(request.unitId, { excludeId: request.id }),
+  const [unit, candidates, neighbours] = await Promise.all([
     getUnitById(request.unitId),
     getAssignmentCandidates(request),
-    getRequestNeighbours(request.id),
+    getRequestNeighbours(request.id, { type: "maintenance" }),
   ]);
 
-  const sameCategory = history.filter(
-    (item) => item.category === request.category,
-  );
-  const spentHere = sameCategory.reduce(
-    (sum, item) => sum + (item.charge ?? 0),
-    0,
-  );
   const categoryLabel = categoryLabels[request.category] ?? request.category;
   const repeat = unit?.repeatFault?.category === request.category
     ? unit.repeatFault
@@ -101,36 +92,22 @@ export default async function RequestDetailPage({ params }) {
       </div>
 
       <div className="flex flex-col gap-5 p-4 md:p-6">
-        <div className="flex items-start gap-4">
-          <span
-            className={[
-              "flex size-12 shrink-0 items-center justify-center rounded-md font-mono text-sm font-bold",
-              request.type === "housekeeping"
-                ? "bg-category-housekeeping-tint text-category-housekeeping"
-                : "bg-category-maintenance-tint text-category-maintenance",
-            ].join(" ")}
-          >
-            {categoryCodes[request.category] ?? "GN"}
-          </span>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-2">
+          <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-category-maintenance uppercase">
+            Maintenance · {categoryLabel}
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[27px] leading-tight font-bold tracking-[-0.015em] text-ink">
               {request.summary}
             </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              {request.priority === "urgent" && (
-                <Badge tone="danger" dot={false}>
-                  Emergency
-                </Badge>
-              )}
-              <Badge tone={stageTones[request.stage]} dot={false}>
-                {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+            {request.priority === "urgent" && (
+              <Badge tone="danger" dot={false}>
+                Emergency
               </Badge>
-              <span className="text-[13.5px] text-ink-soft">
-                {request.type === "housekeeping" ? "Housekeeping" : "Maintenance"}{" "}
-                · {categoryLabel} · reported {formatDateTime(request.createdAt)}
-              </span>
-            </div>
+            )}
+            <Badge tone={stageTones[request.stage]} dot={false}>
+              {request.assignee ? stageLabels[request.stage] : "Unassigned"}
+            </Badge>
           </div>
         </div>
 
@@ -145,159 +122,52 @@ export default async function RequestDetailPage({ params }) {
               </span>
             )}
           </p>
-          {request.photos?.length ? (
-            <div className="mt-3.5 flex flex-wrap gap-2.5">
-              {request.photos.map((photo) => (
-                /* Inline data URLs from the upload — nothing for
-                 * `next/image` to optimise, and no loader to point at. */
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  key={photo.dataUrl}
-                  src={photo.dataUrl}
-                  alt={photo.name}
-                  className="size-28 rounded-sm border border-border object-cover"
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-ink-muted">
-              Photos can be attached when a request is raised here; the tenant
-              portal has no upload path yet, so none are attached to this one.
-            </p>
-          )}
+          <PhotoCarousel photos={request.photos} />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-3">
-          <Panel label="Unit & tenant" bodyClassName="flex flex-col gap-2.5">
-            <Row label="Unit" value={unit ? `${unit.label} · ${unit.bedrooms} BR · ${unit.bathrooms} bath` : request.unit?.label} />
-            <Row label="Building" value={request.property?.name} />
-            <Row label="Tenant" value={request.tenant?.name} />
-            <Row label="Contact" value={request.tenant?.phone} />
-            <Row
-              label="Assignee"
-              value={request.assignee?.name ?? "Unassigned"}
-            />
-          </Panel>
-
-          <Panel
-            label={`This unit\u2019s ${categoryLabel} history`}
-            bodyClassName="flex flex-col gap-2.5"
-          >
-            <div className="flex items-start gap-2.5">
-              <span
-                className={[
-                  "mt-1.5 size-1.5 shrink-0 rounded-pill",
-                  repeat ? "bg-danger" : "bg-border-strong",
-                ].join(" ")}
-              />
-              <p className="text-[13.5px] leading-snug">
-                <b className="text-ink">
-                  {sameCategory.length === 0
-                    ? "First time in this unit"
-                    : `${sameCategory.length + 1}${ordinal(sameCategory.length + 1)} ${categoryLabel} call here`}
-                </b>
-                <br />
-                <span className="text-ink-soft">
-                  {sameCategory.length
-                    ? sameCategory
-                        .slice(0, 2)
-                        .map((item) => formatDateTime(item.createdAt))
-                        .join(" · ")
-                    : "Nothing else has been raised like this here."}
-                </span>
-              </p>
-            </div>
-            {repeat && (
-              <p className="rounded-sm bg-warning-tint p-2.5 text-[13px] font-medium text-warning-ink">
-                {repeatFaultRule.occurrences} or more visits inside{" "}
-                {Math.round(repeatFaultRule.withinDays / 30)} months. Consider
-                replacement over another repair.
-              </p>
-            )}
-          </Panel>
-
-          <Panel
-            label="Cost to date"
-            className="flex flex-col"
-            bodyClassName="flex flex-1 flex-col gap-2.5"
-          >
-            <div className="font-mono text-2xl font-bold tracking-[-0.01em] text-ink">
-              {unit?.lifetimeSpend
-                ? formatCharge(unit.lifetimeSpend)
-                : "Nothing yet"}
-            </div>
-            <p className="text-[13px] text-ink-soft">
-              {spentHere
-                ? `${formatCharge(spentHere)} of it on ${categoryLabel}, across ${sameCategory.length} prior ${sameCategory.length === 1 ? "visit" : "visits"}`
-                : `No ${categoryLabel} work has been charged against this unit`}
-            </p>
-            <div className="mt-auto flex flex-col gap-2.5 pt-2">
-              <Row label="This request" value={formatCharge(request.charge)} />
-              <Row
-                label="Billed to"
-                value={request.type === "housekeeping" ? "Tenant" : "Landlord"}
-              />
-            </div>
-          </Panel>
+        {/* The facts that used to be three panels, condensed into one strip
+          * — cheap to scan on one line, with a second, quieter line under
+          * each figure carrying what used to need its own card. */}
+        <div className="grid divide-y divide-border overflow-hidden rounded-md border border-border bg-surface sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+          <StripCell
+            label="Unit"
+            value={unit ? `${unit.label} · ${unit.bedrooms} BR` : request.unit?.label}
+            sub={request.property?.name}
+          />
+          <StripCell
+            label="Tenant"
+            value={request.tenant?.name}
+            sub={request.tenant?.phone}
+          />
+          <StripCell
+            label="Assignee"
+            value={request.assignee?.name ?? "Unassigned"}
+            sub={request.assignee ? stageLabels[request.stage] : null}
+          />
+          <StripCell
+            label="Scheduled"
+            value={
+              request.schedule ? formatDate(request.schedule.date) : "Not scheduled"
+            }
+            sub={request.schedule?.slot}
+          />
         </div>
+
+        {repeat && (
+          <p className="rounded-md bg-warning-tint p-3 text-[13px] font-medium text-warning-ink">
+            Repeat fault — {repeatFaultRule.occurrences} or more {categoryLabel}{" "}
+            visits inside {Math.round(repeatFaultRule.withinDays / 30)} months.
+            Consider replacement over another repair.
+          </p>
+        )}
 
         <section className="flex flex-col gap-2">
           <MicroLabel>Activity</MicroLabel>
           <ActivityLog request={request} />
         </section>
-
-        <section className="flex flex-col gap-2">
-          <div className="flex items-baseline gap-3">
-            <MicroLabel>Rest of this unit&rsquo;s history</MicroLabel>
-            <span className="flex-1" />
-            {unit && (
-              <Link
-                href={`/units/${unit.id}`}
-                className="text-[13px] font-semibold text-brand hover:underline"
-              >
-                Open the unit record →
-              </Link>
-            )}
-          </div>
-
-          {history.length ? (
-            <ul className="flex flex-col">
-              {history.slice(0, 5).map((item) => (
-                <li key={item.id} className="border-b border-border last:border-b-0">
-                  <Link
-                    href={`/requests/${item.id}`}
-                    className="flex items-center gap-3.5 py-2.5 transition-colors hover:text-brand"
-                  >
-                    <span className="w-28 shrink-0 font-mono text-[12.5px] whitespace-nowrap text-ink-muted">
-                      {formatDate(item.createdAt)}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">
-                      {item.summary}
-                    </span>
-                    <span className="shrink-0 text-[12.5px] text-ink-soft">
-                      {item.assignee?.name ?? "—"}
-                    </span>
-                    <span className="w-20 shrink-0 text-end font-mono text-[12.5px] text-ink-soft">
-                      {item.stage === "done" ? formatCharge(item.charge) : "open"}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-ink-muted">
-              Nothing else has been raised for this unit.
-            </p>
-          )}
-        </section>
       </div>
     </>
   );
-}
-
-function ordinal(n) {
-  if (n % 100 >= 11 && n % 100 <= 13) return "th";
-  return ["th", "st", "nd", "rd"][n % 10] ?? "th";
 }
 
 function PageStep({ href, children }) {
@@ -313,11 +183,21 @@ function PageStep({ href, children }) {
   );
 }
 
-function Row({ label, value }) {
+// One column of the condensed facts strip: a label, a headline figure, and
+// a quieter second line for what used to need its own panel.
+function StripCell({ label, value, sub, flagged = false }) {
   return (
-    <div className="flex justify-between gap-4 text-sm">
-      <span className="text-ink-soft">{label}</span>
-      <span className="text-end font-semibold text-ink">{value || "—"}</span>
+    <div className="flex min-w-0 flex-col gap-1 px-4 py-3">
+      <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted">
+        {label}
+      </span>
+      <span className="flex items-center gap-1.5 truncate text-[13.5px] font-semibold text-ink">
+        {flagged && <span className="size-1.5 shrink-0 rounded-pill bg-danger" />}
+        {value || "—"}
+      </span>
+      {sub && (
+        <span className="truncate text-[12px] text-ink-muted">{sub}</span>
+      )}
     </div>
   );
 }

@@ -1,18 +1,18 @@
 import Link from "next/link";
 import DismissAlert from "@/components/DismissAlert";
-import Icon from "@aqarly/ui/Icon";
 import NewRequestAction from "@/components/NewRequestAction";
 import PageBar from "@/components/PageBar";
 import RequestRows from "@/components/RequestRows";
+import SearchField from "@/components/SearchField";
 import {
   categoryLabels,
   getPropertyRollups,
-  getHousekeepingRates,
   getRequests,
   getStaffRoster,
   getUnits,
   maintenanceCategories,
   stageLabels,
+  stages,
   tierLabels,
 } from "@aqarly/core/operations";
 
@@ -26,12 +26,18 @@ function counter(all, key) {
   return (value) => all.filter((request) => key(request) === value).length;
 }
 
+// Paged rather than infinite — the queue is filtered and sorted server-side
+// already, so a page is just a slice of that same, stable order.
+const PAGE_SIZE = 50;
+
 export default async function RequestQueuePage({ searchParams }) {
   const params = await searchParams;
 
+  // The ops portal is maintenance-only, so every read here is scoped to it —
+  // housekeeping bookings never surface in this queue.
   const query = {
+    type: "maintenance",
     stage: params.stage,
-    type: params.type,
     category: params.category,
     tier: params.tier,
     propertyId: params.propertyId,
@@ -41,22 +47,34 @@ export default async function RequestQueuePage({ searchParams }) {
     sort: params.sort,
   };
 
-  const [requests, unfiltered, properties, staff, units, rates, unassignedUrgent] =
+  const [requests, unfiltered, properties, staff, units, unassignedUrgent] =
     await Promise.all([
       getRequests(query),
-      getRequests({ search: params.q }),
+      getRequests({ type: "maintenance", search: params.q }),
       getPropertyRollups(),
       getStaffRoster(),
       getUnits(),
-      getHousekeepingRates(),
-      getRequests({ open: true, tier: "emergency", assigneeId: "unassigned" }),
+      getRequests({
+        type: "maintenance",
+        open: true,
+        tier: "emergency",
+        assigneeId: "unassigned",
+      }),
     ]);
+
+  // Every filter above already narrowed and sorted `requests`; paging just
+  // windows that same list, so changing filters always lands back on page 1
+  // rather than an index that no longer means anything.
+  const pageCount = Math.max(1, Math.ceil(requests.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Number(params.page) || 1), pageCount);
+  const pageRequests = requests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const scope = properties.find((p) => p.id === params.propertyId);
   const byCategory = counter(unfiltered, (r) => r.category);
   const byProperty = counter(unfiltered, (r) => r.property?.id);
   const byTier = counter(unfiltered, (r) => r.tier);
   const byAssignee = counter(unfiltered, (r) => r.assigneeId);
+  const byStage = counter(unfiltered, (r) => r.stage);
 
   // Only the categories actually in the queue, in the order they weigh on it.
   const categories = [...new Set(unfiltered.map((r) => r.category))].sort(
@@ -82,10 +100,18 @@ export default async function RequestQueuePage({ searchParams }) {
     ],
     tier: [
       { value: null, label: "Any priority", count: unfiltered.length },
-      ...["emergency", "standard", "scheduled"].map((tier) => ({
+      ...["emergency", "standard"].map((tier) => ({
         value: tier,
         label: tierLabels[tier],
         count: byTier(tier),
+      })),
+    ],
+    stage: [
+      { value: null, label: "Any status", count: unfiltered.length },
+      ...stages.map((stage) => ({
+        value: stage,
+        label: stageLabels[stage],
+        count: byStage(stage),
       })),
     ],
     assignee: [
@@ -141,25 +167,10 @@ export default async function RequestQueuePage({ searchParams }) {
             : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
-        {/* Submitting is what applies the search, so the bar says so rather
-          * than leaving Enter as the only way in. */}
-        <form action="/requests" className="flex h-10 items-center gap-1.5 rounded-pill border border-border bg-page ps-4 pe-1 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-focus">
-          <input
-            type="search"
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder="Search ref, unit, tenant…"
-            aria-label="Search requests"
-            className="w-full min-w-0 bg-transparent text-[13.5px] text-ink placeholder:text-ink-muted focus:outline-none sm:w-52"
-          />
-          <button
-            type="submit"
-            aria-label="Search"
-            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-pill bg-brand text-ink-inverse transition-colors hover:bg-brand-hover"
-          >
-            <Icon name="search" size={15} />
-          </button>
-        </form>
+        <SearchField
+          placeholder="Search ref, unit, tenant…"
+          ariaLabel="Search requests"
+        />
         <NewRequestAction
           buildings={properties.map((property) => ({
             id: property.id,
@@ -172,18 +183,17 @@ export default async function RequestQueuePage({ searchParams }) {
                 tenant: unit.tenant?.name ?? null,
               })),
           }))}
-          // Maintenance trades plus whatever is on the housekeeping rate
-          // card — the category is what decides which of the two a request is.
-          categories={[
-            ...maintenanceCategories.map((category) => ({
-              value: category,
-              label: categoryLabels[category] ?? category,
-            })),
-            ...rates.map((rate) => ({
-              value: rate.serviceType,
-              label: rate.label,
-            })),
-          ]}
+          categories={maintenanceCategories.map((category) => ({
+            value: category,
+            label: categoryLabels[category] ?? category,
+          }))}
+          staff={staff.map((member) => ({
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            load: member.load,
+            capacity: member.capacity,
+          }))}
         />
       </PageBar>
 
@@ -214,12 +224,16 @@ export default async function RequestQueuePage({ searchParams }) {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-x-auto pb-6">
+      <div className="min-h-0 flex-1 overflow-x-auto py-4 [scrollbar-width:thin] md:py-6 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border-strong [&::-webkit-scrollbar-track]:bg-transparent">
         <RequestRows
-          requests={requests}
+          requests={pageRequests}
           staff={staff}
           filters={filters}
           searchParams={params}
+          page={page}
+          pageCount={pageCount}
+          pageSize={PAGE_SIZE}
+          total={requests.length}
         />
       </div>
     </>
