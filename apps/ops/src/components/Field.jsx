@@ -27,6 +27,7 @@ export function TextField({
   defaultValue,
   required = false,
   textarea = false,
+  type,
   className = "",
 }) {
   const Element = textarea ? "textarea" : "input";
@@ -37,6 +38,7 @@ export function TextField({
       <Element
         id={name}
         name={name}
+        type={textarea ? undefined : type}
         required={required}
         placeholder={placeholder}
         defaultValue={defaultValue}
@@ -85,7 +87,7 @@ export function PhotoField({ label, name, max = 4, hint }) {
         name={name}
         type="file"
         accept="image/*"
-        multiple
+        multiple={max > 1}
         onChange={(event) => read(event.target.files)}
         className="cursor-pointer rounded-sm border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
       />

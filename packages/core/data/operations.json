@@ -1010,26 +1010,31 @@
     {
       "id": "stf-haddad",
       "name": "Youssef Haddad",
+      "phone": "+000 000 0101",
       "role": "maintenance"
     },
     {
       "id": "stf-kimani",
       "name": "Grace Kimani",
+      "phone": "+000 000 0102",
       "role": "maintenance"
     },
     {
       "id": "stf-torres",
       "name": "Diego Torres",
+      "phone": "+000 000 0103",
       "role": "maintenance"
     },
     {
       "id": "stf-mensah",
       "name": "Ama Mensah",
+      "phone": "+000 000 0104",
       "role": "housekeeping"
     },
     {
       "id": "stf-castillo",
       "name": "Rosa Castillo",
+      "phone": "+000 000 0105",
       "role": "housekeeping"
     }
   ],

@@ -12,7 +12,7 @@ import { removeStaffAction } from "@/app/actions";
 import { typeLabels } from "@aqarly/core/operations";
 
 const GRID =
-  "grid grid-cols-[220px_128px_minmax(0,1fr)_72px_104px] items-center gap-3.5";
+  "grid grid-cols-[minmax(0,1fr)_160px_128px_96px_72px_104px] items-center gap-3.5";
 
 export default function StaffRows({ staff }) {
   const [editing, setEditing] = useState(null);
@@ -34,8 +34,9 @@ export default function StaffRows({ staff }) {
         className={`${GRID} border-b border-border px-3 py-3 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
       >
         <span>Name · staff id</span>
+        <span>Mobile</span>
         <span>Trade</span>
-        <span>Buildings</span>
+        <span className="text-center">In progress</span>
         <span className="text-center">Closed</span>
         <span className="sr-only">Actions</span>
       </div>
@@ -44,7 +45,7 @@ export default function StaffRows({ staff }) {
         {staff.map((member) => (
           <div key={member.id} className={`${GRID} px-3 py-3.5`}>
             <span className="flex min-w-0 items-center gap-2.5">
-              <Initials name={member.name} size={34} />
+              <Initials name={member.name} src={member.photo} size={34} />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-ink">
                   {member.name}
@@ -56,16 +57,32 @@ export default function StaffRows({ staff }) {
               </span>
             </span>
 
+            <span className="min-w-0 truncate">
+              {member.phone ? (
+                <a
+                  href={`tel:${member.phone.replace(/[^\d+]/g, "")}`}
+                  className="font-mono text-[13px] text-ink-soft hover:text-brand"
+                >
+                  {member.phone}
+                </a>
+              ) : (
+                <span className="text-[13px] text-ink-muted">—</span>
+              )}
+            </span>
+
             <span>
               <Badge tone={member.role} dot={false}>
                 {typeLabels[member.role] ?? member.role}
               </Badge>
             </span>
 
-            <span className="min-w-0 truncate text-[13px] text-ink-soft">
-              {member.properties.length
-                ? member.properties.map((p) => p?.name).filter(Boolean).join(", ")
-                : "No work yet"}
+            <span
+              className={[
+                "text-center font-mono text-[13px]",
+                member.inProgress ? "font-semibold text-ink" : "text-ink-soft",
+              ].join(" ")}
+            >
+              {member.inProgress}
             </span>
 
             <span className="text-center font-mono text-[13px] text-ink-soft">

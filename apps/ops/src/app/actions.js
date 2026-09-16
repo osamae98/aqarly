@@ -30,32 +30,43 @@ function fail(error) {
 }
 
 // There is no file store yet, so an uploaded photo is inlined as a data URL
-// and kept with the request. That only stays reasonable while the files are
-// small, which is what the cap is for.
+// and kept with the record it belongs to. That only stays reasonable while
+// the files are small, which is what the cap is for.
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
-async function readPhotos(formData) {
-  const files = formData
-    .getAll("photos")
+function uploadedFiles(formData, name) {
+  return formData
+    .getAll(name)
     .filter((file) => file && typeof file.arrayBuffer === "function" && file.size > 0);
+}
+
+async function inlineImage(file) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error(`${file.name} is not an image`);
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new Error(`${file.name} is larger than 2 MB`);
+  }
+
+  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  return `data:${file.type};base64,${base64}`;
+}
+
+async function readPhotos(formData) {
+  const files = uploadedFiles(formData, "photos");
 
   if (files.length > maxRequestPhotos) {
     throw new Error(`Up to ${maxRequestPhotos} photos per request`);
   }
 
   return Promise.all(
-    files.map(async (file) => {
-      if (!file.type.startsWith("image/")) {
-        throw new Error(`${file.name} is not an image`);
-      }
-      if (file.size > MAX_PHOTO_BYTES) {
-        throw new Error(`${file.name} is larger than 2 MB`);
-      }
-
-      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-      return { name: file.name, dataUrl: `data:${file.type};base64,${base64}` };
-    }),
+    files.map(async (file) => ({ name: file.name, dataUrl: await inlineImage(file) })),
   );
+}
+
+async function readStaffPhoto(formData) {
+  const [file] = uploadedFiles(formData, "photo");
+  return file ? inlineImage(file) : null;
 }
 
 export async function createRequestAction(formData) {
@@ -161,7 +172,9 @@ export async function addStaffAction(formData) {
   try {
     const member = await addStaff({
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();
@@ -175,7 +188,9 @@ export async function updateStaffAction(formData) {
   try {
     const member = await updateStaff(formData.get("id"), {
       name: formData.get("name"),
+      phone: formData.get("phone"),
       role: formData.get("role"),
+      photo: await readStaffPhoto(formData),
     });
 
     revalidateAll();
