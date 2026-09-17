@@ -20,6 +20,16 @@
         "dev"
       ],
       "port": 3002
+    },
+    {
+      "name": "housekeeping",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@aqarly/housekeeping",
+        "dev"
+      ],
+      "port": 3003
     }
   ]
 }

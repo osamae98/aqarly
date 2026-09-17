@@ -8,8 +8,9 @@ platform roadmap, over shared design-system and data packages.
 
 ```
 apps/web      Public marketing site          :3000
-apps/ops      Operations Admin Portal        :3001
-apps/tenant   Tenant Services Portal         :3002
+apps/ops           Operations Admin Portal (maintenance)  :3001
+apps/tenant        Tenant Services Portal                 :3002
+apps/housekeeping  Housekeeping Admin Portal              :3003
 packages/ui   Design system + tokens
 packages/core Shared data model + read seam
 ```
@@ -84,11 +85,13 @@ rendered as navigation only: they authenticate nobody, and every submit
 control on a form is disabled with the reason stated on screen. Wire them to a
 real session rather than making them look like they work.
 
-The ops portal does write. `operations.js` exposes `createRequest`,
+The ops and housekeeping portals write. `operations.js` exposes `createRequest`,
 `assignRequests`, `setPriority`, `deleteRequests`, `addHousekeepingRate`,
 `removeHousekeepingRate`, `addStaff`, `updateStaff` and `removeStaff` over
 `store.js` — one mutable copy of the seed JSON, held on `globalThis` for the
-life of the server process. Removals are guarded rather than soft: a rate with
+life of the server process. Each app is its own process, so each holds its
+own copy: a booking made in the housekeeping portal does not appear in the
+tenant portal or ops until the data has a real home. Removals are guarded rather than soft: a rate with
 open bookings and a technician holding open work both refuse, with the reason
 carried back to the dialog.
 
@@ -98,8 +101,15 @@ caps there are standing in for — give them somewhere real to live before
 raising either. `operations.json` stays the seed and is never
 written to, so a restart (or the sidebar's "Reset demo data") is the way back
 to a known state. Pages call these through the server actions in
-`apps/ops/src/app/actions.js`, which are the only place `revalidatePath` is
+`apps/<app>/src/app/actions.js`, which are the only place `revalidatePath` is
 allowed to live.
+
+Each admin portal manages one trade. `apps/ops` is maintenance only;
+`apps/housekeeping` is housekeeping only — its services come priced from the
+rate card, a booking keeps the price it was made at, it is billed to the
+tenant, and it has no emergency tier and no repeat-fault flag. The shared
+reads in `operations.js` take a `type` option (defaulting to maintenance)
+rather than either app filtering after the fact.
 
 Controls that still cannot work say so on the screen rather than being hidden:
 notifying a tenant, sending to an external vendor, publishing a rate version,
