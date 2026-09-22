@@ -912,3 +912,184 @@ export async function removeStaff(id) {
 export async function resetOperationsData() {
   resetStore();
 }
+
+// --- Field app -----------------------------------------------------------
+// The technician's app reads the same data from the other end: one person's
+// own work rather than a portfolio of it. It is deliberately narrow — no
+// queue, no filters, no dashboard — so everything here answers only "what
+// should I be doing, and what happens when I do it".
+
+// STUB: stands in for the signed-in technician until auth exists, exactly as
+// `getSignedInTenant` does for a tenant. Nothing here authenticates anyone.
+// Replace this, not its callers.
+export async function getSignedInTechnician() {
+  return data.staff.find((s) => s.id === "stf-haddad") ?? data.staff[0] ?? null;
+}
+
+// Work already started outranks work that has not been — a technician
+// standing in the unit finishes what they are holding — and an emergency
+// outranks a standard job. Nothing else about the order is knowable: a
+// request carries no duration, and only an ops-booked one carries a slot, so
+// the remaining tie breaks the way the ops queue breaks it, oldest first.
+const worklistStages = { "in-progress": 0, assigned: 1, submitted: 2 };
+
+function byWorkOrder(a, b) {
+  return (
+    (worklistStages[a.stage] ?? 3) - (worklistStages[b.stage] ?? 3) ||
+    (a.priority === "urgent" ? 0 : 1) - (b.priority === "urgent" ? 0 : 1) ||
+    new Date(a.createdAt) - new Date(b.createdAt)
+  );
+}
+
+// A unit that keeps failing the same way is the one thing worth telling a
+// technician before they start, because the repair that keeps not holding is
+// a different job from the one on the ticket. Read off the same rule the ops
+// portal flags a unit with, narrowed to this request's own category.
+function repeatFaultOn(request, now) {
+  if (request.type !== "maintenance") return null;
+
+  const history = data.requests.filter(
+    (r) => r.unitId === request.unitId && r.type === "maintenance",
+  );
+  const fault = repeatFaultFor(history, now);
+
+  return fault?.category === request.category ? fault : null;
+}
+
+// Everything the worklist screen puts on the glass, already split the way it
+// is drawn: one job led with, the rest queued behind it, and what is closed.
+export async function getWorklist(technicianId) {
+  const technician = data.staff.find((s) => s.id === technicianId);
+  if (!technician) return null;
+
+  const now = Date.now();
+  const mine = data.requests
+    .filter((request) => request.assigneeId === technicianId)
+    .map(enrich)
+    .map((request) => ({ ...request, repeatFault: repeatFaultOn(request, now) }));
+
+  const open = mine.filter((r) => r.stage !== "done").sort(byWorkOrder);
+  const closed = mine
+    .filter((r) => r.stage === "done")
+    .sort((a, b) => new Date(stageAt(b, "done")) - new Date(stageAt(a, "done")));
+
+  return {
+    technician,
+    next: open[0] ?? null,
+    queued: open.slice(1),
+    closed,
+    counts: {
+      left: open.length,
+      urgent: open.filter((r) => r.priority === "urgent").length,
+      closed: closed.length,
+    },
+  };
+}
+
+// One job, and only if it is this technician's. Everything the field app
+// renders goes through here rather than `getRequestById`, so a job that has
+// been reassigned out from under someone stops resolving for them.
+export async function getJob(id, technicianId) {
+  const request = await getRequestById(id);
+  if (!request || request.assigneeId !== technicianId) return null;
+
+  return { ...request, repeatFault: repeatFaultOn(request, Date.now()) };
+}
+
+// --- Field app writes ----------------------------------------------------
+// A technician only ever touches work that is theirs. There is no session to
+// enforce that for them, so each write checks the holder itself rather than
+// trusting the id a form posted.
+
+function heldBy(id, technicianId) {
+  const request = find(id);
+  if (!request) throw new Error(`Unknown job ${id}`);
+  if (request.assigneeId !== technicianId) {
+    throw new Error("That job is not yours to change");
+  }
+  if (request.stage === "done") throw new Error("That job is already closed");
+  return request;
+}
+
+// Arriving on site. Idempotent: tapping start on a job already under way is
+// the technician confirming where they are, not a second event.
+export async function startRequest(id, technicianId) {
+  const request = heldBy(id, technicianId);
+
+  if (request.stage !== "in-progress") {
+    reachStage(request, "in-progress", stamp());
+  }
+
+  return request;
+}
+
+// How many photos close a job, and how many of those are compulsory. The
+// design requires a before and an after, because closing work with no
+// evidence of it is the thing the screen exists to prevent. They inline with
+// the request the way every other photo here does, so the cap is also what
+// keeps the store a sensible size.
+export const maxCompletionPhotos = 4;
+export const requiredCompletionPhotos = 2;
+
+export async function completeRequest(
+  id,
+  technicianId,
+  { notes = "", photos = [] } = {},
+) {
+  const request = heldBy(id, technicianId);
+
+  if (request.stage !== "in-progress") {
+    throw new Error("Start the job before closing it");
+  }
+
+  const evidence = photos.filter((photo) => photo?.dataUrl);
+  if (evidence.length < requiredCompletionPhotos) {
+    throw new Error(
+      `${requiredCompletionPhotos} photos are needed to close a job`,
+    );
+  }
+
+  // Kept apart from `photos`, which are the fault as the tenant reported it.
+  // These are the work as the technician left it, and the two are read for
+  // different reasons.
+  request.completionPhotos = evidence
+    .slice(0, maxCompletionPhotos)
+    .map((photo) => ({ name: photo.name ?? "Photo", dataUrl: photo.dataUrl }));
+  request.completionNotes = notes.trim() || null;
+
+  // `charge` is deliberately untouched. A housekeeping booking has carried
+  // its price since `createRequest` read it off the rate card, and
+  // maintenance is the landlord's cost and is never billed on — so there is
+  // no number here for a technician to type, which is the whole point of
+  // stating the total to them before they close.
+  reachStage(request, "done", stamp());
+
+  return request;
+}
+
+// "Can't do it" — neither a refusal nor a new stage. Work nobody holds is
+// "submitted", and unassigned work is exactly where the ops queue reads its
+// pressure from, so a job handed back returns to where it already sat before
+// anyone held it, carrying why. The assignment leaves the history with the
+// assignee: a request must not read as having reached a stage it is now
+// behind.
+export async function handBackRequest(id, technicianId, { reason } = {}) {
+  const request = heldBy(id, technicianId);
+  if (!reason?.trim()) throw new Error("Say why you can't do it");
+
+  const member = data.staff.find((s) => s.id === technicianId);
+
+  request.handBack = {
+    reason: reason.trim(),
+    by: technicianId,
+    byName: member?.name ?? null,
+    at: stamp(),
+  };
+  request.assigneeId = null;
+  request.stageHistory = request.stageHistory.filter(
+    (entry) => entry.stage === "submitted",
+  );
+  request.stage = "submitted";
+
+  return request;
+}

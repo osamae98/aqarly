@@ -20,6 +20,16 @@
         "dev"
       ],
       "port": 3002
+    },
+    {
+      "name": "field",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@aqarly/field",
+        "dev"
+      ],
+      "port": 3004
     }
   ]
 }
