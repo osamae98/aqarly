@@ -12,10 +12,23 @@ const copy = {
   "in-progress": (request) =>
     request.assignee ? `${request.assignee.name} started work` : "Work started",
   done: (request) => request.completionNotes ?? "Marked complete",
+  // Not a stage — a technician handing work back through the field app.
+  // It leaves the request unassigned and back at "submitted", so without
+  // this the queue would simply grow an entry nobody can account for.
+  "handed-back": (request) =>
+    `Handed back by ${request.handBack?.byName ?? "a technician"} — “${request.handBack?.reason}”`,
 };
 
 export default function ActivityLog({ request }) {
-  const entries = [...request.stageHistory].reverse();
+  // The hand-back is recorded beside the history rather than in it, since
+  // it is the request leaving a stage rather than reaching one. Merged here
+  // and sorted by time so the log reads as one sequence.
+  const entries = [
+    ...request.stageHistory,
+    ...(request.handBack
+      ? [{ stage: "handed-back", at: request.handBack.at }]
+      : []),
+  ].sort((a, b) => new Date(b.at) - new Date(a.at));
 
   return (
     <ol className="flex flex-col">

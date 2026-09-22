@@ -98,6 +98,20 @@ export default async function RequestDetailPage({ params }) {
           </div>
         </div>
 
+        {/* A technician sent this back through the field app. It is
+          * unassigned again and sitting in the queue, so the reason has to be
+          * on the screen the admin reassigns from — not only in the log. */}
+        {request.handBack && !request.assignee && (
+          <div className="rounded-md border border-[var(--amber-300)] bg-warning-tint px-4.5 py-3.5">
+            <p className="text-[13px] font-bold tracking-[0.05em] text-warning-ink uppercase">
+              Handed back by {request.handBack.byName ?? "a technician"}
+            </p>
+            <p className="mt-1 text-[14.5px] leading-relaxed text-ink">
+              &ldquo;{request.handBack.reason}&rdquo;
+            </p>
+          </div>
+        )}
+
         {/* What the tenant actually said, in their words. */}
         <div className="rounded-md border border-border bg-surface p-4.5">
           <p className="text-[15px] leading-relaxed text-ink">
