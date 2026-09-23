@@ -61,7 +61,7 @@ export default async function FinishJobPage({ params }) {
       <ScreenHeader backHref={`/jobs/${job.id}`} eyebrow={job.id} title="Finish this job" />
 
       <main className="flex flex-1 flex-col gap-5 p-4 pb-10">
-        <section className="flex flex-col gap-1 rounded-md border border-border bg-surface p-4">
+        <section className="flex flex-col gap-1 rounded-lg bg-surface p-4 shadow-sm">
           <p className="font-mono text-[10.5px] font-bold tracking-[0.09em] text-ink-muted uppercase">
             {typeLabels[job.type]} · {categoryLabels[job.category] ?? job.category}
           </p>

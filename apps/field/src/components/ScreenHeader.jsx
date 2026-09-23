@@ -22,7 +22,7 @@ export default function ScreenHeader({ backHref, eyebrow, title, action }) {
             {eyebrow}
           </p>
         )}
-        <h1 className="truncate text-lg font-bold tracking-[-0.01em] text-ink">
+        <h1 className="line-clamp-2 text-lg leading-snug font-bold tracking-[-0.01em] text-ink">
           {title}
         </h1>
       </div>

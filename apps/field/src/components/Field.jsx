@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Icon from "@aqarly/ui/Icon";
 
 // The field app's form controls. They are the admin portals' controls one
 // size up: this is used standing on a landing with one thumb, so every target
@@ -74,23 +75,13 @@ export function PhotoField({ name, required, max }) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="flex items-baseline justify-between gap-3">
-        <Label htmlFor={name}>Photos</Label>
-        <span
-          className={[
-            "font-mono text-xs font-semibold",
-            short ? "text-danger" : "text-stage-done",
-          ].join(" ")}
-        >
-          {photos.length} of {required} required
-        </span>
-      </div>
+      <Label htmlFor={name}>Photos</Label>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="-mx-4 flex snap-x snap-proximity gap-2.5 overflow-x-auto px-4 pb-1 touch-pan-x">
         {photos.map((photo, index) => (
           <span
             key={photo.url}
-            className="relative aspect-square overflow-hidden rounded-md border border-border bg-sunken"
+            className="relative size-24 shrink-0 snap-start overflow-hidden rounded-lg bg-sunken shadow-sm"
           >
             {/* A local object URL has nothing for `next/image` to optimise. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,12 +100,10 @@ export function PhotoField({ name, required, max }) {
         {photos.length < max && (
           <label
             htmlFor={name}
-            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-border-strong bg-surface text-ink-soft focus-within:border-brand"
+            className="flex size-24 shrink-0 snap-start cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border-strong bg-surface text-ink-soft focus-within:border-brand"
           >
-            <span className="text-2xl leading-none font-light">+</span>
-            <span className="text-[11px] font-semibold">
-              {photos.length === 0 ? "Before" : photos.length === 1 ? "After" : "Add"}
-            </span>
+            <Icon name="camera" size={22} />
+            <span className="text-[11px] font-semibold">Add photo</span>
           </label>
         )}
       </div>
@@ -135,8 +124,8 @@ export function PhotoField({ name, required, max }) {
         {trimmed
           ? `Only the first ${max} were kept — up to ${max} photos per job.`
           : short
-            ? "A before and an after. The office and the tenant both see these."
-            : `Up to ${max} photos, 2 MB each.`}
+            ? `At least ${required} photos of the work. The office and the tenant both see these.`
+            : `Up to ${max} photos, 5 MB each.`}
       </p>
     </div>
   );

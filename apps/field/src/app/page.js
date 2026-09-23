@@ -1,4 +1,4 @@
-import Avatar from "@aqarly/ui/Avatar";
+import Logo from "@aqarly/ui/Logo";
 import { getSignedInTechnician, getWorklist, typeLabels } from "@aqarly/core/operations";
 import JobRow from "@/components/JobRow";
 import NextJobCard from "@/components/NextJobCard";
@@ -17,6 +17,7 @@ export default async function WorklistPage() {
   return (
     <main className="flex flex-1 flex-col gap-5 p-4 pb-10">
       <header className="flex items-center gap-3 pt-2">
+        <Logo size={34} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-ink-muted uppercase">
             {typeLabels[technician.role] ?? technician.role}
@@ -25,7 +26,6 @@ export default async function WorklistPage() {
             Your work
           </h1>
         </div>
-        <Avatar name={technician.name} size={44} />
       </header>
 
       <StatTiles counts={counts} />

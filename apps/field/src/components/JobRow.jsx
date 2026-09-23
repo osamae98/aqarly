@@ -53,7 +53,7 @@ export default function JobRow({ job, done = false }) {
   return (
     <Link
       href={`/jobs/${job.id}`}
-      className="flex items-center gap-3 rounded-md border border-border bg-surface px-3.5 py-3 active:bg-sunken"
+      className="flex items-center gap-3 rounded-lg bg-surface px-3.5 py-3 shadow-sm active:bg-sunken"
     >
       <Marker job={job} done={done} />
 
