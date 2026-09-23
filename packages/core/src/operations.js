@@ -715,6 +715,7 @@ export async function createRequest({
   assigneeId = null,
   scheduledDate = null,
   scheduledSlot = null,
+  origin = "ops",
 }) {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
@@ -753,7 +754,7 @@ export async function createRequest({
     description: description.trim(),
     stage: "submitted",
     assigneeId: null,
-    origin: "ops",
+    origin,
     createdAt: at,
     stageHistory: [{ stage: "submitted", at }],
     // Photos travel with the request the way the tenant portal's flow will

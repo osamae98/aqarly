@@ -49,10 +49,12 @@ export default async function TenantRequestPage({ params }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <Panel title="Your description">{request.description}</Panel>
+          {request.description && (
+            <Panel title="Your description">{request.description}</Panel>
+          )}
 
           {request.charge && (
-            <div className="rounded-md bg-sunken p-4">
+            <div className="rounded-md border border-border bg-sunken p-4">
               <p className="mb-2 text-sm font-semibold text-ink">
                 Service charge
               </p>
@@ -69,6 +71,23 @@ export default async function TenantRequestPage({ params }) {
           {request.completionNotes && (
             <Panel title="Notes from staff">{request.completionNotes}</Panel>
           )}
+
+          {request.photos?.length > 0 && (
+            <div className="rounded-md border border-border bg-sunken p-4">
+              <p className="mb-3 text-sm font-semibold text-ink">Photos</p>
+              <div className="flex flex-wrap gap-2">
+                {request.photos.map((photo, index) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={`${photo.name}-${index}`}
+                    src={photo.dataUrl}
+                    alt={photo.name}
+                    className="size-20 rounded-md border border-border object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Screen>
@@ -77,7 +96,7 @@ export default async function TenantRequestPage({ params }) {
 
 function Panel({ title, children }) {
   return (
-    <div className="rounded-md bg-sunken p-4">
+    <div className="rounded-md border border-border bg-sunken p-4">
       <p className="mb-2 text-sm font-semibold text-ink">{title}</p>
       <p className="text-sm text-ink-soft">{children}</p>
     </div>

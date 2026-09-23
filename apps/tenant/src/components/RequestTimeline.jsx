@@ -36,7 +36,7 @@ export default function RequestTimeline({ request }) {
         const isLast = index === stages.length - 1;
 
         const tile = isCurrent
-          ? "bg-brand text-ink-inverse ring-4 ring-brand-tint"
+          ? "bg-brand text-ink-inverse ring-4 ring-brand-tint-strong"
           : isPast
             ? "bg-success-tint text-success"
             : "border border-border bg-sunken text-ink-muted";

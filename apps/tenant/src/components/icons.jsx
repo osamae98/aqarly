@@ -252,3 +252,12 @@ export function Plus(props) {
     </Stroke>
   );
 }
+
+export function X(props) {
+  return (
+    <Stroke {...props}>
+      <path d="M18 6 6 18" />
+      <path d="M6 6l12 12" />
+    </Stroke>
+  );
+}

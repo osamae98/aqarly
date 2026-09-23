@@ -1,15 +1,10 @@
 import Link from "next/link";
-import Alert from "@aqarly/ui/Alert";
-import Button from "@aqarly/ui/Button";
-import Input from "@aqarly/ui/Input";
-import Select from "@aqarly/ui/Select";
 import { formatCharge, getHousekeepingRates } from "@aqarly/core/operations";
 import Field from "@/components/Field";
+import HousekeepingRequestForm from "@/components/HousekeepingRequestForm";
 import Screen from "@/components/Screen";
 
 export const metadata = { title: "Book cleaning" };
-
-const timeSlots = ["9AM–12PM", "12PM–3PM", "3PM–6PM"];
 
 export default async function HousekeepingRequestPage({ searchParams }) {
   const { service } = await searchParams;
@@ -23,11 +18,6 @@ export default async function HousekeepingRequestPage({ searchParams }) {
   return (
     <Screen title="Book Cleaning" backHref="/requests/new">
       <div className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-lg">
-        <Alert tone="warning" title="Not connected yet">
-          Prices are the real, centrally-set rates, but confirming a booking
-          needs a write path that does not exist yet.
-        </Alert>
-
         <Field label="Service type">
           <div className="flex flex-col gap-3">
             {rates.map((rate) => {
@@ -72,32 +62,7 @@ export default async function HousekeepingRequestPage({ searchParams }) {
           </div>
         </Field>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <Input id="housekeeping-date" label="Date" type="date" />
-          </div>
-          <div className="flex-1">
-            <Select id="housekeeping-time" label="Time" options={timeSlots} />
-          </div>
-        </div>
-
-        <div className="rounded-md bg-sunken p-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-ink-soft">Service total</span>
-            <span className="text-xl font-bold text-ink">
-              {formatCharge(selected.price)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-ink-muted">
-            Billed to your account after completion
-          </p>
-        </div>
-
-        <div className="mt-auto pt-2">
-          <Button size="lg" disabled fullWidth>
-            Confirm booking
-          </Button>
-        </div>
+        <HousekeepingRequestForm selected={selected} />
       </div>
     </Screen>
   );
