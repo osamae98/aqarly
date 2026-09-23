@@ -24,4 +24,4 @@ export const nav = [
   { href: "/properties", label: "Properties" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
-];
+] satisfies { href: string; label: string }[];

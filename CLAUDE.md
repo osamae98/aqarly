@@ -1,7 +1,7 @@
 # Aqarly
 
 Real estate platform front end. Next.js 16 (App Router) + Tailwind CSS v4,
-plain JavaScript (no TypeScript). A pnpm workspace: one app per system from the
+TypeScript (strict). A pnpm workspace: one app per system from the
 platform roadmap, over shared design-system and data packages.
 
 ## Layout
@@ -59,15 +59,18 @@ never reach its stylesheet.
 
 ## Data
 
-All reads and writes go through `packages/core/src` — `operations.js` for
-service requests, staff, and dashboard rollups; `properties.js` for
-listings; `site.js` for site-wide strings. They currently read JSON from
+All reads and writes go through `packages/core/src` — `operations.ts` for
+service requests, staff, and dashboard rollups; `properties.ts` for
+listings; `site.ts` for site-wide strings. They currently read JSON from
 `packages/core/data`; keep that the single seam so the source can change
 without touching pages.
 
 The entities there (Property, Unit, Tenant, Lease, Service Request, Staff) are
 the shared model the platform roadmap mandates. Extend them in `core` rather
-than redefining them in an app.
+than redefining them in an app. Their types live in `packages/core/src/types.ts`
+and are re-exported from `@aqarly/core/operations`; the read shapes built on
+them (`EnrichedRequest`, `UnitRecord`, `Job`, …) are exported next to the read
+that returns them.
 
 Derived state — unit lifetime spend, a technician's load, the repeat-fault
 flag, the period rollups — is computed in `core` at read time, never stored
@@ -89,11 +92,11 @@ rendered as navigation only: they authenticate nobody, and every submit
 control on a form is disabled with the reason stated on screen. Wire them to a
 real session rather than making them look like they work.
 
-The ops, housekeeping and field apps write. `operations.js` exposes
+The ops, housekeeping and field apps write. `operations.ts` exposes
 `createRequest`, `assignRequests`, `setPriority`, `deleteRequests`,
 `addHousekeepingRate`, `removeHousekeepingRate`, `addStaff`, `updateStaff` and
 `removeStaff`, and the field app adds `startRequest`, `completeRequest` and
-`handBackRequest` — over `store.js`, one mutable copy of the seed JSON, held
+`handBackRequest` — over `store.ts`, one mutable copy of the seed JSON, held
 on `globalThis` for the life of the server process. Each app is its own
 process, so each holds its own copy: a booking made in the housekeeping
 portal does not appear in the tenant portal or ops, a job assigned in ops
@@ -115,7 +118,7 @@ Each admin portal manages one trade. `apps/ops` is maintenance only;
 `apps/housekeeping` is housekeeping only — its services come priced from the
 rate card, a booking keeps the price it was made at, it is billed to the
 tenant, and it has no emergency tier and no repeat-fault flag. The shared
-reads in `operations.js` take a `type` option (defaulting to maintenance)
+reads in `operations.ts` take a `type` option (defaulting to maintenance)
 rather than either app filtering after the fact.
 
 `apps/field` is the technician's side of the same data: one person's own open
@@ -155,6 +158,20 @@ live.
 
 `Aqarly` is a placeholder codename. Do not add the real company name anywhere
 in this repo — including the name the design system project uses.
+
+## TypeScript
+
+The migration from JavaScript is in progress. `packages/core` is TypeScript;
+the apps and `packages/ui` are still `.js`/`.jsx` under `allowJs`, which is not
+type-checked (`checkJs` is off), so a JS file compiles against core's types
+without being held to them. Convert a file by renaming it to `.ts`/`.tsx` and
+typing it — never by adding `// @ts-nocheck` or widening a core type to `any`
+to make a caller compile.
+
+Every workspace extends `tsconfig.base.json` (strict). `next build` type-checks
+each app along with the core files it imports; `pnpm typecheck` runs `tsc` in
+every workspace without building. The seed JSON is asserted to the model once,
+in `store.ts` and `properties.ts`, and nowhere else.
 
 ## Package manager
 

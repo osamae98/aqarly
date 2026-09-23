@@ -1,13 +1,33 @@
-import { db as data, nextId, resetStore } from "./store.js";
+import { db as data, nextId, resetStore } from "./store";
+import type {
+  Category,
+  HousekeepingRate,
+  MaintenanceCategory,
+  Origin,
+  PhotoInput,
+  Priority,
+  Property,
+  RequestType,
+  ServiceRequest,
+  Stage,
+  StageEntry,
+  Staff,
+  Tenant,
+  Tier,
+  Tone,
+  Unit,
+} from "./types";
+
+export type * from "./types";
 
 // Single seam between the ops UI and wherever operations data actually lives.
 // Today it reads and writes an in-process copy of a local JSON file; swap the
 // bodies for API/DB calls later and no page has to change. Mirrors the
 // approach in `./properties`.
 
-export const stages = ["submitted", "assigned", "in-progress", "done"];
+export const stages: Stage[] = ["submitted", "assigned", "in-progress", "done"];
 
-export const stageLabels = {
+export const stageLabels: Record<Stage, string> = {
   submitted: "Submitted",
   assigned: "Assigned",
   "in-progress": "In progress",
@@ -15,19 +35,21 @@ export const stageLabels = {
 };
 
 // Badge tones come from the design system's stage colour tokens.
-export const stageTones = {
+export const stageTones: Record<Stage, Tone> = {
   submitted: "neutral",
   assigned: "info",
   "in-progress": "warning",
   done: "success",
 };
 
-export const typeLabels = {
+export const typeLabels: Record<RequestType, string> = {
   maintenance: "Maintenance",
   housekeeping: "Housekeeping",
 };
 
-export const categoryLabels = {
+// Housekeeping entries grow and shrink with the rate card, so both lookups are
+// open-ended rather than keyed by a fixed union.
+export const categoryLabels: Record<Category, string> = {
   plumbing: "Plumbing",
   electrical: "Electrical",
   ac: "AC",
@@ -40,7 +62,7 @@ export const categoryLabels = {
 };
 
 // Two-letter codes for the category tile the request detail leads with.
-export const categoryCodes = {
+export const categoryCodes: Record<Category, string> = {
   plumbing: "PL",
   electrical: "EL",
   ac: "AC",
@@ -54,7 +76,7 @@ export const categoryCodes = {
 
 // The categories a tenant can file maintenance under. Housekeeping has no
 // equivalent list because its services come priced, from `housekeepingRates`.
-export const maintenanceCategories = [
+export const maintenanceCategories: MaintenanceCategory[] = [
   "ac",
   "plumbing",
   "electrical",
@@ -62,40 +84,58 @@ export const maintenanceCategories = [
   "other",
 ];
 
+export function isMaintenanceCategory(
+  category: string,
+): category is MaintenanceCategory {
+  return (maintenanceCategories as string[]).includes(category);
+}
+
 // The ops queue's priority column: an emergency jumps the line, everything
 // else is standard.
-export const tierLabels = {
+export const tierLabels: Record<Tier, string> = {
   emergency: "Emergency",
   standard: "Standard",
 };
 
-export const tierTones = {
+export const tierTones: Record<Tier, Tone> = {
   emergency: "danger",
   standard: "neutral",
 };
 
-export function tierFor(request) {
+export function tierFor(request: Pick<ServiceRequest, "priority">): Tier {
   return request.priority === "urgent" ? "emergency" : "standard";
 }
 
 const HOUR = 1000 * 60 * 60;
 
-function stageAt(request, stage) {
+function time(iso: string): number {
+  return new Date(iso).getTime();
+}
+
+function stageAt(request: ServiceRequest, stage: Stage): string | null {
   return request.stageHistory.find((entry) => entry.stage === stage)?.at ?? null;
 }
 
-function hoursBetween(from, to) {
-  return (new Date(to).getTime() - new Date(from).getTime()) / HOUR;
+function hoursBetween(from: string, to: number): number {
+  return (to - time(from)) / HOUR;
 }
 
 // What a request has actually cost. A housekeeping booking carries its price
 // from the moment it is made, but nothing is charged until the work is done,
 // so every spend or billed total reads through this rather than `charge`.
-function chargedOf(request) {
+function chargedOf(request: ServiceRequest): number {
   return request.stage === "done" ? (request.charge ?? 0) : 0;
 }
 
-function enrich(request) {
+export interface EnrichedRequest extends ServiceRequest {
+  unit: Unit | null;
+  property: Property | null;
+  tenant: Tenant | null;
+  assignee: Staff | null;
+  tier: Tier;
+}
+
+function enrich(request: ServiceRequest): EnrichedRequest {
   const unit = data.units.find((u) => u.id === request.unitId) ?? null;
   const property = unit
     ? (data.properties.find((p) => p.id === unit.propertyId) ?? null)
@@ -113,13 +153,15 @@ function enrich(request) {
 
 // The queue leads with the work that came in first; `newest` flips it.
 const sorters = {
-  age: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-  newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  age: (a: ServiceRequest, b: ServiceRequest) => time(a.createdAt) - time(b.createdAt),
+  newest: (a: ServiceRequest, b: ServiceRequest) => time(b.createdAt) - time(a.createdAt),
 };
+
+export type RequestSort = keyof typeof sorters;
 
 // Free-text match across the fields an admin actually types: the ref, the
 // unit, the tenant, and the summary.
-function matchesSearch(request, term) {
+function matchesSearch(request: EnrichedRequest, term: string): boolean {
   return [
     request.id,
     request.summary,
@@ -128,8 +170,25 @@ function matchesSearch(request, term) {
     request.tenant?.name,
     request.assignee?.name,
   ]
-    .filter(Boolean)
+    .filter((field): field is string => Boolean(field))
     .some((field) => field.toLowerCase().includes(term));
+}
+
+// Every filter is optional and they narrow together. `assigneeId` also takes
+// "unassigned".
+export interface RequestFilters {
+  stage?: Stage;
+  type?: RequestType;
+  category?: Category;
+  priority?: Priority;
+  tier?: Tier;
+  propertyId?: string;
+  unitId?: string;
+  assigneeId?: string;
+  tenantId?: string;
+  open?: boolean;
+  search?: string;
+  sort?: RequestSort;
 }
 
 export async function getRequests({
@@ -145,7 +204,7 @@ export async function getRequests({
   open,
   search,
   sort = "age",
-} = {}) {
+}: RequestFilters = {}): Promise<EnrichedRequest[]> {
   const term = search?.trim().toLowerCase();
 
   return data.requests
@@ -170,14 +229,24 @@ export async function getRequests({
     .sort(sorters[sort] ?? sorters.age);
 }
 
-export async function getRequestById(id) {
+export async function getRequestById(id: string): Promise<EnrichedRequest | null> {
   const request = data.requests.find((r) => r.id === id);
   return request ? enrich(request) : null;
 }
 
 // Previous / next within the queue's own order, so paging through the detail
 // screen walks the same list the admin was just looking at.
-export async function getRequestNeighbours(id, filters = {}) {
+export interface RequestNeighbours {
+  previous: EnrichedRequest | null;
+  next: EnrichedRequest | null;
+  position?: number;
+  total?: number;
+}
+
+export async function getRequestNeighbours(
+  id: string,
+  filters: RequestFilters = {},
+): Promise<RequestNeighbours> {
   const list = await getRequests(filters);
   const index = list.findIndex((request) => request.id === id);
 
@@ -191,7 +260,7 @@ export async function getRequestNeighbours(id, filters = {}) {
   };
 }
 
-export async function getRequestIds() {
+export async function getRequestIds(): Promise<string[]> {
   return data.requests.map((r) => r.id);
 }
 
@@ -199,15 +268,18 @@ export async function getRequestIds() {
 // in a unit before assigning new work. Scoped to one trade, since each portal
 // manages one: maintenance for ops, housekeeping for the housekeeping portal.
 export async function getUnitHistory(
-  unitId,
-  { excludeId, type = "maintenance" } = {},
-) {
+  unitId: string,
+  {
+    excludeId,
+    type = "maintenance",
+  }: { excludeId?: string; type?: RequestType } = {},
+): Promise<EnrichedRequest[]> {
   return data.requests
     .filter(
       (r) => r.unitId === unitId && r.id !== excludeId && r.type === type,
     )
     .map(enrich)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    .sort(sorters.newest);
 }
 
 // --- Portfolio reads -----------------------------------------------------
@@ -239,19 +311,28 @@ export const visitHours = [
 
 // A slot is "<from>–<to>", both hour marks above, with the visit starting
 // before it ends — any span the admin picks, not one of a fixed few.
-export function isValidScheduledSlot(slot) {
+export function isValidScheduledSlot(slot: string): boolean {
   const [from, to] = slot.split("–");
   const fromIndex = visitHours.indexOf(from);
   const toIndex = visitHours.indexOf(to);
   return fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
 }
 
-function repeatFaultFor(requests, now) {
+export interface RepeatFault {
+  category: Category;
+  count: number;
+  spend: number;
+}
+
+function repeatFaultFor(
+  requests: ServiceRequest[],
+  now: number,
+): RepeatFault | null {
   const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
-  const counts = new Map();
+  const counts = new Map<Category, number>();
 
   for (const request of requests) {
-    if (new Date(request.createdAt).getTime() < cutoff) continue;
+    if (time(request.createdAt) < cutoff) continue;
     counts.set(request.category, (counts.get(request.category) ?? 0) + 1);
   }
 
@@ -271,7 +352,21 @@ function repeatFaultFor(requests, now) {
 
 // Each portal manages one trade, so a unit's counts and history read off
 // that trade's work alone.
-function enrichUnit(unit, now, type = "maintenance") {
+export interface UnitRecord extends Unit {
+  property: Property | null;
+  tenant: Tenant | null;
+  requestCount: number;
+  openCount: number;
+  lifetimeSpend: number;
+  lastServicedAt: string | null;
+  repeatFault: RepeatFault | null;
+}
+
+function enrichUnit(
+  unit: Unit,
+  now: number,
+  type: RequestType = "maintenance",
+): UnitRecord {
   const requests = data.requests.filter(
     (r) => r.unitId === unit.id && r.type === type,
   );
@@ -279,7 +374,8 @@ function enrichUnit(unit, now, type = "maintenance") {
 
   const lastServicedAt = done
     .map((r) => stageAt(r, "done"))
-    .sort((a, b) => new Date(b) - new Date(a))[0] ?? null;
+    .filter((at): at is string => at !== null)
+    .sort((a, b) => time(b) - time(a))[0] ?? null;
 
   return {
     ...unit,
@@ -296,7 +392,10 @@ function enrichUnit(unit, now, type = "maintenance") {
   };
 }
 
-export async function getUnits({ propertyId, type } = {}) {
+export async function getUnits({
+  propertyId,
+  type,
+}: { propertyId?: string; type?: RequestType } = {}): Promise<UnitRecord[]> {
   const now = Date.now();
 
   return data.units
@@ -310,39 +409,50 @@ export async function getUnits({ propertyId, type } = {}) {
     );
 }
 
-export async function getUnitById(id, { type } = {}) {
+export async function getUnitById(
+  id: string,
+  { type }: { type?: RequestType } = {},
+): Promise<UnitRecord | null> {
   const unit = data.units.find((u) => u.id === id);
   return unit ? enrichUnit(unit, Date.now(), type) : null;
 }
 
-export async function getUnitIds() {
+export async function getUnitIds(): Promise<string[]> {
   return data.units.map((u) => u.id);
 }
 
 // The dashboard reports over a window; the queue and the sidebar do not.
 // Anything counted as "raised" or "spent" is period-scoped, while open work
 // is open regardless of when it came in.
-export const reportPeriods = {
+export type ReportPeriod = "month" | "quarter" | "year";
+
+export const reportPeriods: Record<ReportPeriod, { label: string; days: number }> = {
   month: { label: "This month", days: 30 },
   quarter: { label: "Quarter", days: 90 },
   year: { label: "Year", days: 365 },
 };
 
-function raisedSince(period) {
-  const spec = reportPeriods[period];
+// Anything that is not a known period reports over all time.
+function raisedSince(period: string | undefined): number | null {
+  const spec = period ? reportPeriods[period as ReportPeriod] : undefined;
   return spec ? Date.now() - spec.days * 24 * HOUR : null;
 }
 
-function inPeriod(request, since) {
-  return since === null || new Date(request.createdAt).getTime() >= since;
+function inPeriod(request: ServiceRequest, since: number | null): boolean {
+  return since === null || time(request.createdAt) >= since;
 }
 
 // Per-building rollup — the "cost and volume by building" the ops manager
 // view reports on, and the scope list the sidebar narrows the queue by.
+export interface RollupOptions {
+  period?: string;
+  type?: RequestType;
+}
+
 export async function getPropertyRollups({
   period,
   type = "maintenance",
-} = {}) {
+}: RollupOptions = {}) {
   const since = raisedSince(period);
 
   return data.properties
@@ -371,12 +481,19 @@ export async function getPropertyRollups({
 
 // Spend and volume by category, for the two bar blocks on the dashboard.
 // One trade at a time, since each portal reports on its own.
+export interface CategoryRollup {
+  category: Category;
+  label: string;
+  requests: number;
+  spend: number;
+}
+
 export async function getCategoryRollups({
   period,
   type = "maintenance",
-} = {}) {
+}: RollupOptions = {}): Promise<CategoryRollup[]> {
   const since = raisedSince(period);
-  const totals = new Map();
+  const totals = new Map<Category, CategoryRollup>();
 
   for (const request of data.requests) {
     if (request.type !== type) continue;
@@ -401,7 +518,9 @@ export async function getCategoryRollups({
 // record for staff identity in Phase 3, so everything here is either derived
 // from request data or ops-owned (load, coverage). One trade at a time: ops
 // manages the maintenance crew, the housekeeping portal its own.
-export async function getStaffRoster({ type = "maintenance" } = {}) {
+export async function getStaffRoster({
+  type = "maintenance",
+}: { type?: RequestType } = {}) {
   return data.staff
     .filter((member) => member.role === type)
     .map((member) => {
@@ -412,7 +531,7 @@ export async function getStaffRoster({ type = "maintenance" } = {}) {
       const propertyIds = new Set(
         assigned
           .map((r) => data.units.find((u) => u.id === r.unitId)?.propertyId)
-          .filter(Boolean),
+          .filter((id): id is string => Boolean(id)),
       );
 
       return {
@@ -421,8 +540,8 @@ export async function getStaffRoster({ type = "maintenance" } = {}) {
         capacity: staffCapacity,
         inProgress: open.filter((r) => r.stage === "in-progress").length,
         closed: closed.length,
-        properties: [...propertyIds].map((id) =>
-          data.properties.find((p) => p.id === id),
+        properties: [...propertyIds].map(
+          (id) => data.properties.find((p) => p.id === id) ?? null,
         ),
       };
     })
@@ -433,7 +552,11 @@ export async function getStaffRoster({ type = "maintenance" } = {}) {
 // building presence, and load; ours reads those off the roster — role has to
 // match the request type, then whoever is already working that building, then
 // whoever has the most room left in their day.
-export async function getAssignmentCandidates(request) {
+export type RosterMember = Awaited<ReturnType<typeof getStaffRoster>>[number];
+
+export async function getAssignmentCandidates(
+  request: Pick<EnrichedRequest, "type" | "property" | "assigneeId">,
+) {
   const roster = await getStaffRoster({ type: request.type });
   const propertyId = request.property?.id ?? null;
 
@@ -462,7 +585,7 @@ export async function getAssignmentCandidates(request) {
 export async function getDashboardStats({
   period,
   type = "maintenance",
-} = {}) {
+}: RollupOptions = {}) {
   const since = raisedSince(period);
   const all = data.requests.filter((r) => r.type === type).map(enrich);
   const raised = all.filter((request) => inPeriod(request, since));
@@ -492,12 +615,13 @@ export async function getDashboardStats({
 
 // Charges rolled up by month — the "cost trends over time" the
 // ops manager view calls for.
-function costByMonth(closed) {
-  const buckets = new Map();
+function costByMonth(closed: ServiceRequest[]) {
+  const buckets = new Map<string, number>();
 
   for (const request of closed) {
     if (!request.charge) continue;
     const doneAt = stageAt(request, "done");
+    if (!doneAt) continue;
     const month = doneAt.slice(0, 7);
     buckets.set(month, (buckets.get(month) ?? 0) + request.charge);
   }
@@ -508,21 +632,29 @@ function costByMonth(closed) {
 }
 
 // Maps a request's stage history onto the shape `@aqarly/ui/Timeline` renders.
-export function stageSteps(request) {
+export interface StageStep {
+  label: string;
+  caption: string;
+  state: "done" | "current" | "todo";
+}
+
+export function stageSteps(
+  request: Pick<ServiceRequest, "stage" | "stageHistory">,
+): StageStep[] {
   const reached = new Map(
-    request.stageHistory.map((entry) => [entry.stage, entry.at]),
+    request.stageHistory.map((entry): [Stage, string] => [entry.stage, entry.at]),
   );
   const currentIndex = stages.indexOf(request.stage);
 
   return stages.map((stage, index) => ({
     label: stageLabels[stage],
-    caption: reached.has(stage) ? formatDateTime(reached.get(stage)) : "—",
+    caption: reached.has(stage) ? formatDateTime(reached.get(stage)!) : "—",
     state:
       index < currentIndex ? "done" : index === currentIndex ? "current" : "todo",
   }));
 }
 
-export async function getTenantById(id) {
+export async function getTenantById(id: string) {
   const tenant = data.tenants.find((t) => t.id === id);
   if (!tenant) return null;
 
@@ -545,11 +677,24 @@ export async function getSignedInTenant() {
 // The tenant sees a much narrower slice than ops: their own requests, the
 // notifications those requests generated, and what they were charged.
 
-function notificationsFor(request) {
+export interface TenantNotification {
+  id: string;
+  requestId: string;
+  stage: Stage;
+  type: RequestType;
+  at: string;
+  title: string;
+  body: string;
+  unread: boolean;
+}
+
+function notificationsFor(
+  request: EnrichedRequest,
+): Omit<TenantNotification, "unread">[] {
   const { assignee, summary, type, charge, completionNotes } = request;
   const who = assignee?.name;
 
-  const copy = {
+  const copy: Record<Stage, { title: string; body: string }> = {
     submitted: {
       title: "Request submitted",
       body: `${summary} — we'll let you know as soon as it is assigned.`,
@@ -588,7 +733,10 @@ function notificationsFor(request) {
 // Notifications are derived from stage history rather than stored: every
 // stage change is exactly the event the tenant would have been pinged about.
 // Read state needs a write path, so "unread" stands in as "in the last day".
-export async function getTenantNotifications(tenantId, { now = Date.now() } = {}) {
+export async function getTenantNotifications(
+  tenantId: string,
+  { now = Date.now() }: { now?: number } = {},
+): Promise<TenantNotification[]> {
   const requests = await getRequests({ tenantId });
 
   return requests
@@ -597,10 +745,10 @@ export async function getTenantNotifications(tenantId, { now = Date.now() } = {}
       ...notification,
       unread: hoursBetween(notification.at, now) < 24,
     }))
-    .sort((a, b) => new Date(b.at) - new Date(a.at));
+    .sort((a, b) => time(b.at) - time(a.at));
 }
 
-function monthLabel(month) {
+function monthLabel(month: string): string {
   return new Intl.DateTimeFormat("en", {
     month: "long",
     year: "numeric",
@@ -610,12 +758,27 @@ function monthLabel(month) {
 
 // Completed work for one tenant, bucketed by the month it was completed in,
 // with the housekeeping charges for that month already totalled.
-export async function getTenantHistory(tenantId, { type } = {}) {
+export interface CompletedRequest extends EnrichedRequest {
+  completedAt: string;
+}
+
+export interface HistoryMonth {
+  month: string;
+  label: string;
+  items: CompletedRequest[];
+  housekeepingTotal: number;
+}
+
+export async function getTenantHistory(
+  tenantId: string,
+  { type }: { type?: RequestType } = {},
+): Promise<HistoryMonth[]> {
   const requests = await getRequests({ tenantId, type, stage: "done" });
-  const buckets = new Map();
+  const buckets = new Map<string, HistoryMonth>();
 
   for (const request of requests) {
     const doneAt = stageAt(request, "done");
+    if (!doneAt) continue;
     const month = doneAt.slice(0, 7);
 
     if (!buckets.has(month)) {
@@ -627,7 +790,7 @@ export async function getTenantHistory(tenantId, { type } = {}) {
       });
     }
 
-    const bucket = buckets.get(month);
+    const bucket = buckets.get(month)!;
     bucket.items.push({ ...request, completedAt: doneAt });
     if (request.type === "housekeeping") bucket.housekeepingTotal += request.charge ?? 0;
   }
@@ -636,23 +799,26 @@ export async function getTenantHistory(tenantId, { type } = {}) {
     .sort((a, b) => b.month.localeCompare(a.month))
     .map((bucket) => ({
       ...bucket,
-      items: bucket.items.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)),
+      items: bucket.items.sort((a, b) => time(b.completedAt) - time(a.completedAt)),
     }));
 }
 
-export async function getProperties() {
+export async function getProperties(): Promise<Property[]> {
   return data.properties;
 }
 
-export async function getStaff() {
+export async function getStaff(): Promise<Staff[]> {
   return data.staff;
 }
 
-export async function getHousekeepingRates() {
+export async function getHousekeepingRates(): Promise<HousekeepingRate[]> {
   return data.housekeepingRates;
 }
 
-export function formatCharge(amount, currency = "AED") {
+export function formatCharge(
+  amount: number | null | undefined,
+  currency = "AED",
+): string {
   if (!amount) return "—";
   return new Intl.NumberFormat("en", {
     style: "currency",
@@ -663,14 +829,14 @@ export function formatCharge(amount, currency = "AED") {
 
 // Day-level formatting for tiles and columns where a timestamp is more
 // precision than the reader needs.
-export function formatDate(iso) {
+export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(iso));
 }
 
-export function formatDateTime(iso) {
+export function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -680,22 +846,22 @@ export function formatDateTime(iso) {
 
 // --- Writes --------------------------------------------------------------
 // The ops portal's forms go through here. Everything below mutates the store
-// from `./store.js`, which is seeded from the same JSON the reads use, so a
+// from `./store`, which is seeded from the same JSON the reads use, so a
 // record created in the portal behaves exactly like one that shipped with it.
 // Callers are server actions; they revalidate, this does not.
 
-function stamp() {
+function stamp(): string {
   return new Date().toISOString();
 }
 
-function find(id) {
+function find(id: string): ServiceRequest | null {
   return data.requests.find((request) => request.id === id) ?? null;
 }
 
 // A stage is only ever reached once, so re-reaching one moves its timestamp
 // rather than adding a second entry — `stageSteps` and the activity log both
 // read the history as one row per stage.
-function reachStage(request, stage, at) {
+function reachStage(request: ServiceRequest, stage: Stage, at: string) {
   const existing = request.stageHistory.find((entry) => entry.stage === stage);
   if (existing) {
     existing.at = at;
@@ -703,6 +869,19 @@ function reachStage(request, stage, at) {
     request.stageHistory.push({ stage, at });
   }
   request.stage = stage;
+}
+
+export interface NewRequest {
+  unitId: string;
+  category: Category;
+  priority?: Priority;
+  summary: string;
+  description?: string;
+  photos?: (PhotoInput | null | undefined)[];
+  assigneeId?: string | null;
+  scheduledDate?: string | null;
+  scheduledSlot?: string | null;
+  origin?: Origin;
 }
 
 export async function createRequest({
@@ -716,7 +895,7 @@ export async function createRequest({
   scheduledDate = null,
   scheduledSlot = null,
   origin = "ops",
-}) {
+}: NewRequest): Promise<ServiceRequest> {
   const unit = data.units.find((u) => u.id === unitId);
   if (!unit) throw new Error(`Unknown unit ${unitId}`);
   if (!summary?.trim()) throw new Error("A request needs a summary");
@@ -727,7 +906,7 @@ export async function createRequest({
 
   // The category decides the trade, and the trade decides who can be assigned
   // and who gets billed — so it is derived here rather than asked for twice.
-  const type = maintenanceCategories.includes(category)
+  const type: RequestType = isMaintenanceCategory(category)
     ? "maintenance"
     : "housekeeping";
 
@@ -743,7 +922,7 @@ export async function createRequest({
   }
 
   const at = stamp();
-  const request = {
+  const request: ServiceRequest = {
     id: nextId("requests", "REQ"),
     unitId,
     tenantId: unit.tenantId ?? null,
@@ -761,7 +940,7 @@ export async function createRequest({
     // send them: name plus the bytes inline. There is no file store yet, so
     // they live in the same in-process copy everything else here does.
     photos: photos
-      .filter((photo) => photo?.dataUrl)
+      .filter((photo): photo is PhotoInput & { dataUrl: string } => Boolean(photo?.dataUrl))
       .slice(0, maxRequestPhotos)
       .map((photo) => ({
         name: photo.name ?? "Photo",
@@ -789,12 +968,15 @@ export async function createRequest({
 
 // Assigning is the one action that also moves a request forward: work nobody
 // holds is still "submitted", and the moment someone holds it, it is not.
-export async function assignRequests(ids, assigneeId) {
+export async function assignRequests(
+  ids: string | string[],
+  assigneeId: string,
+): Promise<ServiceRequest[]> {
   const member = data.staff.find((s) => s.id === assigneeId);
   if (!member) throw new Error(`Unknown staff member ${assigneeId}`);
 
   const at = stamp();
-  const touched = [];
+  const touched: ServiceRequest[] = [];
 
   for (const id of [ids].flat()) {
     const request = find(id);
@@ -817,12 +999,18 @@ export async function assignRequests(ids, assigneeId) {
   return touched;
 }
 
-export async function setPriority(ids, priority) {
-  if (!["urgent", "normal"].includes(priority)) {
+const priorities: Priority[] = ["urgent", "normal"];
+
+// Takes a plain string because it is checked here rather than trusted.
+export async function setPriority(
+  ids: string | string[],
+  priority: string,
+): Promise<ServiceRequest[]> {
+  if (!isPriority(priority)) {
     throw new Error(`Unknown priority ${priority}`);
   }
 
-  const touched = [];
+  const touched: ServiceRequest[] = [];
   for (const id of [ids].flat()) {
     const request = find(id);
     if (!request) continue;
@@ -836,7 +1024,9 @@ export async function setPriority(ids, priority) {
 // Removing a request takes it out of the queue entirely — the store has no
 // archive to move it to, so there is nothing softer to do than this. Its
 // charges leave the rollups with it.
-export async function deleteRequests(ids) {
+export async function deleteRequests(
+  ids: string | string[],
+): Promise<ServiceRequest[]> {
   const wanted = new Set([ids].flat().filter(Boolean));
   const removed = data.requests.filter((request) => wanted.has(request.id));
 
@@ -847,7 +1037,7 @@ export async function deleteRequests(ids) {
   return removed;
 }
 
-function slug(label) {
+function slug(label: string): string {
   return label
     .trim()
     .toLowerCase()
@@ -858,7 +1048,13 @@ function slug(label) {
 // --- Housekeeping rates --------------------------------------------------
 // The rate card the housekeeping portal manages and tenants book against.
 
-export async function addHousekeepingRate({ label, price }) {
+export async function addHousekeepingRate({
+  label,
+  price,
+}: {
+  label: string;
+  price: number | string;
+}): Promise<HousekeepingRate> {
   if (!label?.trim()) throw new Error("A rate needs a service name");
 
   const amount = Number(price);
@@ -869,12 +1065,16 @@ export async function addHousekeepingRate({ label, price }) {
   const serviceType = slug(label);
   if (
     data.housekeepingRates.some((r) => r.serviceType === serviceType) ||
-    maintenanceCategories.includes(serviceType)
+    isMaintenanceCategory(serviceType)
   ) {
     throw new Error(`${label.trim()} is already a service`);
   }
 
-  const rate = { serviceType, label: label.trim(), price: Math.round(amount) };
+  const rate: HousekeepingRate = {
+    serviceType,
+    label: label.trim(),
+    price: Math.round(amount),
+  };
   data.housekeepingRates.push(rate);
   // A rate is only a real option once the queue can categorise against it.
   categoryLabels[serviceType] = rate.label;
@@ -885,7 +1085,9 @@ export async function addHousekeepingRate({ label, price }) {
 // A rate can only leave the card once nothing open is priced against it —
 // a booking keeps the price it was made at, but a tenant cannot be left
 // mid-service with a rate the card no longer lists.
-export async function removeHousekeepingRate(serviceType) {
+export async function removeHousekeepingRate(
+  serviceType: string,
+): Promise<HousekeepingRate> {
   const index = data.housekeepingRates.findIndex(
     (rate) => rate.serviceType === serviceType,
   );
@@ -912,11 +1114,19 @@ export async function removeHousekeepingRate(serviceType) {
 // actually decides — who they are and how to reach them — can be set.
 // Ops manages the maintenance crew; the housekeeping portal manages its own.
 
-const staffRoles = ["maintenance", "housekeeping"];
+const staffRoles: RequestType[] = ["maintenance", "housekeeping"];
+
+function isRole(role: string): role is RequestType {
+  return (staffRoles as string[]).includes(role);
+}
+
+function isPriority(priority: string): priority is Priority {
+  return (priorities as string[]).includes(priority);
+}
 
 // Loose on purpose: numbers arrive in local and international formats, so
 // this only refuses what cannot be dialled at all.
-function cleanPhone(phone) {
+function cleanPhone(phone: string | null | undefined): string {
   const trimmed = phone?.trim() ?? "";
   const digits = trimmed.replace(/\D/g, "");
   if (!/^\+?[\d\s()-]+$/.test(trimmed) || digits.length < 7 || digits.length > 15) {
@@ -925,7 +1135,7 @@ function cleanPhone(phone) {
   return trimmed;
 }
 
-function staffId(name) {
+function staffId(name: string): string {
   const base = slug(name).split("-").filter(Boolean).pop() ?? "member";
   let candidate = `stf-${base}`;
   let suffix = 2;
@@ -938,11 +1148,24 @@ function staffId(name) {
 
 // `photo` is a data URL, held with the member the way request photos are —
 // there is no file store for either yet.
-export async function addStaff({ name, phone, role, photo = null }) {
-  if (!name?.trim()) throw new Error("A staff member needs a name");
-  if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
+// Role arrives as a plain string from a form and is checked here.
+export interface StaffInput {
+  name: string;
+  phone: string;
+  role: string;
+  photo?: string | null;
+}
 
-  const member = {
+export async function addStaff({
+  name,
+  phone,
+  role,
+  photo = null,
+}: StaffInput): Promise<Staff> {
+  if (!name?.trim()) throw new Error("A staff member needs a name");
+  if (!isRole(role)) throw new Error(`Unknown trade ${role}`);
+
+  const member: Staff = {
     id: staffId(name),
     name: name.trim(),
     phone: cleanPhone(phone),
@@ -954,11 +1177,14 @@ export async function addStaff({ name, phone, role, photo = null }) {
 }
 
 // Leaving `photo` out keeps the one they have.
-export async function updateStaff(id, { name, phone, role, photo }) {
+export async function updateStaff(
+  id: string,
+  { name, phone, role, photo }: StaffInput,
+): Promise<Staff> {
   const member = data.staff.find((s) => s.id === id);
   if (!member) throw new Error(`Unknown staff member ${id}`);
   if (!name?.trim()) throw new Error("A staff member needs a name");
-  if (!staffRoles.includes(role)) throw new Error(`Unknown trade ${role}`);
+  if (!isRole(role)) throw new Error(`Unknown trade ${role}`);
 
   member.name = name.trim();
   member.phone = cleanPhone(phone);
@@ -969,7 +1195,7 @@ export async function updateStaff(id, { name, phone, role, photo }) {
 
 // Work that is still open has to be somewhere, so a technician holding any
 // cannot simply disappear from the roster.
-export async function removeStaff(id) {
+export async function removeStaff(id: string): Promise<Staff> {
   const index = data.staff.findIndex((member) => member.id === id);
   if (index === -1) throw new Error(`Unknown staff member ${id}`);
 
@@ -1003,7 +1229,7 @@ export async function resetOperationsData() {
 // STUB: stands in for the signed-in technician until auth exists, exactly as
 // `getSignedInTenant` does for a tenant. Nothing here authenticates anyone.
 // Replace this, not its callers.
-export async function getSignedInTechnician() {
+export async function getSignedInTechnician(): Promise<Staff | null> {
   return data.staff.find((s) => s.id === "stf-haddad") ?? data.staff[0] ?? null;
 }
 
@@ -1012,13 +1238,17 @@ export async function getSignedInTechnician() {
 // outranks a standard job. Nothing else about the order is knowable: a
 // request carries no duration, and only an ops-booked one carries a slot, so
 // the remaining tie breaks the way the ops queue breaks it, oldest first.
-const worklistStages = { "in-progress": 0, assigned: 1, submitted: 2 };
+const worklistStages: Partial<Record<Stage, number>> = {
+  "in-progress": 0,
+  assigned: 1,
+  submitted: 2,
+};
 
-function byWorkOrder(a, b) {
+function byWorkOrder(a: ServiceRequest, b: ServiceRequest): number {
   return (
     (worklistStages[a.stage] ?? 3) - (worklistStages[b.stage] ?? 3) ||
     (a.priority === "urgent" ? 0 : 1) - (b.priority === "urgent" ? 0 : 1) ||
-    new Date(a.createdAt) - new Date(b.createdAt)
+    time(a.createdAt) - time(b.createdAt)
   );
 }
 
@@ -1026,7 +1256,7 @@ function byWorkOrder(a, b) {
 // technician before they start, because the repair that keeps not holding is
 // a different job from the one on the ticket. Read off the same rule the ops
 // portal flags a unit with, narrowed to this request's own category.
-function repeatFaultOn(request, now) {
+function repeatFaultOn(request: ServiceRequest, now: number): RepeatFault | null {
   if (request.type !== "maintenance") return null;
 
   const history = data.requests.filter(
@@ -1039,7 +1269,19 @@ function repeatFaultOn(request, now) {
 
 // Everything the worklist screen puts on the glass, already split the way it
 // is drawn: one job led with, the rest queued behind it, and what is closed.
-export async function getWorklist(technicianId) {
+export interface Job extends EnrichedRequest {
+  repeatFault: RepeatFault | null;
+}
+
+export interface Worklist {
+  technician: Staff;
+  next: Job | null;
+  queued: Job[];
+  closed: Job[];
+  counts: { left: number; urgent: number; closed: number };
+}
+
+export async function getWorklist(technicianId: string): Promise<Worklist | null> {
   const technician = data.staff.find((s) => s.id === technicianId);
   if (!technician) return null;
 
@@ -1047,12 +1289,12 @@ export async function getWorklist(technicianId) {
   const mine = data.requests
     .filter((request) => request.assigneeId === technicianId)
     .map(enrich)
-    .map((request) => ({ ...request, repeatFault: repeatFaultOn(request, now) }));
+    .map((request): Job => ({ ...request, repeatFault: repeatFaultOn(request, now) }));
 
   const open = mine.filter((r) => r.stage !== "done").sort(byWorkOrder);
   const closed = mine
     .filter((r) => r.stage === "done")
-    .sort((a, b) => new Date(stageAt(b, "done")) - new Date(stageAt(a, "done")));
+    .sort((a, b) => time(stageAt(b, "done") ?? "") - time(stageAt(a, "done") ?? ""));
 
   return {
     technician,
@@ -1070,7 +1312,7 @@ export async function getWorklist(technicianId) {
 // One job, and only if it is this technician's. Everything the field app
 // renders goes through here rather than `getRequestById`, so a job that has
 // been reassigned out from under someone stops resolving for them.
-export async function getJob(id, technicianId) {
+export async function getJob(id: string, technicianId: string): Promise<Job | null> {
   const request = await getRequestById(id);
   if (!request || request.assigneeId !== technicianId) return null;
 
@@ -1082,7 +1324,7 @@ export async function getJob(id, technicianId) {
 // enforce that for them, so each write checks the holder itself rather than
 // trusting the id a form posted.
 
-function heldBy(id, technicianId) {
+function heldBy(id: string, technicianId: string): ServiceRequest {
   const request = find(id);
   if (!request) throw new Error(`Unknown job ${id}`);
   if (request.assigneeId !== technicianId) {
@@ -1094,7 +1336,10 @@ function heldBy(id, technicianId) {
 
 // Arriving on site. Idempotent: tapping start on a job already under way is
 // the technician confirming where they are, not a second event.
-export async function startRequest(id, technicianId) {
+export async function startRequest(
+  id: string,
+  technicianId: string,
+): Promise<ServiceRequest> {
   const request = heldBy(id, technicianId);
 
   if (request.stage !== "in-progress") {
@@ -1114,17 +1359,22 @@ export const maxCompletionPhotos = 10;
 export const requiredCompletionPhotos = 2;
 
 export async function completeRequest(
-  id,
-  technicianId,
-  { notes = "", photos = [] } = {},
-) {
+  id: string,
+  technicianId: string,
+  {
+    notes = "",
+    photos = [],
+  }: { notes?: string; photos?: (PhotoInput | null | undefined)[] } = {},
+): Promise<ServiceRequest> {
   const request = heldBy(id, technicianId);
 
   if (request.stage !== "in-progress") {
     throw new Error("Start the job before closing it");
   }
 
-  const evidence = photos.filter((photo) => photo?.dataUrl);
+  const evidence = photos.filter(
+    (photo): photo is PhotoInput & { dataUrl: string } => Boolean(photo?.dataUrl),
+  );
   if (evidence.length < requiredCompletionPhotos) {
     throw new Error(
       `${requiredCompletionPhotos} photos are needed to close a job`,
@@ -1155,7 +1405,11 @@ export async function completeRequest(
 // anyone held it, carrying why. The assignment leaves the history with the
 // assignee: a request must not read as having reached a stage it is now
 // behind.
-export async function handBackRequest(id, technicianId, { reason } = {}) {
+export async function handBackRequest(
+  id: string,
+  technicianId: string,
+  { reason }: { reason?: string } = {},
+): Promise<ServiceRequest> {
   const request = heldBy(id, technicianId);
   if (!reason?.trim()) throw new Error("Say why you can't do it");
 
