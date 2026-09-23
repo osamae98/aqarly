@@ -47,8 +47,8 @@ export default function ConfirmDialog({
           {description}
         </p>
         <p className="text-xs text-ink-muted">
-          Writes live in the server process, so &ldquo;Reset demo data&rdquo; in
-          the sidebar is the only way back.
+          This can&rsquo;t be undone from the portal. Resetting the API&rsquo;s
+          demo data (<code>scripts/seed.py</code>) is the only way back.
         </p>
         <FormNote state={result} />
       </div>

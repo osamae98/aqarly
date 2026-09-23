@@ -10,7 +10,6 @@ import {
   maxRequestPhotos,
   removeHousekeepingRate,
   removeStaff,
-  resetOperationsData,
   updateStaff,
 } from "@aqarly/core/operations";
 
@@ -222,7 +221,3 @@ export async function removeStaffAction(formData) {
   }
 }
 
-export async function resetAction() {
-  await resetOperationsData();
-  revalidateAll();
-}

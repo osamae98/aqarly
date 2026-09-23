@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@aqarly/ui/Sidebar";
-import { resetAction } from "@/app/actions";
 import OpsMark from "@/components/OpsMark";
 
 // Remembered across visits — a rail an admin collapsed yesterday should stay
@@ -115,17 +114,18 @@ export default function OpsNav({ openCount, className = "" }) {
             )}
           </div>
 
-          {/* Writes live in the server process, not in the seed file, so this
-            * is the way back to a known state. */}
+          {/* The portals' data lives in aqarly-api now, so there's nothing in this
+            * process to reset. Shown disabled, with the real way back, rather than
+            * as a button that would pretend. */}
           {!collapsed && (
-            <form action={resetAction}>
-              <button
-                type="submit"
-                className="w-full cursor-pointer rounded-sm px-1 py-1 text-start text-[11.5px] text-[var(--green-300)] transition-colors hover:bg-white/[0.07] hover:text-[var(--green-100)]"
-              >
+            <div className="px-1 py-1 text-[11.5px] text-[var(--green-300)]">
+              <button type="button" disabled className="cursor-not-allowed opacity-60">
                 Reset demo data
               </button>
-            </form>
+              <span className="block text-[10.5px] opacity-80">
+                Reset from aqarly-api: <code>uv run python scripts/seed.py</code>
+              </span>
+            </div>
           )}
         </div>
       }

@@ -170,10 +170,453 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requests
+         * @description The queue: `getRequests`. Filters narrow together; oldest first unless
+         *     `sort=newest`.
+         */
+        get: operations["list_requests_requests_get"];
+        put?: never;
+        /**
+         * Create Request
+         * @description Raise a request, from ops, the housekeeping portal or a tenant:
+         *     `createRequest`.
+         */
+        post: operations["create_request_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Request
+         * @description One request with what it points at: `getRequestById`.
+         */
+        get: operations["get_request_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/{request_id}/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Assignment Candidates
+         * @description Who could take this request, best first: `getAssignmentCandidates`.
+         */
+        get: operations["assignment_candidates_requests__request_id__candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign Requests
+         * @description Give requests to one staff member: `assignRequests`. Closed work is
+         *     skipped.
+         */
+        post: operations["assign_requests_requests_assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Priority
+         * @description `setPriority`.
+         */
+        post: operations["set_priority_requests_priority_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requests/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Requests
+         * @description Remove requests entirely: `deleteRequests`. Returns them as they were.
+         */
+        post: operations["delete_requests_requests_delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Units
+         * @description Units with one trade's counts and spend, busiest first: `getUnits`.
+         */
+        get: operations["list_units_units_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/units/{unit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unit
+         * @description One unit: `getUnitById`.
+         */
+        get: operations["get_unit_units__unit_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/properties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Properties
+         * @description The buildings operations manages, by name: operations.ts's
+         *     `getProperties`. (Marketing listings are `/listings`.)
+         */
+        get: operations["list_properties_properties_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/properties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Property Rollups
+         * @description Cost and volume by building, most spend first: `getPropertyRollups`.
+         */
+        get: operations["property_rollups_reports_properties_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Category Rollups
+         * @description Volume and spend by category, busiest first: `getCategoryRollups`,
+         *     without labels.
+         */
+        get: operations["category_rollups_reports_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description The dashboard's numbers: `getDashboardStats`.
+         */
+        get: operations["dashboard_reports_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/staff/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Roster
+         * @description One trade's current staff with the load they hold: `getStaffRoster`.
+         */
+        get: operations["roster_staff_roster_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/staff/{staff_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Staff
+         * @description One staff member, retired or not.
+         */
+        get: operations["get_staff_staff__staff_id__get"];
+        /**
+         * Update Staff
+         * @description `updateStaff`. Leaving `photo` out keeps the one they have.
+         */
+        put: operations["update_staff_staff__staff_id__put"];
+        post?: never;
+        /**
+         * Retire Staff
+         * @description `removeStaff`: takes them off the roster once they hold no open work.
+         *     Their closed work still names them.
+         */
+        delete: operations["retire_staff_staff__staff_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Staff
+         * @description `addStaff`.
+         */
+        post: operations["add_staff_staff_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/housekeeping-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rates
+         * @description The card, in its order: `getHousekeepingRates`. `includeRetired` adds
+         *     the services that have left it, so old bookings can still be named.
+         */
+        get: operations["list_rates_housekeeping_rates_get"];
+        put?: never;
+        /**
+         * Add Rate
+         * @description `addHousekeepingRate`: goes at the end of the card.
+         */
+        post: operations["add_rate_housekeeping_rates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/housekeeping-rates/{service_type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Retire Rate
+         * @description `removeHousekeepingRate`: takes it off the card once no open booking
+         *     uses it. Bookings already made keep its name and their price.
+         */
+        delete: operations["retire_rate_housekeeping_rates__service_type__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Tenant
+         * @description A tenant with the unit they occupy: `getTenantById`. The tenant
+         *     portal's notifications and history are built from `/requests?tenantId=`.
+         */
+        get: operations["get_tenant_tenants__tenant_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AssignIn */
+        AssignIn: {
+            /** Ids */
+            ids: string[];
+            /** Assigneeid */
+            assigneeId: string;
+        };
+        /**
+         * CandidateOut
+         * @description A roster member ranked for one request's assign panel.
+         */
+        CandidateOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "maintenance" | "housekeeping";
+            /** Photo */
+            photo: string | null;
+            /** Retiredat */
+            retiredAt: string | null;
+            /** Load */
+            load: number;
+            /** Capacity */
+            capacity: number;
+            /** Inprogress */
+            inProgress: number;
+            /** Closed */
+            closed: number;
+            /** Properties */
+            properties: components["schemas"]["PropertyOut"][];
+            /** Inbuilding */
+            inBuilding: boolean;
+            /** Atcapacity */
+            atCapacity: boolean;
+            /** Iscurrent */
+            isCurrent: boolean;
+            /** Score */
+            score: number;
+        };
+        /**
+         * CategoryRollupOut
+         * @description `CategoryRollup` without `label`, which the frontend adds.
+         */
+        CategoryRollupOut: {
+            /** Category */
+            category: string;
+            /** Requests */
+            requests: number;
+            /** Spend */
+            spend: number;
+        };
         /** CompleteJobIn */
         CompleteJobIn: {
             /** Notes */
@@ -183,6 +626,90 @@ export interface components {
              * @default []
              */
             photos: components["schemas"]["PhotoIn"][];
+        };
+        /** DashboardOut */
+        DashboardOut: {
+            /** Open */
+            open: number;
+            /** Unassigned */
+            unassigned: number;
+            /** Inprogress */
+            inProgress: number;
+            /** Closed */
+            closed: number;
+            /** Bystage */
+            byStage: components["schemas"]["StageCount"][];
+            /** Raised */
+            raised: number;
+            /** Urgentopen */
+            urgentOpen: number;
+            /** Urgentbuildings */
+            urgentBuildings: number;
+            /** Maintenancespend */
+            maintenanceSpend: number;
+            /** Periodspend */
+            periodSpend: number;
+            /** Costtrend */
+            costTrend: components["schemas"]["MonthTotal"][];
+        };
+        /**
+         * EnrichedRequestOut
+         * @description `EnrichedRequest` in the frontend's operations.ts: a request with the
+         *     records it points at. The frontend adds `tier` itself with `tierFor()`.
+         */
+        EnrichedRequestOut: {
+            /** Id */
+            id: string;
+            /** Unitid */
+            unitId: string;
+            /** Tenantid */
+            tenantId: string | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "maintenance" | "housekeeping";
+            /** Category */
+            category: string;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "urgent" | "normal";
+            /** Summary */
+            summary: string;
+            /** Description */
+            description: string;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "submitted" | "assigned" | "in-progress" | "done";
+            /** Assigneeid */
+            assigneeId: string | null;
+            /** Origin */
+            origin: ("ops" | "tenant") | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Stagehistory */
+            stageHistory: components["schemas"]["StageEntryOut"][];
+            /** Photos */
+            photos: components["schemas"]["PhotoOut"][];
+            /** Charge */
+            charge: number | null;
+            /** Completionnotes */
+            completionNotes: string | null;
+            schedule: components["schemas"]["ScheduleOut"] | null;
+            /** Completionphotos */
+            completionPhotos: components["schemas"]["PhotoOut"][];
+            handBack: components["schemas"]["HandBackOut"] | null;
+            unit: components["schemas"]["UnitOut"];
+            property: components["schemas"]["PropertyOut"];
+            tenant: components["schemas"]["TenantOut"] | null;
+            assignee: components["schemas"]["StaffOut"] | null;
         };
         /**
          * ErrorOut
@@ -323,6 +850,58 @@ export interface components {
             /** Area */
             area: string;
         };
+        /** MonthTotal */
+        MonthTotal: {
+            /** Month */
+            month: string;
+            /** Total */
+            total: number;
+        };
+        /**
+         * NewRequestIn
+         * @description `NewRequest` in operations.ts. `type`, `tenantId` and `charge` are not
+         *     asked for: the category decides the trade, the unit decides the tenant, and
+         *     the rate card decides the price.
+         */
+        NewRequestIn: {
+            /** Unitid */
+            unitId: string;
+            /** Category */
+            category: string;
+            /**
+             * Priority
+             * @default normal
+             * @enum {string}
+             */
+            priority: "urgent" | "normal";
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Photos
+             * @default []
+             */
+            photos: components["schemas"]["PhotoIn"][];
+            /** Assigneeid */
+            assigneeId?: string | null;
+            /** Scheduleddate */
+            scheduledDate?: string | null;
+            /** Scheduledslot */
+            scheduledSlot?: string | null;
+            /**
+             * Origin
+             * @default ops
+             * @enum {string}
+             */
+            origin: "ops" | "tenant";
+        };
         /**
          * PhotoIn
          * @description `PhotoInput` in types.ts: anything without bytes is dropped.
@@ -340,6 +919,13 @@ export interface components {
             /** Dataurl */
             dataUrl: string;
         };
+        /** PriorityIn */
+        PriorityIn: {
+            /** Ids */
+            ids: string[];
+            /** Priority */
+            priority: string;
+        };
         /** PropertyOut */
         PropertyOut: {
             /** Id */
@@ -348,6 +934,51 @@ export interface components {
             name: string;
             /** Address */
             address: string;
+        };
+        /**
+         * PropertyRollupOut
+         * @description Cost and volume for one building, over the report period.
+         */
+        PropertyRollupOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Address */
+            address: string;
+            /** Units */
+            units: number;
+            /** Requests */
+            requests: number;
+            /** Open */
+            open: number;
+            /** Unassigned */
+            unassigned: number;
+            /** Spend */
+            spend: number;
+            /** Spendperunit */
+            spendPerUnit: number;
+        };
+        /** RateIn */
+        RateIn: {
+            /** Label */
+            label?: string | null;
+            /** Price */
+            price?: number | string | null;
+        };
+        /**
+         * RateOut
+         * @description `HousekeepingRate`, plus when it left the card, if it has.
+         */
+        RateOut: {
+            /** Servicetype */
+            serviceType: string;
+            /** Label */
+            label: string;
+            /** Price */
+            price: number;
+            /** Retiredat */
+            retiredAt: string | null;
         };
         /**
          * RepeatFaultOut
@@ -361,6 +992,42 @@ export interface components {
             count: number;
             /** Spend */
             spend: number;
+        };
+        /** RequestIdsIn */
+        RequestIdsIn: {
+            /** Ids */
+            ids: string[];
+        };
+        /**
+         * RosterMemberOut
+         * @description A staff member with their load, read off the requests they hold.
+         */
+        RosterMemberOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "maintenance" | "housekeeping";
+            /** Photo */
+            photo: string | null;
+            /** Retiredat */
+            retiredAt: string | null;
+            /** Load */
+            load: number;
+            /** Capacity */
+            capacity: number;
+            /** Inprogress */
+            inProgress: number;
+            /** Closed */
+            closed: number;
+            /** Properties */
+            properties: components["schemas"]["PropertyOut"][];
         };
         /** ScheduleOut */
         ScheduleOut: {
@@ -428,6 +1095,17 @@ export interface components {
             completionPhotos: components["schemas"]["PhotoOut"][];
             handBack: components["schemas"]["HandBackOut"] | null;
         };
+        /** StaffIn */
+        StaffIn: {
+            /** Name */
+            name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Role */
+            role?: string | null;
+            /** Photo */
+            photo?: string | null;
+        };
         /** StaffOut */
         StaffOut: {
             /** Id */
@@ -443,6 +1121,18 @@ export interface components {
             role: "maintenance" | "housekeeping";
             /** Photo */
             photo: string | null;
+            /** Retiredat */
+            retiredAt: string | null;
+        };
+        /** StageCount */
+        StageCount: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "submitted" | "assigned" | "in-progress" | "done";
+            /** Count */
+            count: number;
         };
         /** StageEntryOut */
         StageEntryOut: {
@@ -456,6 +1146,22 @@ export interface components {
              * Format: date-time
              */
             at: string;
+        };
+        /**
+         * TenantAccountOut
+         * @description A tenant with the unit they occupy.
+         */
+        TenantAccountOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            unit: components["schemas"]["UnitOut"] | null;
+            property: components["schemas"]["PropertyOut"] | null;
         };
         /** TenantOut */
         TenantOut: {
@@ -487,6 +1193,40 @@ export interface components {
             bedrooms: number;
             /** Bathrooms */
             bathrooms: number;
+        };
+        /**
+         * UnitRecordOut
+         * @description `UnitRecord`: a unit with what one trade's work there adds up to.
+         */
+        UnitRecordOut: {
+            /** Id */
+            id: string;
+            /** Propertyid */
+            propertyId: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "occupied" | "under-maintenance" | "vacant";
+            /** Tenantid */
+            tenantId: string | null;
+            /** Bedrooms */
+            bedrooms: number;
+            /** Bathrooms */
+            bathrooms: number;
+            property: components["schemas"]["PropertyOut"];
+            tenant: components["schemas"]["TenantOut"] | null;
+            /** Requestcount */
+            requestCount: number;
+            /** Opencount */
+            openCount: number;
+            /** Lifetimespend */
+            lifetimeSpend: number;
+            /** Lastservicedat */
+            lastServicedAt: string | null;
+            repeatFault: components["schemas"]["RepeatFaultOut"] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -919,6 +1659,999 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requests_requests_get: {
+        parameters: {
+            query?: {
+                stage?: ("submitted" | "assigned" | "in-progress" | "done") | null;
+                type?: ("maintenance" | "housekeeping") | null;
+                category?: string | null;
+                priority?: ("urgent" | "normal") | null;
+                tier?: ("emergency" | "standard") | null;
+                propertyId?: string | null;
+                unitId?: string | null;
+                /** @description A staff id, or "unassigned". */
+                assigneeId?: string | null;
+                tenantId?: string | null;
+                open?: boolean;
+                search?: string | null;
+                sort?: "age" | "newest";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrichedRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_request_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrichedRequestOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_request_requests__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrichedRequestOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assignment_candidates_requests__request_id__candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateOut"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_requests_requests_assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequestOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_priority_requests_priority_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriorityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequestOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_requests_requests_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestIdsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRequestOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_units_units_get: {
+        parameters: {
+            query?: {
+                propertyId?: string | null;
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitRecordOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unit_units__unit_id__get: {
+        parameters: {
+            query?: {
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitRecordOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_properties_properties_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertyOut"][];
+                };
+            };
+        };
+    };
+    property_rollups_reports_properties_get: {
+        parameters: {
+            query?: {
+                period?: ("month" | "quarter" | "year") | null;
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertyRollupOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    category_rollups_reports_categories_get: {
+        parameters: {
+            query?: {
+                period?: ("month" | "quarter" | "year") | null;
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRollupOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_reports_dashboard_get: {
+        parameters: {
+            query?: {
+                period?: ("month" | "quarter" | "year") | null;
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    roster_staff_roster_get: {
+        parameters: {
+            query?: {
+                type?: "maintenance" | "housekeeping";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterMemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_staff_staff__staff_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_staff_staff__staff_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_staff_staff__staff_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_staff_staff_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rates_housekeeping_rates_get: {
+        parameters: {
+            query?: {
+                includeRetired?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_rate_housekeeping_rates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_rate_housekeeping_rates__service_type__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_tenant_tenants__tenant_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantAccountOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

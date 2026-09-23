@@ -12,12 +12,12 @@ export type ApiSchemas = components["schemas"];
 // A refusal from the API. `message` is the API's own `detail`, written to be
 // shown to a person as it is.
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
   }
 }
 
@@ -33,7 +33,7 @@ function baseUrl(): string {
 
 export async function api<T>(
   path: string,
-  { method = "GET", body }: { method?: "GET" | "POST"; body?: unknown } = {},
+  { method = "GET", body }: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   const url = `${baseUrl()}${path}`;
   let response: Response;
@@ -83,4 +83,13 @@ export async function apiOrNull<T>(path: string, nullOn: number[] = [404]): Prom
 
 export function segment(value: string): string {
   return encodeURIComponent(value);
+}
+
+// `?a=1&b=2` from the defined, non-empty entries, or "" if there are none.
+export function queryString(params: Record<string, string | number | boolean | null | undefined>): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== "") query.set(key, String(value));
+  }
+  return query.size ? `?${query}` : "";
 }

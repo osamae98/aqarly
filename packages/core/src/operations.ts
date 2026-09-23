@@ -1,5 +1,4 @@
-import { api, apiOrNull, segment, type ApiSchemas } from "./api";
-import { db as data, nextId, resetStore } from "./store";
+import { api, apiOrNull, queryString, segment, type ApiSchemas } from "./api";
 import type {
   Category,
   HousekeepingRate,
@@ -11,20 +10,18 @@ import type {
   RequestType,
   ServiceRequest,
   Stage,
-  StageEntry,
   Staff,
-  Tenant,
   Tier,
   Tone,
-  Unit,
 } from "./types";
 
 export type * from "./types";
 
-// Single seam between the ops UI and wherever operations data actually lives.
-// Today it reads and writes an in-process copy of a local JSON file; swap the
-// bodies for API/DB calls later and no page has to change. Mirrors the
-// approach in `./properties`.
+// Single seam between the portals and wherever operations data lives, which
+// is now aqarly-api: every read and write below is a call to it. What stays
+// here is what the API deliberately doesn't send — labels, tones, formatting,
+// notification wording — and the few shapes built from one list for display.
+// No page changed when the source did.
 
 export const stages: Stage[] = ["submitted", "assigned", "in-progress", "done"];
 
@@ -49,7 +46,10 @@ export const typeLabels: Record<RequestType, string> = {
 };
 
 // Housekeeping entries grow and shrink with the rate card, so both lookups are
-// open-ended rather than keyed by a fixed union.
+// open-ended rather than keyed by a fixed union. A service added in the
+// housekeeping portal is filled in from the API's rate card (retired services
+// included, so old bookings still read as themselves) whenever a read that
+// can show categories runs — see `refreshServiceLabels`.
 export const categoryLabels: Record<Category, string> = {
   plumbing: "Plumbing",
   electrical: "Electrical",
@@ -113,7 +113,7 @@ function time(iso: string): number {
   return new Date(iso).getTime();
 }
 
-function stageAt(request: ServiceRequest, stage: Stage): string | null {
+function stageAt(request: Pick<ServiceRequest, "stageHistory">, stage: Stage): string | null {
   return request.stageHistory.find((entry) => entry.stage === stage)?.at ?? null;
 }
 
@@ -121,59 +121,32 @@ function hoursBetween(from: string, to: number): number {
   return (to - time(from)) / HOUR;
 }
 
-// What a request has actually cost. A housekeeping booking carries its price
-// from the moment it is made, but nothing is charged until the work is done,
-// so every spend or billed total reads through this rather than `charge`.
-function chargedOf(request: ServiceRequest): number {
-  return request.stage === "done" ? (request.charge ?? 0) : 0;
+// Fills `categoryLabels` / `categoryCodes` in from the rate card, so a service
+// added in another app (or since retired) reads by its name here too.
+async function refreshServiceLabels(): Promise<void> {
+  const rates = await api<HousekeepingRate[]>("/housekeeping-rates?includeRetired=true");
+  learnServiceLabels(rates);
 }
 
-export interface EnrichedRequest extends ServiceRequest {
-  unit: Unit | null;
-  property: Property | null;
-  tenant: Tenant | null;
-  assignee: Staff | null;
-  tier: Tier;
+// Only fills in what the lookups don't have: the short names above are what
+// the queues have always shown ("Laundry"), even where the rate card words it
+// longer ("Laundry & linens").
+function learnServiceLabels(rates: HousekeepingRate[]): void {
+  for (const rate of rates) {
+    categoryLabels[rate.serviceType] ??= rate.label;
+    categoryCodes[rate.serviceType] ??= rate.label.slice(0, 2).toUpperCase();
+  }
 }
 
-function enrich(request: ServiceRequest): EnrichedRequest {
-  const unit = data.units.find((u) => u.id === request.unitId) ?? null;
-  const property = unit
-    ? (data.properties.find((p) => p.id === unit.propertyId) ?? null)
-    : null;
+// A request with what it points at. The API sends the records; `tier` is
+// display logic and added here.
+export type EnrichedRequest = ApiSchemas["EnrichedRequestOut"] & { tier: Tier };
 
-  return {
-    ...request,
-    unit,
-    property,
-    tenant: data.tenants.find((t) => t.id === request.tenantId) ?? null,
-    assignee: data.staff.find((s) => s.id === request.assigneeId) ?? null,
-    tier: tierFor(request),
-  };
+function enrich(request: ApiSchemas["EnrichedRequestOut"]): EnrichedRequest {
+  return { ...request, tier: tierFor(request) };
 }
 
-// The queue leads with the work that came in first; `newest` flips it.
-const sorters = {
-  age: (a: ServiceRequest, b: ServiceRequest) => time(a.createdAt) - time(b.createdAt),
-  newest: (a: ServiceRequest, b: ServiceRequest) => time(b.createdAt) - time(a.createdAt),
-};
-
-export type RequestSort = keyof typeof sorters;
-
-// Free-text match across the fields an admin actually types: the ref, the
-// unit, the tenant, and the summary.
-function matchesSearch(request: EnrichedRequest, term: string): boolean {
-  return [
-    request.id,
-    request.summary,
-    request.unit?.label,
-    request.property?.name,
-    request.tenant?.name,
-    request.assignee?.name,
-  ]
-    .filter((field): field is string => Boolean(field))
-    .some((field) => field.toLowerCase().includes(term));
-}
+export type RequestSort = "age" | "newest";
 
 // Every filter is optional and they narrow together. `assigneeId` also takes
 // "unassigned".
@@ -192,47 +165,43 @@ export interface RequestFilters {
   sort?: RequestSort;
 }
 
-export async function getRequests({
-  stage,
-  type,
-  category,
-  priority,
-  tier,
-  propertyId,
-  unitId,
-  assigneeId,
-  tenantId,
-  open,
-  search,
-  sort = "age",
-}: RequestFilters = {}): Promise<EnrichedRequest[]> {
-  const term = search?.trim().toLowerCase();
+// Filters arrive straight from URL search params, so a value the API wouldn't
+// know is possible. It matches nothing, as it always has — except `sort`,
+// which falls back to oldest first.
+function knownFilters(filters: RequestFilters): Record<string, string | boolean | undefined> | null {
+  const { stage, type, priority, tier, sort, open, ...rest } = filters;
+  if (stage && !stages.includes(stage)) return null;
+  if (type && !(type in typeLabels)) return null;
+  if (priority && priority !== "urgent" && priority !== "normal") return null;
+  if (tier && !(tier in tierLabels)) return null;
+  return {
+    ...rest,
+    stage,
+    type,
+    priority,
+    tier,
+    open: open ? true : undefined,
+    sort: sort === "newest" ? "newest" : undefined,
+  };
+}
 
-  return data.requests
-    .map(enrich)
-    .filter((request) => {
-      if (stage && request.stage !== stage) return false;
-      if (type && request.type !== type) return false;
-      if (category && request.category !== category) return false;
-      if (priority && request.priority !== priority) return false;
-      if (tier && request.tier !== tier) return false;
-      if (propertyId && request.property?.id !== propertyId) return false;
-      if (unitId && request.unitId !== unitId) return false;
-      // `unassigned` is a stage in practice but reads as an assignee filter.
-      if (assigneeId === "unassigned" && request.assigneeId) return false;
-      if (assigneeId && assigneeId !== "unassigned" && request.assigneeId !== assigneeId)
-        return false;
-      if (tenantId && request.tenantId !== tenantId) return false;
-      if (open && request.stage === "done") return false;
-      if (term && !matchesSearch(request, term)) return false;
-      return true;
-    })
-    .sort(sorters[sort] ?? sorters.age);
+export async function getRequests(filters: RequestFilters = {}): Promise<EnrichedRequest[]> {
+  const params = knownFilters(filters);
+  if (!params) return [];
+
+  const [requests] = await Promise.all([
+    api<ApiSchemas["EnrichedRequestOut"][]>(`/requests${queryString(params)}`),
+    refreshServiceLabels(),
+  ]);
+  return requests.map(enrich);
 }
 
 export async function getRequestById(id: string): Promise<EnrichedRequest | null> {
-  const request = data.requests.find((r) => r.id === id);
-  return request ? enrich(request) : null;
+  const [request] = await Promise.all([
+    apiOrNull<ApiSchemas["EnrichedRequestOut"]>(`/requests/${segment(id)}`),
+    refreshServiceLabels(),
+  ]);
+  return request && enrich(request);
 }
 
 // Previous / next within the queue's own order, so paging through the detail
@@ -261,45 +230,19 @@ export async function getRequestNeighbours(
   };
 }
 
-export async function getRequestIds(): Promise<string[]> {
-  return data.requests.map((r) => r.id);
-}
-
-// Per-unit service history — Ops PRD §7: an admin should see what's happened
-// in a unit before assigning new work. Scoped to one trade, since each portal
-// manages one: maintenance for ops, housekeeping for the housekeeping portal.
-export async function getUnitHistory(
-  unitId: string,
-  {
-    excludeId,
-    type = "maintenance",
-  }: { excludeId?: string; type?: RequestType } = {},
-): Promise<EnrichedRequest[]> {
-  return data.requests
-    .filter(
-      (r) => r.unitId === unitId && r.id !== excludeId && r.type === type,
-    )
-    .map(enrich)
-    .sort(sorters.newest);
-}
-
 // --- Portfolio reads -----------------------------------------------------
 // The queue answers "what needs doing now"; these answer "what is this unit,
 // this building, this technician like" — the context Ops PRD §7 wants an
-// admin to have before assigning work.
+// admin to have before assigning work. The API derives every number.
 
-// Ops PRD §7 wants how much work one person can hold to be admin-configurable
-// rather than hardcoded. Fixed for MVP, here as one number to lift into admin
-// settings later.
+// How much work one person can hold before they read as full, and the rule a
+// unit is flagged by. The API applies both; they're here so screens can say
+// so ("3 visits in 240 days").
 export const staffCapacity = 7;
-
-// A unit that keeps failing the same way is the repair-versus-replace signal,
-// so it is flagged on sight rather than left to be read out of the history.
 export const repeatFaultRule = { withinDays: 240, occurrences: 3 };
 
-// How many photos one request carries. They are held in memory with the
-// request, so the cap is what keeps the store a sensible size rather than a
-// business rule.
+// How many photos one request carries. The API enforces it; the forms say it
+// up front.
 export const maxRequestPhotos = 4;
 
 // The hour marks a visit's window can start or end on. A request's schedule
@@ -319,107 +262,32 @@ export function isValidScheduledSlot(slot: string): boolean {
   return fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
 }
 
-export interface RepeatFault {
-  category: Category;
-  count: number;
-  spend: number;
-}
-
-function repeatFaultFor(
-  requests: ServiceRequest[],
-  now: number,
-): RepeatFault | null {
-  const cutoff = now - repeatFaultRule.withinDays * 24 * HOUR;
-  const counts = new Map<Category, number>();
-
-  for (const request of requests) {
-    if (time(request.createdAt) < cutoff) continue;
-    counts.set(request.category, (counts.get(request.category) ?? 0) + 1);
-  }
-
-  const [worst] = [...counts.entries()].sort(([, a], [, b]) => b - a);
-  if (!worst || worst[1] < repeatFaultRule.occurrences) return null;
-
-  const [category, count] = worst;
-
-  return {
-    category,
-    count,
-    spend: requests
-      .filter((r) => r.category === category)
-      .reduce((sum, r) => sum + chargedOf(r), 0),
-  };
-}
+export type RepeatFault = ApiSchemas["RepeatFaultOut"];
 
 // Each portal manages one trade, so a unit's counts and history read off
 // that trade's work alone.
-export interface UnitRecord extends Unit {
-  property: Property | null;
-  tenant: Tenant | null;
-  requestCount: number;
-  openCount: number;
-  lifetimeSpend: number;
-  lastServicedAt: string | null;
-  repeatFault: RepeatFault | null;
-}
-
-function enrichUnit(
-  unit: Unit,
-  now: number,
-  type: RequestType = "maintenance",
-): UnitRecord {
-  const requests = data.requests.filter(
-    (r) => r.unitId === unit.id && r.type === type,
-  );
-  const done = requests.filter((r) => r.stage === "done");
-
-  const lastServicedAt = done
-    .map((r) => stageAt(r, "done"))
-    .filter((at): at is string => at !== null)
-    .sort((a, b) => time(b) - time(a))[0] ?? null;
-
-  return {
-    ...unit,
-    property: data.properties.find((p) => p.id === unit.propertyId) ?? null,
-    tenant: unit.tenantId
-      ? (data.tenants.find((t) => t.id === unit.tenantId) ?? null)
-      : null,
-    requestCount: requests.length,
-    openCount: requests.filter((r) => r.stage !== "done").length,
-    lifetimeSpend: requests.reduce((sum, r) => sum + chargedOf(r), 0),
-    lastServicedAt,
-    // Housekeeping recurring is the service working, not a fault.
-    repeatFault: type === "maintenance" ? repeatFaultFor(requests, now) : null,
-  };
-}
+export type UnitRecord = ApiSchemas["UnitRecordOut"];
 
 export async function getUnits({
   propertyId,
   type,
 }: { propertyId?: string; type?: RequestType } = {}): Promise<UnitRecord[]> {
-  const now = Date.now();
-
-  return data.units
-    .filter((unit) => !propertyId || unit.propertyId === propertyId)
-    .map((unit) => enrichUnit(unit, now, type))
-    .sort(
-      (a, b) =>
-        b.openCount - a.openCount ||
-        (a.property?.name ?? "").localeCompare(b.property?.name ?? "") ||
-        a.label.localeCompare(b.label),
-    );
+  const [units] = await Promise.all([
+    api<UnitRecord[]>(`/units${queryString({ propertyId, type })}`),
+    refreshServiceLabels(),
+  ]);
+  return units;
 }
 
 export async function getUnitById(
   id: string,
   { type }: { type?: RequestType } = {},
 ): Promise<UnitRecord | null> {
-  const unit = data.units.find((u) => u.id === id);
-  return unit ? enrichUnit(unit, Date.now(), type) : null;
-}
-
-export async function getUnitIds(): Promise<string[]> {
-  return data.units.map((u) => u.id);
+  const [unit] = await Promise.all([
+    apiOrNull<UnitRecord>(`/units/${segment(id)}${queryString({ type })}`),
+    refreshServiceLabels(),
+  ]);
+  return unit;
 }
 
 // The dashboard reports over a window; the queue and the sidebar do not.
@@ -434,202 +302,72 @@ export const reportPeriods: Record<ReportPeriod, { label: string; days: number }
 };
 
 // Anything that is not a known period reports over all time.
-function raisedSince(period: string | undefined): number | null {
-  const spec = period ? reportPeriods[period as ReportPeriod] : undefined;
-  return spec ? Date.now() - spec.days * 24 * HOUR : null;
+function knownPeriod(period: string | undefined): ReportPeriod | undefined {
+  return period && period in reportPeriods ? (period as ReportPeriod) : undefined;
 }
 
-function inPeriod(request: ServiceRequest, since: number | null): boolean {
-  return since === null || time(request.createdAt) >= since;
-}
-
-// Per-building rollup — the "cost and volume by building" the ops manager
-// view reports on, and the scope list the sidebar narrows the queue by.
 export interface RollupOptions {
   period?: string;
   type?: RequestType;
 }
 
-export async function getPropertyRollups({
-  period,
-  type = "maintenance",
-}: RollupOptions = {}) {
-  const since = raisedSince(period);
-
-  return data.properties
-    .map((property) => {
-      const units = data.units.filter((u) => u.propertyId === property.id);
-      const unitIds = new Set(units.map((u) => u.id));
-      const all = data.requests.filter(
-        (r) => unitIds.has(r.unitId) && r.type === type,
-      );
-      const open = all.filter((r) => r.stage !== "done");
-      const raised = all.filter((r) => inPeriod(r, since));
-      const spend = raised.reduce((sum, r) => sum + chargedOf(r), 0);
-
-      return {
-        ...property,
-        units: units.length,
-        requests: raised.length,
-        open: open.length,
-        unassigned: open.filter((r) => !r.assigneeId).length,
-        spend,
-        spendPerUnit: units.length ? spend / units.length : 0,
-      };
-    })
-    .sort((a, b) => b.spend - a.spend || b.requests - a.requests);
+// Per-building rollup — the "cost and volume by building" the ops manager
+// view reports on, and the scope list the sidebar narrows the queue by.
+export async function getPropertyRollups({ period, type }: RollupOptions = {}) {
+  return api<ApiSchemas["PropertyRollupOut"][]>(
+    `/reports/properties${queryString({ period: knownPeriod(period), type })}`,
+  );
 }
 
 // Spend and volume by category, for the two bar blocks on the dashboard.
 // One trade at a time, since each portal reports on its own.
-export interface CategoryRollup {
-  category: Category;
+type ApiCategoryRollup = ApiSchemas["CategoryRollupOut"];
+
+export interface CategoryRollup extends ApiCategoryRollup {
   label: string;
-  requests: number;
-  spend: number;
 }
 
 export async function getCategoryRollups({
   period,
-  type = "maintenance",
+  type,
 }: RollupOptions = {}): Promise<CategoryRollup[]> {
-  const since = raisedSince(period);
-  const totals = new Map<Category, CategoryRollup>();
-
-  for (const request of data.requests) {
-    if (request.type !== type) continue;
-    if (!inPeriod(request, since)) continue;
-
-    const entry = totals.get(request.category) ?? {
-      category: request.category,
-      label: categoryLabels[request.category] ?? request.category,
-      requests: 0,
-      spend: 0,
-    };
-
-    entry.requests += 1;
-    entry.spend += chargedOf(request);
-    totals.set(request.category, entry);
-  }
-
-  return [...totals.values()].sort((a, b) => b.requests - a.requests);
+  const [rollups] = await Promise.all([
+    api<ApiSchemas["CategoryRollupOut"][]>(
+      `/reports/categories${queryString({ period: knownPeriod(period), type })}`,
+    ),
+    refreshServiceLabels(),
+  ]);
+  return rollups.map((rollup) => ({
+    ...rollup,
+    label: categoryLabels[rollup.category] ?? rollup.category,
+  }));
 }
 
 // The roster is deliberately thin: Ops PRD §9 makes the HRMS the system of
 // record for staff identity in Phase 3, so everything here is either derived
 // from request data or ops-owned (load, coverage). One trade at a time: ops
-// manages the maintenance crew, the housekeeping portal its own.
-export async function getStaffRoster({
-  type = "maintenance",
-}: { type?: RequestType } = {}) {
-  return data.staff
-    .filter((member) => member.role === type)
-    .map((member) => {
-      const assigned = data.requests.filter((r) => r.assigneeId === member.id);
-      const open = assigned.filter((r) => r.stage !== "done");
-      const closed = assigned.filter((r) => r.stage === "done");
+// manages the maintenance crew, the housekeeping portal its own. Retired
+// staff are not on it.
+export type RosterMember = ApiSchemas["RosterMemberOut"];
 
-      const propertyIds = new Set(
-        assigned
-          .map((r) => data.units.find((u) => u.id === r.unitId)?.propertyId)
-          .filter((id): id is string => Boolean(id)),
-      );
-
-      return {
-        ...member,
-        load: open.length,
-        capacity: staffCapacity,
-        inProgress: open.filter((r) => r.stage === "in-progress").length,
-        closed: closed.length,
-        properties: [...propertyIds].map(
-          (id) => data.properties.find((p) => p.id === id) ?? null,
-        ),
-      };
-    })
-    .sort((a, b) => b.load - a.load || a.name.localeCompare(b.name));
+export async function getStaffRoster({ type }: { type?: RequestType } = {}): Promise<RosterMember[]> {
+  return api<RosterMember[]>(`/staff/roster${queryString({ type })}`);
 }
 
-// Ranked candidates for the assign panel. The design ranks by certification,
-// building presence, and load; ours reads those off the roster — role has to
-// match the request type, then whoever is already working that building, then
-// whoever has the most room left in their day.
-export type RosterMember = Awaited<ReturnType<typeof getStaffRoster>>[number];
-
-export async function getAssignmentCandidates(
-  request: Pick<EnrichedRequest, "type" | "property" | "assigneeId">,
-) {
-  const roster = await getStaffRoster({ type: request.type });
-  const propertyId = request.property?.id ?? null;
-
-  return roster
-    .filter((member) => member.role === request.type)
-    .map((member) => {
-      const inBuilding = member.properties.some((p) => p?.id === propertyId);
-      const atCapacity = member.load >= member.capacity;
-
-      return {
-        ...member,
-        inBuilding,
-        atCapacity,
-        isCurrent: member.id === request.assigneeId,
-        // Capacity outweighs familiarity; familiarity outweighs a lighter day.
-        score:
-          (atCapacity ? -100 : 0) + (inBuilding ? 10 : 0) - member.load,
-      };
-    })
-    .sort((a, b) => b.score - a.score);
+// Ranked candidates for the assign panel: role has to match the request
+// type, then whoever is already working that building, then whoever has the
+// most room left in their day. Capacity outweighs familiarity.
+export async function getAssignmentCandidates(request: Pick<ServiceRequest, "id">) {
+  return api<ApiSchemas["CandidateOut"][]>(`/requests/${segment(request.id)}/candidates`);
 }
 
 // One trade at a time. The money splits the way the business does:
 // maintenance spend is the landlord's, housekeeping is billed on to tenants,
 // so the two never land on the same dashboard.
-export async function getDashboardStats({
-  period,
-  type = "maintenance",
-}: RollupOptions = {}) {
-  const since = raisedSince(period);
-  const all = data.requests.filter((r) => r.type === type).map(enrich);
-  const raised = all.filter((request) => inPeriod(request, since));
-  const open = all.filter((r) => r.stage !== "done");
-  const closed = all.filter((r) => r.stage === "done");
-  const spend = raised.reduce((sum, r) => sum + chargedOf(r), 0);
-
-  return {
-    open: open.length,
-    unassigned: open.filter((r) => !r.assigneeId).length,
-    inProgress: open.filter((r) => r.stage === "in-progress").length,
-    closed: closed.length,
-    byStage: stages.map((stage) => ({
-      stage,
-      count: all.filter((r) => r.stage === stage).length,
-    })),
-    raised: raised.length,
-    urgentOpen: open.filter((r) => r.priority === "urgent").length,
-    urgentBuildings: new Set(
-      open.filter((r) => r.priority === "urgent").map((r) => r.property?.id),
-    ).size,
-    maintenanceSpend: spend,
-    periodSpend: spend,
-    costTrend: costByMonth(closed),
-  };
-}
-
-// Charges rolled up by month — the "cost trends over time" the
-// ops manager view calls for.
-function costByMonth(closed: ServiceRequest[]) {
-  const buckets = new Map<string, number>();
-
-  for (const request of closed) {
-    if (!request.charge) continue;
-    const doneAt = stageAt(request, "done");
-    if (!doneAt) continue;
-    const month = doneAt.slice(0, 7);
-    buckets.set(month, (buckets.get(month) ?? 0) + request.charge);
-  }
-
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, total]) => ({ month, total }));
+export async function getDashboardStats({ period, type }: RollupOptions = {}) {
+  return api<ApiSchemas["DashboardOut"]>(
+    `/reports/dashboard${queryString({ period: knownPeriod(period), type })}`,
+  );
 }
 
 // Maps a request's stage history onto the shape `@aqarly/ui/Timeline` renders.
@@ -655,16 +393,10 @@ export function stageSteps(
   }));
 }
 
-export async function getTenantById(id: string) {
-  const tenant = data.tenants.find((t) => t.id === id);
-  if (!tenant) return null;
+export type TenantAccount = ApiSchemas["TenantAccountOut"];
 
-  const unit = data.units.find((u) => u.tenantId === id) ?? null;
-  const property = unit
-    ? (data.properties.find((p) => p.id === unit.propertyId) ?? null)
-    : null;
-
-  return { ...tenant, unit, property };
+export async function getTenantById(id: string): Promise<TenantAccount | null> {
+  return apiOrNull<TenantAccount>(`/tenants/${segment(id)}`);
 }
 
 // STUB: stands in for the signed-in session until auth exists. The Tenant
@@ -676,7 +408,9 @@ export async function getSignedInTenant() {
 
 // --- Tenant portal reads -------------------------------------------------
 // The tenant sees a much narrower slice than ops: their own requests, the
-// notifications those requests generated, and what they were charged.
+// notifications those requests generated, and what they were charged. The
+// requests come from the API; the notifications and the monthly history are
+// wording and grouping over them, so they're built here.
 
 export interface TenantNotification {
   id: string;
@@ -746,7 +480,9 @@ export async function getTenantNotifications(
       ...notification,
       unread: hoursBetween(notification.at, now) < 24,
     }))
-    .sort((a, b) => time(b.at) - time(a.at));
+    // Newest first; a request raised already assigned has both at one
+    // instant, and the later stage is the newer news.
+    .sort((a, b) => time(b.at) - time(a.at) || stages.indexOf(b.stage) - stages.indexOf(a.stage));
 }
 
 function monthLabel(month: string): string {
@@ -804,16 +540,19 @@ export async function getTenantHistory(
     }));
 }
 
+// The buildings operations manages, by name. (Marketing listings are
+// `getProperties` in `./properties`.)
 export async function getProperties(): Promise<Property[]> {
-  return data.properties;
+  return api<Property[]>("/properties");
 }
 
-export async function getStaff(): Promise<Staff[]> {
-  return data.staff;
-}
-
+// The card as it's listed, without retired services.
 export async function getHousekeepingRates(): Promise<HousekeepingRate[]> {
-  return data.housekeepingRates;
+  const [rates] = await Promise.all([
+    api<HousekeepingRate[]>("/housekeeping-rates"),
+    refreshServiceLabels(),
+  ]);
+  return rates;
 }
 
 export function formatCharge(
@@ -846,31 +585,10 @@ export function formatDateTime(iso: string): string {
 }
 
 // --- Writes --------------------------------------------------------------
-// The ops portal's forms go through here. Everything below mutates the store
-// from `./store`, which is seeded from the same JSON the reads use, so a
-// record created in the portal behaves exactly like one that shipped with it.
-// Callers are server actions; they revalidate, this does not.
-
-function stamp(): string {
-  return new Date().toISOString();
-}
-
-function find(id: string): ServiceRequest | null {
-  return data.requests.find((request) => request.id === id) ?? null;
-}
-
-// A stage is only ever reached once, so re-reaching one moves its timestamp
-// rather than adding a second entry — `stageSteps` and the activity log both
-// read the history as one row per stage.
-function reachStage(request: ServiceRequest, stage: Stage, at: string) {
-  const existing = request.stageHistory.find((entry) => entry.stage === stage);
-  if (existing) {
-    existing.at = at;
-  } else {
-    request.stageHistory.push({ stage, at });
-  }
-  request.stage = stage;
-}
+// The portals' forms go through here, to the API. It checks everything and
+// refuses in words meant for the admin or tenant; an `ApiError` carries that
+// message back to the action unchanged. Callers are server actions; they
+// revalidate, this does not.
 
 export interface NewRequest {
   unitId: string;
@@ -885,6 +603,9 @@ export interface NewRequest {
   origin?: Origin;
 }
 
+// The category decides the trade, and the trade decides who can be assigned
+// and who gets billed. Housekeeping is booked at the rate card's price and
+// keeps it, and carries no emergency.
 export async function createRequest({
   unitId,
   category,
@@ -896,154 +617,47 @@ export async function createRequest({
   scheduledDate = null,
   scheduledSlot = null,
   origin = "ops",
-}: NewRequest): Promise<ServiceRequest> {
-  const unit = data.units.find((u) => u.id === unitId);
-  if (!unit) throw new Error(`Unknown unit ${unitId}`);
-  if (!summary?.trim()) throw new Error("A request needs a summary");
-  if (!categoryLabels[category]) throw new Error(`Unknown category ${category}`);
-  if (scheduledSlot && !isValidScheduledSlot(scheduledSlot)) {
-    throw new Error(`Unknown time slot ${scheduledSlot}`);
-  }
-
-  // The category decides the trade, and the trade decides who can be assigned
-  // and who gets billed — so it is derived here rather than asked for twice.
-  const type: RequestType = isMaintenanceCategory(category)
-    ? "maintenance"
-    : "housekeeping";
-
-  // Housekeeping is booked at the rate card's price and keeps it: a later
-  // change to the card never reprices a booking already made. It is booked
-  // into a slot rather than raced against, so it carries no emergency.
-  const rate =
-    type === "housekeeping"
-      ? data.housekeepingRates.find((r) => r.serviceType === category)
-      : null;
-  if (type === "housekeeping" && !rate) {
-    throw new Error(`${categoryLabels[category]} is no longer on the rate card`);
-  }
-
-  const at = stamp();
-  const request: ServiceRequest = {
-    id: nextId("requests", "REQ"),
+}: NewRequest): Promise<EnrichedRequest> {
+  const body: ApiSchemas["NewRequestIn"] = {
     unitId,
-    tenantId: unit.tenantId ?? null,
-    type,
     category,
-    priority: type === "housekeeping" ? "normal" : priority,
-    summary: summary.trim(),
-    description: description.trim(),
-    stage: "submitted",
-    assigneeId: null,
+    priority,
+    summary: summary ?? "",
+    description: description ?? "",
+    photos: photos.filter((photo): photo is PhotoInput => Boolean(photo)),
+    assigneeId: assigneeId || null,
+    scheduledDate: scheduledDate || null,
+    scheduledSlot: scheduledSlot || null,
     origin,
-    createdAt: at,
-    stageHistory: [{ stage: "submitted", at }],
-    // Photos travel with the request the way the tenant portal's flow will
-    // send them: name plus the bytes inline. There is no file store yet, so
-    // they live in the same in-process copy everything else here does.
-    photos: photos
-      .filter((photo): photo is PhotoInput & { dataUrl: string } => Boolean(photo?.dataUrl))
-      .slice(0, maxRequestPhotos)
-      .map((photo) => ({
-        name: photo.name ?? "Photo",
-        dataUrl: photo.dataUrl,
-      })),
-    charge: rate ? rate.price : null,
-    completionNotes: null,
-    // Both or neither — a date with no window, or a window with no date,
-    // isn't a booking.
-    schedule:
-      scheduledDate && scheduledSlot
-        ? { date: scheduledDate, slot: scheduledSlot }
-        : null,
   };
-
-  data.requests.push(request);
-
-  // Assigning here is the same move as assigning from the queue, just made
-  // at creation time — so it goes through the one path that knows how to
-  // validate a technician and carry the request into "assigned".
-  if (assigneeId) await assignRequests(request.id, assigneeId);
-
-  return request;
+  return enrich(await api<ApiSchemas["EnrichedRequestOut"]>("/requests", { method: "POST", body }));
 }
 
 // Assigning is the one action that also moves a request forward: work nobody
 // holds is still "submitted", and the moment someone holds it, it is not.
+// Closed work is skipped; what was touched comes back.
 export async function assignRequests(
   ids: string | string[],
   assigneeId: string,
 ): Promise<ServiceRequest[]> {
-  const member = data.staff.find((s) => s.id === assigneeId);
-  if (!member) throw new Error(`Unknown staff member ${assigneeId}`);
-
-  const at = stamp();
-  const touched: ServiceRequest[] = [];
-
-  for (const id of [ids].flat()) {
-    const request = find(id);
-    if (!request || request.stage === "done") continue;
-
-    request.assigneeId = assigneeId;
-
-    if (request.stage === "submitted") {
-      reachStage(request, "assigned", at);
-    } else {
-      // Already in flight: a hand-over re-dates the assignment, it does not
-      // send the request backwards.
-      const assigned = request.stageHistory.find((e) => e.stage === "assigned");
-      if (assigned) assigned.at = at;
-    }
-
-    touched.push(request);
-  }
-
-  return touched;
+  const body: ApiSchemas["AssignIn"] = { ids: [ids].flat(), assigneeId };
+  return api("/requests/assign", { method: "POST", body });
 }
 
-const priorities: Priority[] = ["urgent", "normal"];
-
-// Takes a plain string because it is checked here rather than trusted.
+// Takes a plain string because the API checks it rather than trusting it.
 export async function setPriority(
   ids: string | string[],
   priority: string,
 ): Promise<ServiceRequest[]> {
-  if (!isPriority(priority)) {
-    throw new Error(`Unknown priority ${priority}`);
-  }
-
-  const touched: ServiceRequest[] = [];
-  for (const id of [ids].flat()) {
-    const request = find(id);
-    if (!request) continue;
-    request.priority = priority;
-    touched.push(request);
-  }
-
-  return touched;
+  const body: ApiSchemas["PriorityIn"] = { ids: [ids].flat(), priority };
+  return api("/requests/priority", { method: "POST", body });
 }
 
-// Removing a request takes it out of the queue entirely — the store has no
-// archive to move it to, so there is nothing softer to do than this. Its
-// charges leave the rollups with it.
-export async function deleteRequests(
-  ids: string | string[],
-): Promise<ServiceRequest[]> {
-  const wanted = new Set([ids].flat().filter(Boolean));
-  const removed = data.requests.filter((request) => wanted.has(request.id));
-
-  for (const request of removed) {
-    data.requests.splice(data.requests.indexOf(request), 1);
-  }
-
-  return removed;
-}
-
-function slug(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+// Removing a request takes it out of the queue entirely, with its history and
+// photos. Its charges leave the rollups with it.
+export async function deleteRequests(ids: string | string[]): Promise<ServiceRequest[]> {
+  const body: ApiSchemas["RequestIdsIn"] = { ids: [ids].flat().filter(Boolean) };
+  return api("/requests/delete", { method: "POST", body });
 }
 
 // --- Housekeeping rates --------------------------------------------------
@@ -1056,57 +670,16 @@ export async function addHousekeepingRate({
   label: string;
   price: number | string;
 }): Promise<HousekeepingRate> {
-  if (!label?.trim()) throw new Error("A rate needs a service name");
-
-  const amount = Number(price);
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("A rate needs a price above zero");
-  }
-
-  const serviceType = slug(label);
-  if (
-    data.housekeepingRates.some((r) => r.serviceType === serviceType) ||
-    isMaintenanceCategory(serviceType)
-  ) {
-    throw new Error(`${label.trim()} is already a service`);
-  }
-
-  const rate: HousekeepingRate = {
-    serviceType,
-    label: label.trim(),
-    price: Math.round(amount),
-  };
-  data.housekeepingRates.push(rate);
-  // A rate is only a real option once the queue can categorise against it.
-  categoryLabels[serviceType] = rate.label;
-  categoryCodes[serviceType] = rate.label.slice(0, 2).toUpperCase();
+  const body: ApiSchemas["RateIn"] = { label, price };
+  const rate = await api<HousekeepingRate>("/housekeeping-rates", { method: "POST", body });
+  learnServiceLabels([rate]);
   return rate;
 }
 
-// A rate can only leave the card once nothing open is priced against it —
-// a booking keeps the price it was made at, but a tenant cannot be left
-// mid-service with a rate the card no longer lists.
-export async function removeHousekeepingRate(
-  serviceType: string,
-): Promise<HousekeepingRate> {
-  const index = data.housekeepingRates.findIndex(
-    (rate) => rate.serviceType === serviceType,
-  );
-  if (index === -1) throw new Error(`Unknown service ${serviceType}`);
-
-  const open = data.requests.filter(
-    (request) => request.category === serviceType && request.stage !== "done",
-  );
-  if (open.length > 0) {
-    throw new Error(
-      `${open.length} open ${open.length === 1 ? "booking uses" : "bookings use"} this service — close them first`,
-    );
-  }
-
-  const [rate] = data.housekeepingRates.splice(index, 1);
-  // The label stays in the lookup so requests already charged against it keep
-  // reading as themselves in the history.
-  return rate;
+// A rate can only leave the card once nothing open is priced against it. It's
+// retired rather than deleted, so bookings made against it keep its name.
+export async function removeHousekeepingRate(serviceType: string): Promise<HousekeepingRate> {
+  return api(`/housekeeping-rates/${segment(serviceType)}`, { method: "DELETE" });
 }
 
 // --- Staff ---------------------------------------------------------------
@@ -1115,41 +688,9 @@ export async function removeHousekeepingRate(
 // actually decides — who they are and how to reach them — can be set.
 // Ops manages the maintenance crew; the housekeeping portal manages its own.
 
-const staffRoles: RequestType[] = ["maintenance", "housekeeping"];
-
-function isRole(role: string): role is RequestType {
-  return (staffRoles as string[]).includes(role);
-}
-
-function isPriority(priority: string): priority is Priority {
-  return (priorities as string[]).includes(priority);
-}
-
-// Loose on purpose: numbers arrive in local and international formats, so
-// this only refuses what cannot be dialled at all.
-function cleanPhone(phone: string | null | undefined): string {
-  const trimmed = phone?.trim() ?? "";
-  const digits = trimmed.replace(/\D/g, "");
-  if (!/^\+?[\d\s()-]+$/.test(trimmed) || digits.length < 7 || digits.length > 15) {
-    throw new Error("Enter a valid mobile number");
-  }
-  return trimmed;
-}
-
-function staffId(name: string): string {
-  const base = slug(name).split("-").filter(Boolean).pop() ?? "member";
-  let candidate = `stf-${base}`;
-  let suffix = 2;
-  while (data.staff.some((member) => member.id === candidate)) {
-    candidate = `stf-${base}-${suffix}`;
-    suffix += 1;
-  }
-  return candidate;
-}
-
 // `photo` is a data URL, held with the member the way request photos are —
-// there is no file store for either yet.
-// Role arrives as a plain string from a form and is checked here.
+// there is no file store for either yet. Role arrives as a plain string from a
+// form and the API checks it.
 export interface StaffInput {
   name: string;
   phone: string;
@@ -1157,68 +698,22 @@ export interface StaffInput {
   photo?: string | null;
 }
 
-export async function addStaff({
-  name,
-  phone,
-  role,
-  photo = null,
-}: StaffInput): Promise<Staff> {
-  if (!name?.trim()) throw new Error("A staff member needs a name");
-  if (!isRole(role)) throw new Error(`Unknown trade ${role}`);
-
-  const member: Staff = {
-    id: staffId(name),
-    name: name.trim(),
-    phone: cleanPhone(phone),
-    role,
-    photo,
-  };
-  data.staff.push(member);
-  return member;
+export async function addStaff({ name, phone, role, photo = null }: StaffInput): Promise<Staff> {
+  const body: ApiSchemas["StaffIn"] = { name, phone, role, photo };
+  return api("/staff", { method: "POST", body });
 }
 
 // Leaving `photo` out keeps the one they have.
-export async function updateStaff(
-  id: string,
-  { name, phone, role, photo }: StaffInput,
-): Promise<Staff> {
-  const member = data.staff.find((s) => s.id === id);
-  if (!member) throw new Error(`Unknown staff member ${id}`);
-  if (!name?.trim()) throw new Error("A staff member needs a name");
-  if (!isRole(role)) throw new Error(`Unknown trade ${role}`);
-
-  member.name = name.trim();
-  member.phone = cleanPhone(phone);
-  member.role = role;
-  if (photo) member.photo = photo;
-  return member;
+export async function updateStaff(id: string, { name, phone, role, photo }: StaffInput): Promise<Staff> {
+  const body: ApiSchemas["StaffIn"] = { name, phone, role, photo: photo || null };
+  return api(`/staff/${segment(id)}`, { method: "PUT", body });
 }
 
 // Work that is still open has to be somewhere, so a technician holding any
-// cannot simply disappear from the roster.
+// cannot leave the roster. Once they can, they're retired rather than deleted:
+// the work they closed still says who did it.
 export async function removeStaff(id: string): Promise<Staff> {
-  const index = data.staff.findIndex((member) => member.id === id);
-  if (index === -1) throw new Error(`Unknown staff member ${id}`);
-
-  const open = data.requests.filter(
-    (request) => request.assigneeId === id && request.stage !== "done",
-  );
-  if (open.length > 0) {
-    throw new Error(
-      open.length === 1
-        ? "1 open request is still assigned — reassign it first"
-        : `${open.length} open requests are still assigned — reassign them first`,
-    );
-  }
-
-  const [member] = data.staff.splice(index, 1);
-  return member;
-}
-
-// Everything the portal has created goes back to the seed. The prototype's
-// data lives in one process, so this is the only way back to a known state.
-export async function resetOperationsData() {
-  resetStore();
+  return api(`/staff/${segment(id)}`, { method: "DELETE" });
 }
 
 // --- Field app -----------------------------------------------------------
@@ -1231,7 +726,7 @@ export async function resetOperationsData() {
 // `getSignedInTenant` does for a tenant. Nothing here authenticates anyone.
 // Replace this, not its callers.
 export async function getSignedInTechnician(): Promise<Staff | null> {
-  return data.staff.find((s) => s.id === "stf-haddad") ?? data.staff[0] ?? null;
+  return apiOrNull<Staff>("/staff/stf-haddad");
 }
 
 // The field app reads and writes through aqarly-api, so every technician's
@@ -1240,9 +735,8 @@ export async function getSignedInTechnician(): Promise<Staff | null> {
 // emergency, then oldest; closed work most recently closed first. The one
 // thing added here is `tier`, which is display logic (`tierFor`).
 //
-// Ops still reads and writes the in-process store until its own reads move
-// (roadmap Phase 6–7), so a job assigned in ops doesn't reach the field app
-// yet, and a hand-back doesn't reach ops.
+// Ops reads and writes the same API, so a job assigned in ops reaches the
+// technician's worklist and a hand-back reaches the ops queue.
 
 type ApiJob = ApiSchemas["JobOut"];
 

@@ -64,25 +64,38 @@ service requests, staff, and dashboard rollups; `properties.ts` for
 listings; `site.ts` for site-wide strings. Keep that the single seam so the
 source can change without touching pages.
 
-The source is moving to **aqarly-api**, the backend in the sibling repo
-(`../aqarly-api`: FastAPI + Postgres), one area at a time. Moved so far:
-listings (`getProperties`, `getPropertyBySlug`, `getPropertySlugs`) and the
-whole field app (`getWorklist`, `getJob`, `startRequest`, `completeRequest`,
-`handBackRequest`). Everything else still reads and writes `store.ts`.
+The source is **aqarly-api**, the backend in the sibling repo
+(`../aqarly-api`: FastAPI + Postgres). Every read and write in `operations.ts`
+and `properties.ts` is a call to it, so all five apps share one database: a
+job assigned in ops reaches the technician's worklist, a hand-back reaches
+ops, and a tenant's booking reaches the housekeeping queue. There is no
+in-process store any more.
 
 - `core/src/api.ts` is the only place core calls the API. It reads
   `API_URL` (server-only, in each app's gitignored `.env.local`:
-  `API_URL=http://localhost:8000`; `web` and `field` need it today), always
+  `API_URL=http://localhost:8000`; every app needs it), always
   fetches with `cache: "no-store"`, and turns an API refusal into an
   `ApiError` whose message is the API's `detail`, written to be shown as is.
 - `core/src/api-schema.ts` is generated from the API's `openapi.json`, never
   edited: `pnpm --filter @aqarly/core generate:api` (reads
   `../aqarly-api/openapi.json`, or `API_SCHEMA`). A type the API serves is
   aliased from it (`Listing`, `Job`) rather than declared in `types.ts`.
-- The API sends data, not display logic: core adds `tier` with `tierFor()`.
-  Formatting helpers stay here.
-- A page reading from the API renders per request (`force-dynamic`), so
+- The API sends data and the numbers derived from it (spend, load, rollups,
+  scores, the repeat-fault flag); core keeps the words. `tier` (`tierFor()`),
+  category labels, notification copy, month labels and formatting stay here,
+  as do shapes built from one list for display (`getRequestNeighbours`,
+  `getTenantNotifications`, `getTenantHistory`).
+- `categoryLabels` / `categoryCodes` hold the short names the queues show.
+  A service added on the rate card in any app is filled in from
+  `/housekeeping-rates?includeRetired=true` by the reads that show categories;
+  a name already in the lookup is never overwritten.
+- Filters from URL search params are checked in core before the API sees
+  them: an unknown `stage`/`type`/`tier`/`priority` matches nothing and an
+  unknown `sort` falls back to oldest first, as before.
+- Pages reading from the API render per request (`force-dynamic`), so
   `next build` never needs the API running.
+- `next.config.mjs` in every app sets `logging.fetches.fullUrl`, so each API
+  call shows in that app's dev terminal (the browser never sees it).
 - Its data is reset with `uv run python scripts/seed.py` in aqarly-api, which
   reloads `packages/core/data` (now the API's seed), not by any app's reset.
 
@@ -94,8 +107,8 @@ them (`EnrichedRequest`, `UnitRecord`, `Job`, …) are exported next to the read
 that returns them.
 
 Derived state — unit lifetime spend, a technician's load, the repeat-fault
-flag, the period rollups — is computed in `core` at read time, never stored
-and never recomputed in a page. That is why every ops route is
+flag, the period rollups — is computed by the API at read time, never stored
+and never recomputed in a page or in core. That is why every ops route is
 `dynamic = "force-dynamic"`.
 
 Nothing in the UI reports elapsed time or SLA state: no request age, no
@@ -113,27 +126,25 @@ rendered as navigation only: they authenticate nobody, and every submit
 control on a form is disabled with the reason stated on screen. Wire them to a
 real session rather than making them look like they work.
 
-The ops, housekeeping and field apps write. `operations.ts` exposes
+The ops, housekeeping, tenant and field apps write. `operations.ts` exposes
 `createRequest`, `assignRequests`, `setPriority`, `deleteRequests`,
-`addHousekeepingRate`, `removeHousekeepingRate`, `addStaff`, `updateStaff` and
-`removeStaff` over `store.ts`, one mutable copy of the seed JSON, held on
-`globalThis` for the life of the server process. Each app is its own process,
-so each holds its own copy: a booking made in the housekeeping portal does not
-appear in the tenant portal or ops. The field app's `startRequest`,
-`completeRequest` and `handBackRequest` write to aqarly-api instead, which is
-the real home; but ops still reads its own store, so a job assigned in ops
-does not reach the technician's worklist, and a hand-back does not reach ops,
-until ops moves too. Removals are guarded rather than soft: a rate with open
-bookings and a technician holding open work both refuse, with the reason
-carried back to the dialog.
+`addHousekeepingRate`, `removeHousekeepingRate`, `addStaff`, `updateStaff`,
+`removeStaff`, and for the field app `startRequest`, `completeRequest` and
+`handBackRequest`; each is one API call, and the API checks everything and
+refuses in words the dialog shows as they are. Removals are guarded, then
+soft: a rate with open bookings and a technician holding open work both
+refuse; once they can go, they're retired (`retiredAt`), not deleted. A
+retired rate leaves the card but still names the bookings made against it; a
+retired technician leaves the roster and assign panel but still shows as the
+assignee of work they closed.
 
 Photos on a request are inlined as data URLs by `createRequestAction` and kept
 with the request. There is no file store, which is what the count and size
 caps there are standing in for — give them somewhere real to live before
-raising either. `operations.json` stays the seed and is never
-written to, so a restart (or the sidebar's "Reset demo data") is the way back
-to a known state for the apps still on the store. The field app's reset is
-disabled with its reason on screen: its jobs live in the API. Pages call these through the server actions in
+raising either. `packages/core/data` is now only the API's seed, never read
+by core: `uv run python scripts/seed.py` in aqarly-api is the way back to a
+known state. Every app's "Reset demo data" is disabled with that reason on
+screen. Pages call these through the server actions in
 `apps/<app>/src/app/actions.js`, which are the only place `revalidatePath` is
 allowed to live.
 
@@ -196,8 +207,9 @@ to make a caller compile.
 
 Every workspace extends `tsconfig.base.json` (strict). `next build` type-checks
 each app along with the core files it imports; `pnpm typecheck` runs `tsc` in
-every workspace without building. The seed JSON is asserted to the model once,
-in `store.ts` and `properties.ts`, and nowhere else.
+every workspace without building. The model's types come from the API's
+OpenAPI schema (`api-schema.ts`); the seed JSON is validated against the model
+only by aqarly-api's seed script.
 
 ## Package manager
 

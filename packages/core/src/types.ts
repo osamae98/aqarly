@@ -34,108 +34,35 @@ export type UnitStatus = "occupied" | "under-maintenance" | "vacant";
 // The design system's badge tones, as the lookups below pick them.
 export type Tone = "neutral" | "info" | "warning" | "success" | "danger";
 
-export interface Property {
-  id: string;
-  name: string;
-  address: string;
-}
+// --- The operations model ---------------------------------------------------
+// Served by aqarly-api, so each entity is the API's shape, generated from its
+// OpenAPI schema (`./api-schema`) rather than declared here. Where the old
+// in-memory shapes left an optional field out, the API sends `null` or `[]`.
 
-export interface Unit {
-  id: string;
-  propertyId: string;
-  label: string;
-  status: UnitStatus;
-  tenantId: string | null;
-  bedrooms: number;
-  bathrooms: number;
-}
+type Schemas = components["schemas"];
 
-export interface Tenant {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-}
-
-export interface Staff {
-  id: string;
-  name: string;
-  phone: string;
-  role: RequestType;
-  // A data URL; there is no file store yet.
-  photo?: string | null;
-}
-
-export interface HousekeepingRate {
-  serviceType: string;
-  label: string;
-  price: number;
-}
-
-// Photos are inlined with whatever carries them until there is a file store.
-export interface Photo {
-  name: string;
-  dataUrl: string;
-}
+export type Property = Schemas["PropertyOut"];
+export type Unit = Schemas["UnitOut"];
+export type Tenant = Schemas["TenantOut"];
+// `retiredAt` is set once they've left the roster; closed work keeps them.
+export type Staff = Schemas["StaffOut"];
+// `retiredAt` is set once the service has left the card.
+export type HousekeepingRate = Schemas["RateOut"];
+// Photos are inlined as data URLs until there is a file store.
+export type Photo = Schemas["PhotoOut"];
+export type StageEntry = Schemas["StageEntryOut"];
+// `slot` is "<from>–<to>", both from `visitHours`.
+export type Schedule = Schemas["ScheduleOut"];
+export type HandBack = Schemas["HandBackOut"];
+// `stage` and `createdAt` are read from `stageHistory`, the only thing a
+// request says about time. `charge` is set when booked off the rate card and
+// only counts as spend once the work is done.
+export type ServiceRequest = Schemas["ServiceRequestOut"];
 
 // What a form hands a write: anything without bytes is dropped.
 export interface PhotoInput {
   name?: string | null;
   dataUrl?: string | null;
-}
-
-export interface StageEntry {
-  stage: Stage;
-  // ISO timestamp.
-  at: string;
-}
-
-export interface Schedule {
-  date: string;
-  // "<from>–<to>", both from `visitHours`.
-  slot: string;
-}
-
-export interface HandBack {
-  reason: string;
-  by: string;
-  byName: string | null;
-  at: string;
-}
-
-export interface ServiceRequest {
-  id: string;
-  unitId: string;
-  tenantId: string | null;
-  type: RequestType;
-  category: Category;
-  priority: Priority;
-  summary: string;
-  description: string;
-  stage: Stage;
-  assigneeId: string | null;
-  origin?: Origin;
-  createdAt: string;
-  // One entry per stage reached, and the only thing a request says about time.
-  stageHistory: StageEntry[];
-  // The fault as the tenant reported it.
-  photos?: Photo[];
-  // Set when booked off the rate card; only charged once the work is done.
-  charge: number | null;
-  completionNotes: string | null;
-  schedule?: Schedule | null;
-  // The work as the technician left it, apart from `photos`.
-  completionPhotos?: Photo[];
-  handBack?: HandBack;
-}
-
-export interface OperationsData {
-  properties: Property[];
-  units: Unit[];
-  tenants: Tenant[];
-  staff: Staff[];
-  housekeepingRates: HousekeepingRate[];
-  requests: ServiceRequest[];
 }
 
 // --- Listings --------------------------------------------------------------
