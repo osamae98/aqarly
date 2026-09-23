@@ -1,4 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // TypeScript 6 loads no @types packages unless named. `api.ts` reads
+    // `process.env` on the server.
+    "types": ["node"]
+  },
   "include": ["src/**/*"]
 }

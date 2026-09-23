@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import Section from "@/components/ui/Section";
-import { getPropertyBySlug, getPropertySlugs } from "@aqarly/core/properties";
+import { getPropertyBySlug } from "@aqarly/core/properties";
 
-export async function generateStaticParams() {
-  const slugs = await getPropertySlugs();
-  return slugs.map((slug) => ({ slug }));
-}
+// Read from aqarly-api when requested rather than prerendered from a slug list
+// at build time, so `next build` doesn't need the API running and a new
+// listing shows without a rebuild.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

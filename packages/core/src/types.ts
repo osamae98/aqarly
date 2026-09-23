@@ -2,6 +2,8 @@
 // shapes through `./operations` and `./properties`; extend them here rather
 // than redefining them in an app.
 
+import type { components } from "./api-schema";
+
 export type Stage = "submitted" | "assigned" | "in-progress" | "done";
 
 // The trade a request belongs to, and the trade a staff member works in.
@@ -137,19 +139,7 @@ export interface OperationsData {
 }
 
 // --- Listings --------------------------------------------------------------
+// Served by aqarly-api, so the shape is the API's: generated from its OpenAPI
+// schema rather than declared here.
 
-export interface Listing {
-  slug: string;
-  title: string;
-  type: string;
-  purpose: string;
-  price: number;
-  currency: string;
-  bedrooms: number;
-  bathrooms: number;
-  areaSqft: number;
-  location: { city: string; area: string };
-  images: string[];
-  description: string;
-  featured: boolean;
-}
+export type Listing = components["schemas"]["ListingOut"];

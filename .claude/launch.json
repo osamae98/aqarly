@@ -2,6 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@aqarly/web",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
       "name": "ops",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [

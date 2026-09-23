@@ -4,9 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:api": "openapi-typescript ${API_SCHEMA:-../../../aqarly-api/openapi.json} --output src/api-schema.ts"
   },
   "exports": {
     "./*": "./src/*.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "openapi-typescript": "^7.13.0"
   }
 }

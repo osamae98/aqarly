@@ -7,14 +7,14 @@ import {
   handBackRequest,
   maxCompletionPhotos,
   requiredCompletionPhotos,
-  resetOperationsData,
   startRequest,
 } from "@aqarly/core/operations";
 
 // Every write the field app makes goes through here. The mutation itself
-// belongs to `packages/core`; this layer only translates form data, names the
-// technician making the change, and tells Next what to re-render — so
-// swapping the store for a database touches neither.
+// belongs to `packages/core`, which sends it to aqarly-api; this layer only
+// translates form data, names the technician making the change, and tells
+// Next what to re-render. An API refusal arrives as an Error whose message is
+// meant for the technician, and `fail` passes it to the screen unchanged.
 
 // Field routes are `force-dynamic`, but the router cache still holds rendered
 // segments, so a write has to invalidate the whole tree.
@@ -113,9 +113,4 @@ export async function handBackAction(formData) {
   } catch (error) {
     return fail(error);
   }
-}
-
-export async function resetAction() {
-  await resetOperationsData();
-  revalidateAll();
 }

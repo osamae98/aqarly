@@ -1,3 +1,4 @@
+import { api, apiOrNull, segment, type ApiSchemas } from "./api";
 import { db as data, nextId, resetStore } from "./store";
 import type {
   Category,
@@ -1233,44 +1234,22 @@ export async function getSignedInTechnician(): Promise<Staff | null> {
   return data.staff.find((s) => s.id === "stf-haddad") ?? data.staff[0] ?? null;
 }
 
-// Work already started outranks work that has not been — a technician
-// standing in the unit finishes what they are holding — and an emergency
-// outranks a standard job. Nothing else about the order is knowable: a
-// request carries no duration, and only an ops-booked one carries a slot, so
-// the remaining tie breaks the way the ops queue breaks it, oldest first.
-const worklistStages: Partial<Record<Stage, number>> = {
-  "in-progress": 0,
-  assigned: 1,
-  submitted: 2,
-};
+// The field app reads and writes through aqarly-api, so every technician's
+// view is the one database rather than this process's copy. Its order, counts
+// and repeat-fault flag are derived there: started work first, then an
+// emergency, then oldest; closed work most recently closed first. The one
+// thing added here is `tier`, which is display logic (`tierFor`).
+//
+// Ops still reads and writes the in-process store until its own reads move
+// (roadmap Phase 6–7), so a job assigned in ops doesn't reach the field app
+// yet, and a hand-back doesn't reach ops.
 
-function byWorkOrder(a: ServiceRequest, b: ServiceRequest): number {
-  return (
-    (worklistStages[a.stage] ?? 3) - (worklistStages[b.stage] ?? 3) ||
-    (a.priority === "urgent" ? 0 : 1) - (b.priority === "urgent" ? 0 : 1) ||
-    time(a.createdAt) - time(b.createdAt)
-  );
-}
-
-// A unit that keeps failing the same way is the one thing worth telling a
-// technician before they start, because the repair that keeps not holding is
-// a different job from the one on the ticket. Read off the same rule the ops
-// portal flags a unit with, narrowed to this request's own category.
-function repeatFaultOn(request: ServiceRequest, now: number): RepeatFault | null {
-  if (request.type !== "maintenance") return null;
-
-  const history = data.requests.filter(
-    (r) => r.unitId === request.unitId && r.type === "maintenance",
-  );
-  const fault = repeatFaultFor(history, now);
-
-  return fault?.category === request.category ? fault : null;
-}
+type ApiJob = ApiSchemas["JobOut"];
 
 // Everything the worklist screen puts on the glass, already split the way it
 // is drawn: one job led with, the rest queued behind it, and what is closed.
-export interface Job extends EnrichedRequest {
-  repeatFault: RepeatFault | null;
+export interface Job extends ApiJob {
+  tier: Tier;
 }
 
 export interface Worklist {
@@ -1281,83 +1260,53 @@ export interface Worklist {
   counts: { left: number; urgent: number; closed: number };
 }
 
+function asJob(job: ApiJob): Job {
+  return { ...job, tier: tierFor(job) };
+}
+
+function jobPath(id: string, technicianId: string, action = ""): string {
+  return `/technicians/${segment(technicianId)}/jobs/${segment(id)}${action}`;
+}
+
 export async function getWorklist(technicianId: string): Promise<Worklist | null> {
-  const technician = data.staff.find((s) => s.id === technicianId);
-  if (!technician) return null;
-
-  const now = Date.now();
-  const mine = data.requests
-    .filter((request) => request.assigneeId === technicianId)
-    .map(enrich)
-    .map((request): Job => ({ ...request, repeatFault: repeatFaultOn(request, now) }));
-
-  const open = mine.filter((r) => r.stage !== "done").sort(byWorkOrder);
-  const closed = mine
-    .filter((r) => r.stage === "done")
-    .sort((a, b) => time(stageAt(b, "done") ?? "") - time(stageAt(a, "done") ?? ""));
+  const worklist = await apiOrNull<ApiSchemas["WorklistOut"]>(
+    `/technicians/${segment(technicianId)}/worklist`,
+  );
+  if (!worklist) return null;
 
   return {
-    technician,
-    next: open[0] ?? null,
-    queued: open.slice(1),
-    closed,
-    counts: {
-      left: open.length,
-      urgent: open.filter((r) => r.priority === "urgent").length,
-      closed: closed.length,
-    },
+    ...worklist,
+    next: worklist.next && asJob(worklist.next),
+    queued: worklist.queued.map(asJob),
+    closed: worklist.closed.map(asJob),
   };
 }
 
-// One job, and only if it is this technician's. Everything the field app
-// renders goes through here rather than `getRequestById`, so a job that has
-// been reassigned out from under someone stops resolving for them.
+// One job, and only if it is this technician's: the API refuses (403) work
+// they don't hold, so a job reassigned out from under someone stops resolving
+// for them.
 export async function getJob(id: string, technicianId: string): Promise<Job | null> {
-  const request = await getRequestById(id);
-  if (!request || request.assigneeId !== technicianId) return null;
-
-  return { ...request, repeatFault: repeatFaultOn(request, Date.now()) };
+  const job = await apiOrNull<ApiJob>(jobPath(id, technicianId), [403, 404]);
+  return job && asJob(job);
 }
 
 // --- Field app writes ----------------------------------------------------
-// A technician only ever touches work that is theirs. There is no session to
-// enforce that for them, so each write checks the holder itself rather than
-// trusting the id a form posted.
-
-function heldBy(id: string, technicianId: string): ServiceRequest {
-  const request = find(id);
-  if (!request) throw new Error(`Unknown job ${id}`);
-  if (request.assigneeId !== technicianId) {
-    throw new Error("That job is not yours to change");
-  }
-  if (request.stage === "done") throw new Error("That job is already closed");
-  return request;
-}
+// The API checks the holder itself and refuses with a message meant for the
+// technician; an `ApiError` carries it back to the action unchanged.
 
 // Arriving on site. Idempotent: tapping start on a job already under way is
 // the technician confirming where they are, not a second event.
-export async function startRequest(
-  id: string,
-  technicianId: string,
-): Promise<ServiceRequest> {
-  const request = heldBy(id, technicianId);
-
-  if (request.stage !== "in-progress") {
-    reachStage(request, "in-progress", stamp());
-  }
-
-  return request;
+export async function startRequest(id: string, technicianId: string): Promise<Job> {
+  return asJob(await api<ApiJob>(jobPath(id, technicianId, "/start"), { method: "POST" }));
 }
 
-// How many photos close a job, and how many of those are compulsory. A
-// minimum is required because closing work with no evidence of it is the
-// thing the screen exists to prevent, but the photos are not tied to a
-// before/after pair — the technician just attaches what shows the work is
-// done. They inline with the request the way every other photo here does, so
-// the cap is also what keeps the store a sensible size.
+// How many photos close a job, and how many of those are compulsory. The API
+// enforces both; they're here so the finish screen can say so up front.
 export const maxCompletionPhotos = 10;
 export const requiredCompletionPhotos = 2;
 
+// `charge` can't be set: a housekeeping booking has carried its price since
+// it was booked, and maintenance is never billed on.
 export async function completeRequest(
   id: string,
   technicianId: string,
@@ -1365,67 +1314,24 @@ export async function completeRequest(
     notes = "",
     photos = [],
   }: { notes?: string; photos?: (PhotoInput | null | undefined)[] } = {},
-): Promise<ServiceRequest> {
-  const request = heldBy(id, technicianId);
-
-  if (request.stage !== "in-progress") {
-    throw new Error("Start the job before closing it");
-  }
-
-  const evidence = photos.filter(
-    (photo): photo is PhotoInput & { dataUrl: string } => Boolean(photo?.dataUrl),
+): Promise<Job> {
+  const body: ApiSchemas["CompleteJobIn"] = {
+    notes,
+    photos: photos.filter((photo): photo is PhotoInput => Boolean(photo)),
+  };
+  return asJob(
+    await api<ApiJob>(jobPath(id, technicianId, "/complete"), { method: "POST", body }),
   );
-  if (evidence.length < requiredCompletionPhotos) {
-    throw new Error(
-      `${requiredCompletionPhotos} photos are needed to close a job`,
-    );
-  }
-
-  // Kept apart from `photos`, which are the fault as the tenant reported it.
-  // These are the work as the technician left it, and the two are read for
-  // different reasons.
-  request.completionPhotos = evidence
-    .slice(0, maxCompletionPhotos)
-    .map((photo) => ({ name: photo.name ?? "Photo", dataUrl: photo.dataUrl }));
-  request.completionNotes = notes.trim() || null;
-
-  // `charge` is deliberately untouched. A housekeeping booking has carried
-  // its price since `createRequest` read it off the rate card, and
-  // maintenance is the landlord's cost and is never billed on — so there is
-  // no number here for a technician to type, which is the whole point of
-  // stating the total to them before they close.
-  reachStage(request, "done", stamp());
-
-  return request;
 }
 
-// "Can't do it" — neither a refusal nor a new stage. Work nobody holds is
-// "submitted", and unassigned work is exactly where the ops queue reads its
-// pressure from, so a job handed back returns to where it already sat before
-// anyone held it, carrying why. The assignment leaves the history with the
-// assignee: a request must not read as having reached a stage it is now
-// behind.
+// "Can't do it": neither a refusal nor a new stage. The job goes back to
+// unassigned "submitted" carrying why, and leaves the technician's hands,
+// so what comes back is the request rather than a job.
 export async function handBackRequest(
   id: string,
   technicianId: string,
-  { reason }: { reason?: string } = {},
-): Promise<ServiceRequest> {
-  const request = heldBy(id, technicianId);
-  if (!reason?.trim()) throw new Error("Say why you can't do it");
-
-  const member = data.staff.find((s) => s.id === technicianId);
-
-  request.handBack = {
-    reason: reason.trim(),
-    by: technicianId,
-    byName: member?.name ?? null,
-    at: stamp(),
-  };
-  request.assigneeId = null;
-  request.stageHistory = request.stageHistory.filter(
-    (entry) => entry.stage === "submitted",
-  );
-  request.stage = "submitted";
-
-  return request;
+  { reason }: { reason?: string | null } = {},
+): Promise<ApiSchemas["ServiceRequestOut"]> {
+  const body: ApiSchemas["HandBackIn"] = { reason: reason ?? null };
+  return api(jobPath(id, technicianId, "/hand-back"), { method: "POST", body });
 }

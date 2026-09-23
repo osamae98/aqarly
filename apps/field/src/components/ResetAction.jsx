@@ -1,22 +1,23 @@
-"use client";
-
-import { useTransition } from "react";
-import { resetAction } from "@/app/actions";
-
-// The prototype's data lives in one process, so this is the way back to a
-// known state after clicking through a day's work. The ops portal's sidebar
-// carries the same control for the same reason.
+// The field app's jobs now live in aqarly-api's database, not in this
+// process, so resetting this app's in-memory store would change nothing on
+// screen. The way back to a known state is the API's seed script. There is no
+// reset endpoint: an unauthenticated "wipe everything" route has no place in
+// an API that will be deployed. Kept on screen, disabled, so the control says
+// why rather than pretending.
 export default function ResetAction() {
-  const [pending, startTransition] = useTransition();
-
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => startTransition(() => resetAction())}
-      className="self-center text-xs font-medium text-ink-muted underline underline-offset-4 disabled:opacity-50"
-    >
-      {pending ? "Resetting…" : "Reset demo data"}
-    </button>
+    <div className="flex flex-col items-center gap-1 self-center text-center">
+      <button
+        type="button"
+        disabled
+        className="text-xs font-medium text-ink-muted underline underline-offset-4 disabled:opacity-50"
+      >
+        Reset demo data
+      </button>
+      <p className="text-xs text-ink-muted">
+        Jobs now live in the API. Reset them with{" "}
+        <code>uv run python scripts/seed.py</code> in aqarly-api.
+      </p>
+    </div>
   );
 }

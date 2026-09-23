@@ -61,9 +61,30 @@ never reach its stylesheet.
 
 All reads and writes go through `packages/core/src` — `operations.ts` for
 service requests, staff, and dashboard rollups; `properties.ts` for
-listings; `site.ts` for site-wide strings. They currently read JSON from
-`packages/core/data`; keep that the single seam so the source can change
-without touching pages.
+listings; `site.ts` for site-wide strings. Keep that the single seam so the
+source can change without touching pages.
+
+The source is moving to **aqarly-api**, the backend in the sibling repo
+(`../aqarly-api`: FastAPI + Postgres), one area at a time. Moved so far:
+listings (`getProperties`, `getPropertyBySlug`, `getPropertySlugs`) and the
+whole field app (`getWorklist`, `getJob`, `startRequest`, `completeRequest`,
+`handBackRequest`). Everything else still reads and writes `store.ts`.
+
+- `core/src/api.ts` is the only place core calls the API. It reads
+  `API_URL` (server-only, in each app's gitignored `.env.local`:
+  `API_URL=http://localhost:8000`; `web` and `field` need it today), always
+  fetches with `cache: "no-store"`, and turns an API refusal into an
+  `ApiError` whose message is the API's `detail`, written to be shown as is.
+- `core/src/api-schema.ts` is generated from the API's `openapi.json`, never
+  edited: `pnpm --filter @aqarly/core generate:api` (reads
+  `../aqarly-api/openapi.json`, or `API_SCHEMA`). A type the API serves is
+  aliased from it (`Listing`, `Job`) rather than declared in `types.ts`.
+- The API sends data, not display logic: core adds `tier` with `tierFor()`.
+  Formatting helpers stay here.
+- A page reading from the API renders per request (`force-dynamic`), so
+  `next build` never needs the API running.
+- Its data is reset with `uv run python scripts/seed.py` in aqarly-api, which
+  reloads `packages/core/data` (now the API's seed), not by any app's reset.
 
 The entities there (Property, Unit, Tenant, Lease, Service Request, Staff) are
 the shared model the platform roadmap mandates. Extend them in `core` rather
@@ -95,14 +116,15 @@ real session rather than making them look like they work.
 The ops, housekeeping and field apps write. `operations.ts` exposes
 `createRequest`, `assignRequests`, `setPriority`, `deleteRequests`,
 `addHousekeepingRate`, `removeHousekeepingRate`, `addStaff`, `updateStaff` and
-`removeStaff`, and the field app adds `startRequest`, `completeRequest` and
-`handBackRequest` — over `store.ts`, one mutable copy of the seed JSON, held
-on `globalThis` for the life of the server process. Each app is its own
-process, so each holds its own copy: a booking made in the housekeeping
-portal does not appear in the tenant portal or ops, a job assigned in ops
+`removeStaff` over `store.ts`, one mutable copy of the seed JSON, held on
+`globalThis` for the life of the server process. Each app is its own process,
+so each holds its own copy: a booking made in the housekeeping portal does not
+appear in the tenant portal or ops. The field app's `startRequest`,
+`completeRequest` and `handBackRequest` write to aqarly-api instead, which is
+the real home; but ops still reads its own store, so a job assigned in ops
 does not reach the technician's worklist, and a hand-back does not reach ops,
-until the data has a real home. Removals are guarded rather than soft: a rate with
-open bookings and a technician holding open work both refuse, with the reason
+until ops moves too. Removals are guarded rather than soft: a rate with open
+bookings and a technician holding open work both refuse, with the reason
 carried back to the dialog.
 
 Photos on a request are inlined as data URLs by `createRequestAction` and kept
@@ -110,7 +132,8 @@ with the request. There is no file store, which is what the count and size
 caps there are standing in for — give them somewhere real to live before
 raising either. `operations.json` stays the seed and is never
 written to, so a restart (or the sidebar's "Reset demo data") is the way back
-to a known state. Pages call these through the server actions in
+to a known state for the apps still on the store. The field app's reset is
+disabled with its reason on screen: its jobs live in the API. Pages call these through the server actions in
 `apps/<app>/src/app/actions.js`, which are the only place `revalidatePath` is
 allowed to live.
 
@@ -127,7 +150,10 @@ dashboard. It serves whichever trade the signed-in technician's `role` is, so
 it is not another portal over another slice — `getWorklist` and `getJob` are
 the only reads it has, and `getJob` refuses work the technician does not hold.
 The worklist's order is derived, never scheduled: started work first, then an
-emergency, then oldest. `getSignedInTechnician()` is a stub standing in for a
+emergency, then oldest. All of that, and every guard on its three writes, is
+now enforced by aqarly-api (`/technicians/{id}/worklist`,
+`/technicians/{id}/jobs/{jobId}[/start|/complete|/hand-back]`); core only
+passes the stub technician's id along. `getSignedInTechnician()` is a stub standing in for a
 session exactly as `getSignedInTenant()` is, which is also why its server
 actions ask who is signed in rather than letting a form post an identity.
 
