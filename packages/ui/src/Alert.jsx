@@ -1,8 +1,8 @@
 const tones = {
-  info: "border-info bg-info-tint text-info-ink",
-  success: "border-success bg-success-tint text-success-ink",
-  warning: "border-warning bg-warning-tint text-warning-ink",
-  error: "border-danger bg-danger-tint text-danger-ink",
+  info: "bg-info-tint text-info-ink",
+  success: "bg-success-tint text-success-ink",
+  warning: "bg-warning-tint text-warning-ink",
+  error: "bg-danger-tint text-danger-ink",
 };
 
 export default function Alert({
@@ -17,7 +17,7 @@ export default function Alert({
     <div
       role="status"
       className={[
-        "flex items-start gap-3 rounded-md border-l-4 p-4",
+        "flex items-start gap-3 rounded-md p-4",
         tones[tone] ?? tones.info,
         className,
       ].join(" ")}

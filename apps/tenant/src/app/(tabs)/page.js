@@ -38,6 +38,10 @@ export default async function MyRequestsPage({ searchParams }) {
 
   return (
     <Screen title="My Requests" action={<NotificationsBell unread={unread} />}>
+      <p className="mb-4 text-xl font-bold text-ink">
+        Hala, {tenant.name.split(" ")[0]}
+      </p>
+
       {requests.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
@@ -98,6 +102,10 @@ export default async function MyRequestsPage({ searchParams }) {
         </div>
       )}
 
+      {/* Keeps the last card clear of the floating button below, which
+          overlaps scrolled content since it sits outside the flow. */}
+      <div aria-hidden className="h-24 md:h-16" />
+
       <NewRequestButton />
     </Screen>
   );
@@ -122,7 +130,7 @@ function NotificationsBell({ unread }) {
 // standing action keeps it reachable once there are requests on screen.
 function NewRequestButton() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-18 z-20 mx-auto flex w-full max-w-md justify-end px-4 md:bottom-6 md:max-w-5xl md:px-6">
+    <div className="pointer-events-none fixed inset-x-0 bottom-18 z-20 mx-auto flex w-full max-w-md justify-center px-4 md:bottom-6 md:max-w-5xl md:px-6">
       <Button
         href="/requests/new"
         className="pointer-events-auto shadow-lg"

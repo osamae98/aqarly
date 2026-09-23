@@ -7,13 +7,13 @@ platform roadmap, over shared design-system and data packages.
 ## Layout
 
 ```
-apps/web      Public marketing site          :3000
-apps/ops           Operations Admin Portal (maintenance)  :3001
-apps/tenant        Tenant Services Portal                 :3002
-apps/housekeeping  Housekeeping Admin Portal              :3003
-apps/field         Technician Field App                   :3004
-packages/ui   Design system + tokens
-packages/core Shared data model + read seam
+apps/web           Public marketing site                    :3000
+apps/ops           Operations Admin Portal (maintenance)     :3001
+apps/tenant        Tenant Services Portal                    :3002
+apps/housekeeping  Housekeeping Admin Portal                 :3003
+apps/field         Technician Field App                      :3004
+packages/ui        Design system + tokens
+packages/core      Shared data model + read seam
 ```
 
 Each app runs, builds, and deploys on its own — `pnpm dev:ops` starts only the
@@ -95,10 +95,10 @@ The ops, housekeeping and field apps write. `operations.js` exposes
 `removeStaff`, and the field app adds `startRequest`, `completeRequest` and
 `handBackRequest` — over `store.js`, one mutable copy of the seed JSON, held
 on `globalThis` for the life of the server process. Each app is its own
-process, so each holds its own copy: a booking made in the housekeeping portal
-does not appear in the tenant portal or ops, a job assigned in ops does not
-reach the technician's worklist, and a hand-back does not reach either admin
-portal — not until the data has a real home. Removals are guarded rather than soft: a rate with
+process, so each holds its own copy: a booking made in the housekeeping
+portal does not appear in the tenant portal or ops, a job assigned in ops
+does not reach the technician's worklist, and a hand-back does not reach ops,
+until the data has a real home. Removals are guarded rather than soft: a rate with
 open bookings and a technician holding open work both refuse, with the reason
 carried back to the dialog.
 
