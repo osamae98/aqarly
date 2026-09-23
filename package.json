@@ -12,6 +12,7 @@
     "dev:ops": "pnpm --filter @aqarly/ops dev",
     "dev:tenant": "pnpm --filter @aqarly/tenant dev",
     "dev:housekeeping": "pnpm --filter @aqarly/housekeeping dev",
+    "dev:field": "pnpm --filter @aqarly/field dev",
     "build": "pnpm --recursive --stream build",
     "lint": "pnpm --recursive --stream lint"
   },
