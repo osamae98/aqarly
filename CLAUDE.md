@@ -96,6 +96,15 @@ in-process store any more.
   `next build` never needs the API running.
 - `next.config.mjs` in every app sets `logging.fetches.fullUrl`, so each API
   call shows in that app's dev terminal (the browser never sees it).
+- Staging runs on Render (free), described by `render.yaml`: one service per
+  app, built with `pnpm --filter`, run with `next start` (production mode) on
+  Render's `$PORT`, deployed on each push to the `staging` branch. Setup steps
+  are in the aqarly-api README → "Staging".
+- Each app's `src/proxy.js` (Next 16's name for middleware) calls
+  `stagingLock` from `@aqarly/core/staging`: with `STAGING_PASSWORD` set, every
+  request needs the shared staging password, and `api.ts` sends it to the API.
+  Unset locally, so nothing changes in development. It stands in for sign-in
+  until the API's Phase 9; don't build features on it.
 - Its data is reset with `uv run python scripts/seed.py` in aqarly-api, which
   reloads `packages/core/data` (now the API's seed), not by any app's reset.
 

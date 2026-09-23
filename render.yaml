@@ -1,0 +1,139 @@
+# Render Blueprint: the five frontends on staging. Render reads this file from
+# the repo and creates (then keeps in sync) one web service per app. See the
+# aqarly-api README → "Staging" for the one-time setup.
+#
+# Each service installs the workspace, builds only its own app, and runs it in
+# production mode (`next start`, not `next dev`) on the port Render gives it.
+# A push to `staging` rebuilds only the apps whose files (or the shared
+# packages) changed, which keeps within the free plan's build minutes.
+#
+# Every service needs the same two secrets, pasted in once:
+#   API_URL           the staging API, e.g. https://aqarly-api-stg.onrender.com
+#   STAGING_PASSWORD  the shared staging password (the same one the API has)
+
+services:
+
+  # The marketing site
+  - type: web
+    name: aqarly-web-stg
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: commit
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aqarly/web build
+    startCommand: cd apps/web && ./node_modules/.bin/next start --port $PORT
+    buildFilter:
+      include:
+        - apps/web/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_URL
+        sync: false
+      - key: STAGING_PASSWORD
+        sync: false
+
+  # Operations admin portal (maintenance)
+  - type: web
+    name: aqarly-ops-stg
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: commit
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aqarly/ops build
+    startCommand: cd apps/ops && ./node_modules/.bin/next start --port $PORT
+    buildFilter:
+      include:
+        - apps/ops/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_URL
+        sync: false
+      - key: STAGING_PASSWORD
+        sync: false
+
+  # Tenant services portal
+  - type: web
+    name: aqarly-tenant-stg
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: commit
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aqarly/tenant build
+    startCommand: cd apps/tenant && ./node_modules/.bin/next start --port $PORT
+    buildFilter:
+      include:
+        - apps/tenant/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_URL
+        sync: false
+      - key: STAGING_PASSWORD
+        sync: false
+
+  # Housekeeping admin portal
+  - type: web
+    name: aqarly-housekeeping-stg
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: commit
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aqarly/housekeeping build
+    startCommand: cd apps/housekeeping && ./node_modules/.bin/next start --port $PORT
+    buildFilter:
+      include:
+        - apps/housekeeping/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_URL
+        sync: false
+      - key: STAGING_PASSWORD
+        sync: false
+
+  # Technician field app
+  - type: web
+    name: aqarly-field-stg
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: commit
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aqarly/field build
+    startCommand: cd apps/field && ./node_modules/.bin/next start --port $PORT
+    buildFilter:
+      include:
+        - apps/field/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_URL
+        sync: false
+      - key: STAGING_PASSWORD
+        sync: false
