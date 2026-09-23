@@ -7,6 +7,7 @@ import {
   repeatFaultRule,
   typeLabels,
 } from "@aqarly/core/operations";
+import Icon from "@aqarly/ui/Icon";
 import ChargePanel from "@/components/ChargePanel";
 import JobActions from "@/components/JobActions";
 import PhotoStrip from "@/components/PhotoStrip";
@@ -20,11 +21,16 @@ export async function generateMetadata({ params }) {
   return { title: job ? `${job.id} — ${job.summary}` : "Job" };
 }
 
-function Fact({ label, children }) {
+function Fact({ icon, label, children }) {
   return (
-    <div className="flex flex-col gap-0.5 border-b border-border py-2.5 last:border-b-0">
-      <span className="text-xs font-semibold text-ink-muted">{label}</span>
-      <span className="text-[15px] text-ink">{children}</span>
+    <div className="flex items-start gap-3 py-3.5">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-sunken text-ink-soft">
+        <Icon name={icon} size={16} />
+      </span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-xs font-semibold text-ink-muted">{label}</span>
+        <span className="text-[15px] text-ink">{children}</span>
+      </span>
     </div>
   );
 }
@@ -47,7 +53,7 @@ export default async function JobPage({ params }) {
 
       <main className="flex flex-1 flex-col gap-5 p-4 pb-10">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-pill bg-sunken px-2.5 py-1 text-[11px] font-bold tracking-[0.05em] text-ink-soft uppercase">
+          <span className="rounded-pill border border-border-strong bg-surface px-2.5 py-1 text-[11px] font-bold tracking-[0.05em] text-ink-soft uppercase">
             {typeLabels[job.type]} · {categoryLabels[job.category] ?? job.category}
           </span>
           {job.priority === "urgent" && !done && (
@@ -73,8 +79,9 @@ export default async function JobPage({ params }) {
         )}
 
         {/* What the tenant actually said, in their words. */}
-        <section className="rounded-md border border-border bg-surface p-4">
-          <p className="text-[15px] leading-relaxed text-ink">
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Description</SectionLabel>
+          <p className="rounded-lg bg-surface p-4 text-[15px] leading-relaxed text-ink shadow-sm">
             {job.description ? (
               `“${job.description}”`
             ) : (
@@ -85,16 +92,19 @@ export default async function JobPage({ params }) {
 
         <PhotoStrip label="What the tenant sent" photos={job.photos} />
 
-        <section className="flex flex-col rounded-md border border-border bg-surface px-4 py-1">
-          <Fact label="Unit">
-            {job.unit ? `Unit ${job.unit.label}` : "—"}
-            {job.unit ? ` · ${job.unit.bedrooms} BR, ${job.unit.bathrooms} bath` : ""}
-          </Fact>
-          <Fact label="Building">{job.property?.name ?? "—"}</Fact>
-          <Fact label="Tenant">
-            {job.tenant ? `${job.tenant.name} · ${job.tenant.phone}` : "Vacant unit"}
-          </Fact>
-          <Fact label="Raised">{formatDateTime(job.createdAt)}</Fact>
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Details</SectionLabel>
+          <div className="flex flex-col divide-y divide-border rounded-lg bg-surface px-4 shadow-sm">
+            <Fact icon="home" label="Unit">
+              {job.unit ? `Unit ${job.unit.label}` : "—"}
+              {job.unit ? ` · ${job.unit.bedrooms} BR, ${job.unit.bathrooms} bath` : ""}
+            </Fact>
+            <Fact icon="building" label="Building">{job.property?.name ?? "—"}</Fact>
+            <Fact icon="user" label="Tenant">
+              {job.tenant ? `${job.tenant.name} · ${job.tenant.phone}` : "Vacant unit"}
+            </Fact>
+            <Fact icon="calendar" label="Raised">{formatDateTime(job.createdAt)}</Fact>
+          </div>
         </section>
 
         <ChargePanel job={job} />
@@ -103,7 +113,7 @@ export default async function JobPage({ params }) {
           <>
             <section className="flex flex-col gap-2">
               <SectionLabel>What you logged</SectionLabel>
-              <p className="rounded-md border border-border bg-surface p-4 text-[15px] leading-relaxed text-ink">
+              <p className="rounded-lg bg-surface p-4 text-[15px] leading-relaxed text-ink shadow-sm">
                 {job.completionNotes ?? (
                   <span className="text-ink-muted">No note was left.</span>
                 )}

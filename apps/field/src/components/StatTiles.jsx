@@ -4,13 +4,13 @@
 // percentage against one.
 function Tile({ value, label, tone = "neutral" }) {
   const tones = {
-    neutral: "border-border bg-surface text-ink",
-    urgent: "border-[var(--red-300)] bg-danger-tint text-danger-ink",
+    neutral: "bg-surface text-ink shadow-sm",
+    urgent: "bg-danger-tint text-danger-ink shadow-sm",
   };
 
   return (
     <div
-      className={`flex flex-1 flex-col gap-0.5 rounded-md border px-3.5 py-3 ${tones[tone] ?? tones.neutral}`}
+      className={`flex flex-1 flex-col gap-0.5 rounded-lg px-3.5 py-3 ${tones[tone] ?? tones.neutral}`}
     >
       <span className="font-mono text-2xl leading-none font-bold">{value}</span>
       <span className="text-xs font-medium text-current opacity-70">{label}</span>

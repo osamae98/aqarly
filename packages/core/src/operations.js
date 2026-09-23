@@ -1023,12 +1023,13 @@ export async function startRequest(id, technicianId) {
   return request;
 }
 
-// How many photos close a job, and how many of those are compulsory. The
-// design requires a before and an after, because closing work with no
-// evidence of it is the thing the screen exists to prevent. They inline with
-// the request the way every other photo here does, so the cap is also what
-// keeps the store a sensible size.
-export const maxCompletionPhotos = 4;
+// How many photos close a job, and how many of those are compulsory. A
+// minimum is required because closing work with no evidence of it is the
+// thing the screen exists to prevent, but the photos are not tied to a
+// before/after pair — the technician just attaches what shows the work is
+// done. They inline with the request the way every other photo here does, so
+// the cap is also what keeps the store a sensible size.
+export const maxCompletionPhotos = 10;
 export const requiredCompletionPhotos = 2;
 
 export async function completeRequest(

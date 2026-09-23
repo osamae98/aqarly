@@ -38,14 +38,14 @@ async function signedIn() {
 // There is no file store yet, so a photo posts with the form and is inlined
 // as a data URL alongside the job it closes. That only stays reasonable while
 // the files are small, which is what this cap is standing in for.
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 async function inlinePhoto(file) {
   if (!file.type.startsWith("image/")) {
     throw new Error(`${file.name} isn't a photo`);
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error(`${file.name} is larger than 2 MB`);
+    throw new Error(`${file.name} is larger than 5 MB`);
   }
 
   const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
@@ -59,7 +59,7 @@ async function readPhotos(formData) {
 
   if (files.length < requiredCompletionPhotos) {
     throw new Error(
-      `Attach ${requiredCompletionPhotos} photos — before and after — to close this job`,
+      `Attach at least ${requiredCompletionPhotos} photos to close this job`,
     );
   }
   if (files.length > maxCompletionPhotos) {
