@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { pendingSignIn, signOut, startSignIn, verifyCode } from "@aqarly/core/auth";
 import {
   addStaff,
+  approveRegistration,
   assignRequests,
   createRequest,
+  declineRegistration,
   deleteRequests,
   maxRequestPhotos,
   removeStaff,
@@ -213,3 +217,67 @@ export async function removeStaffAction(formData) {
   }
 }
 
+// --- Signing in -------------------------------------------------------------
+// Phone → code → the portal. Admins can't register: only a number the API
+// holds as an admin of this portal gets in, and it says so to anyone else.
+
+export async function sendCodeAction(formData) {
+  try {
+    const number = (formData.get("phone") ?? "").toString().trim();
+    if (!number) throw new Error("Enter your mobile number");
+    await startSignIn(`${formData.get("countryCode") ?? ""} ${number}`);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function resendCodeAction() {
+  try {
+    const pending = await pendingSignIn();
+    if (!pending) throw new Error("That sign-in has expired. Enter your number again.");
+    await startSignIn(pending.phone);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function verifyCodeAction(formData) {
+  try {
+    await verifyCode((formData.get("code") ?? "").toString());
+    revalidateAll();
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function signOutAction() {
+  await signOut();
+  redirect("/login");
+}
+
+// --- Registrations ------------------------------------------------------------
+// A tenant who registered in the tenant portal waits here until ops confirms
+// they live where they say. Approving replaces the unit's current tenant.
+
+export async function approveRegistrationAction(formData) {
+  try {
+    const registration = await approveRegistration(formData.get("id"));
+    revalidateAll();
+    return { ok: true, message: `${registration.name} is now the tenant of unit ${registration.unit.label}` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function declineRegistrationAction(formData) {
+  try {
+    const registration = await declineRegistration(formData.get("id"));
+    revalidateAll();
+    return { ok: true, message: `Declined ${registration.name}` };
+  } catch (error) {
+    return fail(error);
+  }
+}

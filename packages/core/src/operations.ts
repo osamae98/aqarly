@@ -597,6 +597,37 @@ export async function removeStaff(id: string): Promise<Staff> {
   return api(`/staff/${segment(id)}`, { method: "DELETE" });
 }
 
+// --- Admins and registrations ---------------------------------------------
+// Ops and housekeeping are each signed in to as an admin of that portal's
+// trade; the API scopes every read and write to it.
+
+export type Admin = ApiSchemas["AdminOut"];
+
+// The admin signed in to this portal; anyone else is sent to /login.
+export async function getSignedInAdmin(): Promise<Admin> {
+  const me = await getMe();
+  if (me?.kind !== "admin" || !me.admin) redirect("/login");
+  return me.admin;
+}
+
+// Tenants who registered themselves in the tenant portal, waiting for ops to
+// confirm they live where they say. Ops only. Oldest first.
+export type Registration = ApiSchemas["RegistrationOut"];
+
+export async function getRegistrations(): Promise<Registration[]> {
+  return api<Registration[]>("/registrations");
+}
+
+// Makes them the unit's tenant, replacing `currentTenant` if there is one.
+export async function approveRegistration(id: string): Promise<Registration> {
+  return api(`/registrations/${segment(id)}/approve`, { method: "POST" });
+}
+
+// They're told their building couldn't confirm them, and can register again.
+export async function declineRegistration(id: string): Promise<Registration> {
+  return api(`/registrations/${segment(id)}/decline`, { method: "POST" });
+}
+
 // --- Field app -----------------------------------------------------------
 // The technician's app reads the same data from the other end: one person's
 // own work rather than a portfolio of it. It is deliberately narrow — no

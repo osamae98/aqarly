@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@aqarly/ui/Icon";
 import OpsMark from "@/components/OpsMark";
+import { signOutAction } from "@/app/actions";
 
 const items = [
   { href: "/requests", label: "Requests", icon: "file-text" },
+  { href: "/registrations", label: "Registrations", icon: "user" },
   { href: "/units", label: "Buildings", icon: "building" },
   { href: "/staff", label: "Staff", icon: "users" },
   { href: "/", label: "Reports", icon: "sliders" },
@@ -14,7 +16,7 @@ const items = [
 
 // Stands in for the rail below its breakpoint — the building scope stays a
 // queue filter there rather than becoming a second nav.
-export default function CompactNav({ openCount }) {
+export default function CompactNav({ openCount, registrationCount = 0 }) {
   const pathname = usePathname();
 
   return (
@@ -41,6 +43,11 @@ export default function CompactNav({ openCount }) {
               ].join(" ")}
             >
               <Icon name={item.icon} size={18} />
+              {item.href === "/registrations" && registrationCount > 0 && (
+                <span className="absolute -top-0.5 -end-0.5 rounded-pill bg-surface px-1.5 font-mono text-[10px] font-bold text-ink">
+                  {registrationCount}
+                </span>
+              )}
               {item.href === "/requests" && openCount > 0 && (
                 <span className="absolute -top-0.5 -end-0.5 rounded-pill bg-danger px-1.5 font-mono text-[10px] font-bold text-ink-inverse">
                   {openCount}
@@ -49,6 +56,15 @@ export default function CompactNav({ openCount }) {
             </Link>
           );
         })}
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            aria-label="Sign out"
+            className="flex size-9 cursor-pointer items-center justify-center rounded-sm text-[var(--green-200)] transition-colors hover:bg-white/[0.07]"
+          >
+            <Icon name="log-out" size={18} />
+          </button>
+        </form>
       </nav>
     </header>
   );

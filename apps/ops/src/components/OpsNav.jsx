@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import Icon from "@aqarly/ui/Icon";
 import Sidebar from "@aqarly/ui/Sidebar";
+import { signOutAction } from "@/app/actions";
 import OpsMark from "@/components/OpsMark";
 
 // Remembered across visits — a rail an admin collapsed yesterday should stay
@@ -12,7 +14,7 @@ const STORAGE_KEY = "aqarly-ops-nav-collapsed";
 // The shell's nav. Client-side only because the active item is read off the
 // current URL — every item is still a real link, so nothing routes
 // imperatively.
-export default function OpsNav({ openCount, className = "" }) {
+export default function OpsNav({ openCount, registrationCount, admin, className = "" }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [readStorage, setReadStorage] = useState(false);
@@ -79,6 +81,14 @@ export default function OpsNav({ openCount, className = "" }) {
               // alert tone rather than the neutral pill.
               countTone: "danger",
             },
+            {
+              value: "/registrations",
+              label: "Registrations",
+              icon: "user",
+              href: "/registrations",
+              // Tenants waiting to be confirmed; nothing shown when none are.
+              count: registrationCount || null,
+            },
             { value: "/units", label: "Buildings", icon: "building", href: "/units" },
             { value: "/staff", label: "Staff", icon: "users", href: "/staff" },
             { value: "/", label: "Reports", icon: "sliders", href: "/" },
@@ -86,33 +96,47 @@ export default function OpsNav({ openCount, className = "" }) {
         },
       ]}
       footer={
-        // No auth anywhere yet, so this names the role the screens are
-        // designed for rather than a signed-in person. Collapsed keeps just
-        // the avatar — "Reset demo data" is rare enough to live behind
-        // expanding the rail rather than becoming an icon that has to guess
-        // at its own meaning.
+        // Who is signed in, and the way out. Collapsed keeps just the avatar
+        // and a sign-out icon — "Reset demo data" is rare enough to live
+        // behind expanding the rail rather than becoming an icon that has to
+        // guess at its own meaning.
         <div className="flex flex-col gap-2">
           <div
-            title={collapsed ? "Property admin — No sign-in yet" : undefined}
+            title={collapsed ? `${admin.name} — ${admin.phone}` : undefined}
             className={[
               "flex items-center gap-2.5 py-0.5",
               collapsed ? "justify-center px-0" : "px-1",
             ].join(" ")}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--green-400)] text-xs font-bold text-[var(--green-900)]">
-              PA
+              {initials(admin.name)}
             </span>
             {!collapsed && (
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-semibold text-[var(--sand-50)]">
-                  Property admin
+                  {admin.name}
                 </span>
-                <span className="block text-xs text-[var(--green-300)]">
-                  No sign-in yet
+                <span className="block truncate text-xs text-[var(--green-300)]">
+                  {admin.phone}
                 </span>
               </span>
             )}
           </div>
+
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              title={collapsed ? "Sign out" : undefined}
+              aria-label="Sign out"
+              className={[
+                "flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[12.5px] font-semibold text-[var(--green-200)] transition-colors hover:bg-white/[0.07] hover:text-[var(--sand-50)]",
+                collapsed ? "justify-center px-0" : "px-1",
+              ].join(" ")}
+            >
+              <Icon name="log-out" size={15} />
+              {!collapsed && "Sign out"}
+            </button>
+          </form>
 
           {/* The portals' data lives in aqarly-api now, so there's nothing in this
             * process to reset. Shown disabled, with the real way back, rather than
@@ -131,4 +155,14 @@ export default function OpsNav({ openCount, className = "" }) {
       }
     />
   );
+}
+
+// "Property admin" → "PA".
+function initials(name) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join("");
 }

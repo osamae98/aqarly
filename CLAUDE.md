@@ -152,8 +152,16 @@ sends it as `X-Session` on every call.
   to anyone else. Sign out is under the worklist. Its server actions check the
   session with `getMe()` rather than `getSignedInTechnician()`, whose redirect
   is a thrown signal their `try/catch` would swallow.
-- Ops and housekeeping: their sign-in screens are next. Until then they have
-  no way to sign in, so they can't be used against this API.
+- **Ops and housekeeping: done.** `/login` → `/login/verify` → `/requests`,
+  for an admin of that portal's trade only (demo: ops `000 0900`,
+  housekeeping `000 0901`). Their pages live in the `app/(portal)/` route
+  group, whose layout calls `getSignedInAdmin()` before any data and draws the
+  rail, so `/login` renders without either. The rail shows who is signed in
+  and Sign out; the compact bar has a sign-out icon.
+- **Ops → Registrations** (`/registrations`): tenants who registered in the
+  tenant portal, oldest first, to approve or decline. A unit that already has
+  a tenant says so on the card, and the button reads "Approve and replace".
+  The rail counts who is waiting.
 - **Client components import `@aqarly/core/labels`, never `operations` or
   `auth`.** Those reach `next/headers` (the session cookie), which the
   production build refuses in browser code; `next dev` doesn't complain, so
