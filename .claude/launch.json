@@ -50,6 +50,19 @@
         "dev"
       ],
       "port": 3004
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "--directory",
+        "../aqarly-api",
+        "run",
+        "uvicorn",
+        "app.main:app",
+        "--reload"
+      ],
+      "port": 8000
     }
   ]
 }

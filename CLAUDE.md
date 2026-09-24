@@ -147,8 +147,16 @@ sends it as `X-Session` on every call.
   `/login/register` (name, building, unit) → `/login/waiting` until ops
   approves. `getSignedInTenant()` returns the real tenant and redirects anyone
   else where they belong, so pages use it without checking. Sign out works.
-- Field, ops and housekeeping: their sign-in screens are next. Until then
-  they have no way to sign in, so they can't be used against this API.
+- **Field app: done.** `/login` → `/login/verify` → the worklist. No
+  registering: only a number on the staff roster gets in, and the API says so
+  to anyone else. Sign out is under the worklist. Its server actions check the
+  session with `getMe()` rather than `getSignedInTechnician()`, whose redirect
+  is a thrown signal their `try/catch` would swallow.
+- Ops and housekeeping: their sign-in screens are next. Until then they have
+  no way to sign in, so they can't be used against this API.
+- The field app and tenant portal have a root `loading.js`: while a sleeping
+  staging API wakes (core's reads retry for up to two minutes), it's what
+  shows instead of a blank screen.
 
 The ops, housekeeping, tenant and field apps write. `operations.ts` exposes
 `createRequest`, `assignRequests`, `setPriority`, `deleteRequests`,
@@ -187,8 +195,8 @@ the only reads it has, and `getJob` refuses work the technician does not hold.
 The worklist's order is derived, never scheduled: started work first, then an
 emergency, then oldest. All of that, and every guard on its three writes, is
 now enforced by aqarly-api (`/technicians/{id}/worklist`,
-`/technicians/{id}/jobs/{jobId}[/start|/complete|/hand-back]`); core only
-passes the stub technician's id along. `getSignedInTechnician()` returns the technician signed in to the field app,
+`/technicians/{id}/jobs/{jobId}[/start|/complete|/hand-back]`), which only
+lets a technician use their own id. `getSignedInTechnician()` returns the technician signed in to the field app,
 and sends anyone else to `/login`.
 
 Closing a job takes `requiredCompletionPhotos` photos and cannot set a price:

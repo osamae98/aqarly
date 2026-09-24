@@ -1,5 +1,6 @@
 import Logo from "@aqarly/ui/Logo";
 import { getSignedInTechnician, getWorklist, typeLabels } from "@aqarly/core/operations";
+import { signOutAction } from "@/app/actions";
 import JobRow from "@/components/JobRow";
 import NextJobCard from "@/components/NextJobCard";
 import ResetAction from "@/components/ResetAction";
@@ -20,7 +21,7 @@ export default async function WorklistPage() {
         <Logo size={34} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-ink-muted uppercase">
-            {typeLabels[technician.role] ?? technician.role}
+            {typeLabels[technician.role] ?? technician.role} · {technician.name}
           </p>
           <h1 className="truncate text-[26px] leading-tight font-bold tracking-[-0.02em] text-ink">
             Your work
@@ -60,6 +61,12 @@ export default async function WorklistPage() {
       )}
 
       <ResetAction />
+
+      <form action={signOutAction} className="self-center">
+        <button type="submit" className="h-12 px-4 text-sm font-semibold text-ink-soft">
+          Sign out
+        </button>
+      </form>
     </main>
   );
 }

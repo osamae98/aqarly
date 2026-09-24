@@ -46,13 +46,14 @@ async function headersFor(body: unknown): Promise<Record<string, string>> {
 }
 
 // A host on a free plan puts an idle API to sleep, and its gateway answers
-// 502/503/504 for the half-minute the API takes to wake. A read that gets one
-// of those waits and asks again, for up to a minute, so the first visit after
-// a quiet spell is slow rather than an error page. Only reads: a write is
+// 502/503/504 while the API wakes, which on Render's free plan has taken over
+// a minute. A read that gets one of those waits and asks again, for up to two
+// minutes, so the first visit after a quiet spell is slow rather than an error
+// page. Only reads: a write is
 // never sent twice. An API that can't be reached at all (not started, on a
 // laptop) still fails at once.
 const WAKING_STATUSES = new Set([502, 503, 504]);
-const WAKE_UP_WINDOW_MS = 60_000;
+const WAKE_UP_WINDOW_MS = 120_000;
 
 function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

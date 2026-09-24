@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getMe, pendingSignIn, signOut, startSignIn, verifyCode } from "@aqarly/core/auth";
 import {
   completeRequest,
-  getSignedInTechnician,
   handBackRequest,
   maxCompletionPhotos,
   requiredCompletionPhotos,
@@ -26,13 +27,16 @@ function fail(error) {
   return { ok: false, error: error.message ?? "Something went wrong" };
 }
 
-// STUB, and the reason every action starts by asking who is signed in: there
-// is no session, so the technician cannot be posted with the form — a form
-// that carried its own identity would let any job be closed as anyone.
+// Every action starts by asking the session who is signed in, never the
+// form: a form that carried its own identity would let any job be closed as
+// anyone. (The API checks it again.) Not `getSignedInTechnician`, whose
+// redirect is a thrown signal that `fail` would swallow.
 async function signedIn() {
-  const technician = await getSignedInTechnician();
-  if (!technician) throw new Error("No technician is signed in");
-  return technician;
+  const me = await getMe();
+  if (me?.kind !== "staff" || !me.staff) {
+    throw new Error("You've been signed out. Sign in again to carry on.");
+  }
+  return me.staff;
 }
 
 // There is no file store yet, so a photo posts with the form and is inlined
@@ -113,4 +117,45 @@ export async function handBackAction(formData) {
   } catch (error) {
     return fail(error);
   }
+}
+
+// --- Signing in -------------------------------------------------------------
+// Phone → code → the worklist. Only numbers on the staff roster get in: the
+// API refuses anyone else with a reason that is shown as it is.
+
+export async function sendCodeAction(formData) {
+  try {
+    const number = (formData.get("phone") ?? "").toString().trim();
+    if (!number) throw new Error("Enter your mobile number");
+    await startSignIn(`${formData.get("countryCode") ?? ""} ${number}`);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function resendCodeAction() {
+  try {
+    const pending = await pendingSignIn();
+    if (!pending) throw new Error("That sign-in has expired. Enter your number again.");
+    await startSignIn(pending.phone);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function verifyCodeAction(formData) {
+  try {
+    await verifyCode((formData.get("code") ?? "").toString());
+    revalidateAll();
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function signOutAction() {
+  await signOut();
+  redirect("/login");
 }
