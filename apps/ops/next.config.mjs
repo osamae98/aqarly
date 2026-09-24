@@ -4,6 +4,11 @@ import { dirname, join } from "node:path";
 const nextConfig = {
   // Workspace packages ship untranspiled JSX, so Next has to compile them.
   transpilePackages: ["@aqarly/ui", "@aqarly/core"],
+  // Which app this is, for signing in: the account a phone opens here, and
+  // the name of this app's session cookie (packages/core/src/auth.ts).
+  env: {
+    AQARLY_APP: "ops",
+  },
   // A deployed staging copy (STAGING_PASSWORD set) is open to anyone with the
   // link, so ask search engines not to list it. Locally, nothing changes.
   async headers() {

@@ -1,4 +1,5 @@
 import type { components } from "./api-schema";
+import { sessionToken } from "./auth";
 import { stagingAuthorization } from "./staging";
 
 // The one place core talks to aqarly-api. Everything the API returns is typed
@@ -32,11 +33,13 @@ function baseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-// JSON when there's a body, and the staging credentials when the API is
-// locked (see `./staging`).
-function headersFor(body: unknown): Record<string, string> {
+// JSON when there's a body; who is signed in (the session, see `./auth`);
+// and the staging credentials when the API is locked (see `./staging`).
+async function headersFor(body: unknown): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["content-type"] = "application/json";
+  const session = await sessionToken();
+  if (session) headers["x-session"] = session;
   const authorization = stagingAuthorization();
   if (authorization) headers.authorization = authorization;
   return headers;
@@ -68,7 +71,7 @@ export async function api<T>(
     try {
       response = await fetch(url, {
         method,
-        headers: headersFor(body),
+        headers: await headersFor(body),
         body: body === undefined ? undefined : JSON.stringify(body),
         // Never cached. This Next.js caches a `fetch` by default when nothing
         // request-specific has been read yet, and a cached worklist would never

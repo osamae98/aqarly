@@ -133,11 +133,22 @@ offenders — `2h 41m late`, `1h 48m on site`, and per-row durations like
 only an ops-booked one has a slot. Do not reintroduce a duration
 without the SLA targets being real and admin-configurable first.
 
-`getSignedInTenant()` is a stub standing in for a session. There is no auth
-anywhere yet. The tenant portal's `/login` screens are the designed flow
-rendered as navigation only: they authenticate nobody, and every submit
-control on a form is disabled with the reason stated on screen. Wire them to a
-real session rather than making them look like they work.
+Sign-in is a phone number and a 6-digit code, checked by aqarly-api
+(`packages/core/src/auth.ts`). Each app is named in its `next.config.mjs`
+(`AQARLY_APP`: tenant, field, ops, housekeeping), which picks the account a
+phone opens there and names the app's HttpOnly session cookie, so apps on
+different localhost ports don't share sessions. The cookie is set and cleared
+only in server actions (`startSignIn`, `verifyCode`, `signOut`); `api.ts`
+sends it as `X-Session` on every call.
+
+- Codes aren't texted yet: the API returns the code and the code screen shows
+  it as a test code. That goes when a texting provider is wired in.
+- **Tenant portal: done.** `/login` → `/login/verify` → first time
+  `/login/register` (name, building, unit) → `/login/waiting` until ops
+  approves. `getSignedInTenant()` returns the real tenant and redirects anyone
+  else where they belong, so pages use it without checking. Sign out works.
+- Field, ops and housekeeping: their sign-in screens are next. Until then
+  they have no way to sign in, so they can't be used against this API.
 
 The ops, housekeeping, tenant and field apps write. `operations.ts` exposes
 `createRequest`, `assignRequests`, `setPriority`, `deleteRequests`,
@@ -177,9 +188,8 @@ The worklist's order is derived, never scheduled: started work first, then an
 emergency, then oldest. All of that, and every guard on its three writes, is
 now enforced by aqarly-api (`/technicians/{id}/worklist`,
 `/technicians/{id}/jobs/{jobId}[/start|/complete|/hand-back]`); core only
-passes the stub technician's id along. `getSignedInTechnician()` is a stub standing in for a
-session exactly as `getSignedInTenant()` is, which is also why its server
-actions ask who is signed in rather than letting a form post an identity.
+passes the stub technician's id along. `getSignedInTechnician()` returns the technician signed in to the field app,
+and sends anyone else to `/login`.
 
 Closing a job takes `requiredCompletionPhotos` photos and cannot set a price:
 a housekeeping booking has carried its charge since `createRequest` read it

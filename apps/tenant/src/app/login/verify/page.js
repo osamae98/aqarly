@@ -1,48 +1,34 @@
-import Link from "next/link";
-import Button from "@aqarly/ui/Button";
-import Field from "@/components/Field";
+import { redirect } from "next/navigation";
+import Alert from "@aqarly/ui/Alert";
+import { pendingSignIn } from "@aqarly/core/auth";
 import Screen from "@/components/Screen";
+import { CodeForm } from "@/components/SignInForms";
 
 export const metadata = { title: "Verify code" };
+export const dynamic = "force-dynamic";
 
-export default function VerifyCodePage() {
+export default async function VerifyCodePage() {
+  const pending = await pendingSignIn();
+  if (!pending) redirect("/login");
+
   return (
     <Screen title="Verify code" backHref="/login" className="justify-center">
       <div className="w-full md:mx-auto md:max-w-sm">
-        <Field label="Enter code" htmlFor="otp">
-          <input
-            id="otp"
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="000000"
-            className="rounded-md border-[1.5px] border-border bg-surface p-4 text-center text-2xl tracking-[8px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none"
-          />
-        </Field>
-        <p className="mt-2 text-xs text-ink-muted">
-          A code would be sent to the number you entered — no code is sent
-          today, since nothing is wired to a provider.
+        <p className="mb-6 text-sm text-ink-soft">
+          Enter the 6-digit code for <span className="font-semibold text-ink">{pending.phone}</span>.
         </p>
 
-        <p className="my-4 text-center text-sm text-ink-muted">
-          Didn&apos;t get a code?{" "}
-          <span className="font-medium text-brand">Resend</span>
-        </p>
-
-        <Button href="/" size="lg" fullWidth>
-          Verify
-        </Button>
-
-        <p className="mt-4 text-center text-sm text-ink-muted">
-          First time here?{" "}
-          <Link
-            href="/login/register"
-            className="font-medium text-brand transition-colors hover:text-brand-hover"
-          >
-            Complete your profile
-          </Link>
-        </p>
+        {/* Codes aren't texted yet: the API hands the code back and it's shown
+          * here, so the flow can be walked end to end. It goes once a texting
+          * provider is wired in. */}
+        {pending.shownCode && (
+          <Alert tone="info" title="Test code" className="mb-6">
+            Codes aren&apos;t texted yet. Yours is{" "}
+            <span className="font-mono text-base font-semibold tracking-[4px]">{pending.shownCode}</span>
+          </Alert>
+        )}
       </div>
+      <CodeForm />
     </Screen>
   );
 }

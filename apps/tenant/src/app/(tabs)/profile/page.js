@@ -1,7 +1,7 @@
-import Link from "next/link";
 import Avatar from "@aqarly/ui/Avatar";
 import Button from "@aqarly/ui/Button";
 import { getSignedInTenant } from "@aqarly/core/operations";
+import { signOutAction } from "@/app/actions";
 import Screen from "@/components/Screen";
 import { Grid, Home, Mail, Phone } from "@/components/icons";
 
@@ -25,7 +25,7 @@ export default async function ProfilePage() {
 
       <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start">
         <DetailCard>
-          <DetailRow icon={<Mail size={18} />} label="Email" value={tenant.email} />
+          <DetailRow icon={<Mail size={18} />} label="Email" value={tenant.email ?? "Not given"} />
           <DetailRow icon={<Phone size={18} />} label="Phone" value={tenant.phone} />
         </DetailCard>
 
@@ -45,15 +45,16 @@ export default async function ProfilePage() {
         <Button variant="outline" size="lg" disabled fullWidth>
           Edit profile
         </Button>
-        <Link
-          href="/login"
-          className="rounded-pill py-4 text-center text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
-        >
-          Sign out
-        </Link>
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="w-full rounded-pill py-4 text-center text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
+          >
+            Sign out
+          </button>
+        </form>
         <p className="text-center text-xs text-ink-muted">
-          Editing a profile needs a write path, and signing out needs a session
-          — neither exists yet.
+          Editing a profile needs a write path, which doesn&apos;t exist yet.
         </p>
       </div>
     </Screen>

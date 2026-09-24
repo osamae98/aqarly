@@ -1,6 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import {
+  pendingSignIn,
+  register,
+  signOut,
+  startSignIn,
+  verifyCode,
+} from "@aqarly/core/auth";
 import {
   createRequest,
   getSignedInTenant,
@@ -8,9 +16,8 @@ import {
 } from "@aqarly/core/operations";
 
 // Mirrors the ops portal's write layer: the mutation lives in `packages/core`,
-// this only translates form data and revalidates. `getSignedInTenant()` is
-// still the auth stub — swap that for a real session and nothing here
-// changes.
+// this only translates form data and revalidates. Every write asks who is
+// signed in (`getSignedInTenant()`), never trusting a form to say.
 
 function fail(error) {
   return { ok: false, error: error.message ?? "Something went wrong" };
@@ -111,4 +118,63 @@ export async function createHousekeepingRequestAction(formData) {
   } catch (error) {
     return fail(error);
   }
+}
+
+// --- Signing in -------------------------------------------------------------
+// Phone → code → (first time) profile. aqarly-api checks everything; its
+// refusals ("That code isn't right…") come back as the error to show.
+
+// Where a proved phone goes next.
+function nextFor(me) {
+  if (me.kind === "tenant") return "/";
+  if (me.kind === "new") return "/login/register";
+  return "/login/waiting";
+}
+
+export async function sendCodeAction(formData) {
+  try {
+    const number = (formData.get("phone") ?? "").toString().trim();
+    if (!number) throw new Error("Enter your mobile number");
+    await startSignIn(`${formData.get("countryCode") ?? ""} ${number}`);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function resendCodeAction() {
+  try {
+    const pending = await pendingSignIn();
+    if (!pending) throw new Error("That sign-in has expired. Enter your number again.");
+    await startSignIn(pending.phone);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function verifyCodeAction(formData) {
+  try {
+    const me = await verifyCode((formData.get("code") ?? "").toString());
+    return { ok: true, next: nextFor(me) };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function registerAction(formData) {
+  try {
+    const name = (formData.get("name") ?? "").toString();
+    const unitId = (formData.get("unitId") ?? "").toString();
+    if (!unitId) throw new Error("Choose your building and unit");
+    const me = await register(name, unitId);
+    return { ok: true, next: nextFor(me) };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function signOutAction() {
+  await signOut();
+  redirect("/login");
 }

@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { api, apiOrNull, queryString, segment, type ApiSchemas } from "./api";
+import { getMe } from "./auth";
 import type {
   Category,
   HousekeepingRate,
@@ -399,11 +401,17 @@ export async function getTenantById(id: string): Promise<TenantAccount | null> {
   return apiOrNull<TenantAccount>(`/tenants/${segment(id)}`);
 }
 
-// STUB: stands in for the signed-in session until auth exists. The Tenant
-// Portal PRD specifies phone + OTP against accounts provisioned at lease
-// signing; nothing here authenticates anyone. Replace this, not its callers.
-export async function getSignedInTenant() {
-  return getTenantById("ten-alhabsi");
+// The tenant signed in to the tenant portal. Anyone else is sent where they
+// belong instead: not signed in → /login; a proved phone with no account →
+// registration; a registration still waiting for (or declined by) their
+// building → the waiting screen. So a page can use the tenant without checking.
+export async function getSignedInTenant(): Promise<TenantAccount> {
+  const me = await getMe();
+  if (!me) redirect("/login");
+  if (me.kind === "new") redirect("/login/register");
+  if (me.kind === "registration") redirect("/login/waiting");
+  if (me.kind !== "tenant" || !me.tenant) redirect("/login");
+  return me.tenant;
 }
 
 // --- Tenant portal reads -------------------------------------------------
@@ -722,11 +730,11 @@ export async function removeStaff(id: string): Promise<Staff> {
 // queue, no filters, no dashboard — so everything here answers only "what
 // should I be doing, and what happens when I do it".
 
-// STUB: stands in for the signed-in technician until auth exists, exactly as
-// `getSignedInTenant` does for a tenant. Nothing here authenticates anyone.
-// Replace this, not its callers.
-export async function getSignedInTechnician(): Promise<Staff | null> {
-  return apiOrNull<Staff>("/staff/stf-haddad");
+// The technician signed in to the field app; anyone else is sent to /login.
+export async function getSignedInTechnician(): Promise<Staff> {
+  const me = await getMe();
+  if (me?.kind !== "staff" || !me.staff) redirect("/login");
+  return me.staff;
 }
 
 // The field app reads and writes through aqarly-api, so every technician's
