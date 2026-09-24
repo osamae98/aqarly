@@ -100,11 +100,12 @@ in-process store any more.
   app, built with `pnpm --filter`, run with `next start` (production mode) on
   Render's `$PORT`, deployed on each push to the `staging` branch. Setup steps
   are in the aqarly-api README → "Staging".
-- Each app's `src/proxy.js` (Next 16's name for middleware) calls
-  `stagingLock` from `@aqarly/core/staging`: with `STAGING_PASSWORD` set, every
-  request needs the shared staging password, and `api.ts` sends it to the API.
-  Unset locally, so nothing changes in development. It stands in for sign-in
-  until the API's Phase 9; don't build features on it.
+- The staging API is locked with a shared password; the staging apps are
+  open to anyone with the link (a deliberate choice, so links can be shared).
+  With `STAGING_PASSWORD` set, `api.ts` sends it to the API
+  (`@aqarly/core/staging`) and each app's `next.config.mjs` adds
+  `X-Robots-Tag: noindex`. Unset locally, so nothing changes in development.
+  It stands in for sign-in until the API's Phase 9; don't build on it.
 - Its data is reset with `uv run python scripts/seed.py` in aqarly-api, which
   reloads `packages/core/data` (now the API's seed), not by any app's reset.
 

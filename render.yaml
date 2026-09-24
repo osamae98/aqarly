@@ -9,7 +9,9 @@
 #
 # Every service needs the same two secrets, pasted in once:
 #   API_URL           the staging API, e.g. https://aqarly-api-stg.onrender.com
-#   STAGING_PASSWORD  the shared staging password (the same one the API has)
+#   STAGING_PASSWORD  the API's staging password: the apps send it to the API
+#                     server-side. The apps themselves are open to anyone with
+#                     the link; visitors never need it.
 
 services:
 
