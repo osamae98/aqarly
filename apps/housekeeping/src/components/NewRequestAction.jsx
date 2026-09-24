@@ -15,7 +15,7 @@ import { createRequestAction } from "@/app/actions";
 import {
   maxRequestPhotos,
   visitHours,
-} from "@aqarly/core/operations";
+} from "@aqarly/core/labels";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 

@@ -9,7 +9,7 @@ import StaffDialog from "@/components/StaffDialog";
 import Toast from "@/components/Toast";
 import { useFormAction } from "@/components/Field";
 import { removeStaffAction } from "@/app/actions";
-import { typeLabels } from "@aqarly/core/operations";
+import { typeLabels } from "@aqarly/core/labels";
 
 const GRID =
   "grid grid-cols-[minmax(0,1fr)_160px_128px_96px_72px_104px] items-center gap-3.5";

@@ -17,7 +17,7 @@ import {
   stageTones,
   tierLabels,
   tierTones,
-} from "@aqarly/core/operations";
+} from "@aqarly/core/labels";
 
 // One row per request. The mockup lays these out as a grid rather than a
 // table so the unit and assignee cells can each stack two lines. Priority

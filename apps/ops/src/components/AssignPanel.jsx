@@ -7,7 +7,7 @@ import { FormNote, Label, useFormAction } from "@/components/Field";
 import { MicroLabel } from "@/components/Panel";
 import Toast from "@/components/Toast";
 import { assignAction } from "@/app/actions";
-import { typeLabels } from "@aqarly/core/operations";
+import { typeLabels } from "@aqarly/core/labels";
 
 // Why this person is the suggestion, in the order the ranking weighs it.
 function reason(candidate) {

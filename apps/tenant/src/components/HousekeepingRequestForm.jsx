@@ -6,7 +6,7 @@ import Alert from "@aqarly/ui/Alert";
 import Button from "@aqarly/ui/Button";
 import Input from "@aqarly/ui/Input";
 import Select from "@aqarly/ui/Select";
-import { formatCharge } from "@aqarly/core/operations";
+import { formatCharge } from "@aqarly/core/labels";
 import { createHousekeepingRequestAction } from "@/app/actions";
 
 const timeSlots = ["9AM–12PM", "12PM–3PM", "3PM–6PM"];

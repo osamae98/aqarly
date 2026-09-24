@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { maxRequestPhotos } from "@aqarly/core/operations";
+import { maxRequestPhotos } from "@aqarly/core/labels";
 import { Camera, X } from "./icons";
 
 // The files stay as browser File objects on this input until the form

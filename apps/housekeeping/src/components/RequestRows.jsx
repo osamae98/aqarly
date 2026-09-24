@@ -16,7 +16,7 @@ import {
   formatCharge,
   stageLabels,
   stageTones,
-} from "@aqarly/core/operations";
+} from "@aqarly/core/labels";
 
 // One row per booking. The mockup lays these out as a grid rather than a
 // table so the unit and assignee cells can each stack two lines. Housekeeping

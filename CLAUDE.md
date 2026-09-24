@@ -154,6 +154,10 @@ sends it as `X-Session` on every call.
   is a thrown signal their `try/catch` would swallow.
 - Ops and housekeeping: their sign-in screens are next. Until then they have
   no way to sign in, so they can't be used against this API.
+- **Client components import `@aqarly/core/labels`, never `operations` or
+  `auth`.** Those reach `next/headers` (the session cookie), which the
+  production build refuses in browser code; `next dev` doesn't complain, so
+  run `pnpm --filter <app> build` before pushing to `staging`.
 - The field app and tenant portal have a root `loading.js`: while a sleeping
   staging API wakes (core's reads retry for up to two minutes), it's what
   shows instead of a blank screen.
