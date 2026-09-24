@@ -76,6 +76,9 @@ in-process store any more.
   `API_URL=http://localhost:8000`; every app needs it), always
   fetches with `cache: "no-store"`, and turns an API refusal into an
   `ApiError` whose message is the API's `detail`, written to be shown as is.
+- A read (GET) that gets 502/503/504 is retried for up to a minute: that's a
+  free host's gateway while a sleeping API wakes. Writes are never retried,
+  and an API that can't be reached at all fails at once.
 - `core/src/api-schema.ts` is generated from the API's `openapi.json`, never
   edited: `pnpm --filter @aqarly/core generate:api` (reads
   `../aqarly-api/openapi.json`, or `API_SCHEMA`). A type the API serves is

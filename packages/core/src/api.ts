@@ -42,27 +42,50 @@ function headersFor(body: unknown): Record<string, string> {
   return headers;
 }
 
+// A host on a free plan puts an idle API to sleep, and its gateway answers
+// 502/503/504 for the half-minute the API takes to wake. A read that gets one
+// of those waits and asks again, for up to a minute, so the first visit after
+// a quiet spell is slow rather than an error page. Only reads: a write is
+// never sent twice. An API that can't be reached at all (not started, on a
+// laptop) still fails at once.
+const WAKING_STATUSES = new Set([502, 503, 504]);
+const WAKE_UP_WINDOW_MS = 60_000;
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function api<T>(
   path: string,
   { method = "GET", body }: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   const url = `${baseUrl()}${path}`;
+  const giveUpAt = Date.now() + WAKE_UP_WINDOW_MS;
+  let wait = 1_000;
   let response: Response;
-  try {
-    response = await fetch(url, {
-      method,
-      headers: headersFor(body),
-      body: body === undefined ? undefined : JSON.stringify(body),
-      // Never cached. This Next.js caches a `fetch` by default when nothing
-      // request-specific has been read yet, and a cached worklist would never
-      // show new work: the data changes under every app, not just this one.
-      cache: "no-store",
-    });
-  } catch (error) {
-    throw new Error(
-      `Can't reach the API at ${url}. Is it running? (\`uv run uvicorn app.main:app\` in aqarly-api)`,
-      { cause: error },
-    );
+
+  for (;;) {
+    try {
+      response = await fetch(url, {
+        method,
+        headers: headersFor(body),
+        body: body === undefined ? undefined : JSON.stringify(body),
+        // Never cached. This Next.js caches a `fetch` by default when nothing
+        // request-specific has been read yet, and a cached worklist would never
+        // show new work: the data changes under every app, not just this one.
+        cache: "no-store",
+      });
+    } catch (error) {
+      throw new Error(
+        `Can't reach the API at ${url}. Is it running? (\`uv run uvicorn app.main:app\` in aqarly-api)`,
+        { cause: error },
+      );
+    }
+
+    const waking = method === "GET" && WAKING_STATUSES.has(response.status);
+    if (!waking || Date.now() + wait > giveUpAt) break;
+    await pause(wait);
+    wait = Math.min(wait * 2, 8_000);
   }
 
   if (!response.ok) {
