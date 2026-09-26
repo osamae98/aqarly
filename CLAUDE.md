@@ -99,16 +99,19 @@ in-process store any more.
   `next build` never needs the API running.
 - `next.config.mjs` in every app sets `logging.fetches.fullUrl`, so each API
   call shows in that app's dev terminal (the browser never sees it).
-- Staging runs on Render (free), described by `render.yaml`: one service per
-  app, built with `pnpm --filter`, run with `next start` (production mode) on
-  Render's `$PORT`, deployed on each push to the `staging` branch. Setup steps
-  are in the aqarly-api README → "Staging".
+- Staging runs on Vercel (free, never sleeps): one project per app, Root
+  Directory `apps/<app>`, Production branch `staging`, env `API_URL` and
+  `STAGING_PASSWORD`. Each app's `vercel.json` pins its server code to
+  Frankfurt (`fra1`), next to the API (Render) and database (Neon). Vercel
+  functions accept at most 4.5 MB per request, so a form carrying several
+  full-size photos can be refused there until photos move to file storage.
+  Setup steps are in the aqarly-api README → "Staging".
 - The staging API is locked with a shared password; the staging apps are
   open to anyone with the link (a deliberate choice, so links can be shared).
   With `STAGING_PASSWORD` set, `api.ts` sends it to the API
   (`@aqarly/core/staging`) and each app's `next.config.mjs` adds
   `X-Robots-Tag: noindex`. Unset locally, so nothing changes in development.
-  It stands in for sign-in until the API's Phase 9; don't build on it.
+  It isn't user accounts; sign-in (below) sits on top of it.
 - Its data is reset with `uv run python scripts/seed.py` in aqarly-api, which
   reloads `packages/core/data` (now the API's seed), not by any app's reset.
 
