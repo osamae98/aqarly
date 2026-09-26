@@ -160,7 +160,10 @@ sends it as `X-Session` on every call.
   housekeeping `000 0901`). Their pages live in the `app/(portal)/` route
   group, whose layout calls `getSignedInAdmin()` before any data and draws the
   rail, so `/login` renders without either. The rail shows who is signed in
-  and Sign out; the compact bar has a sign-out icon.
+  and Sign out; the compact bar has a sign-out icon. `src/proxy.js` sends
+  a visit with no session cookie to /login before anything renders: Next
+  renders a layout and its page at the same time, so the layout's check alone
+  would let the page's API reads fail first.
 - **Ops → Registrations** (`/registrations`): tenants who registered in the
   tenant portal, oldest first, to approve or decline. A unit that already has
   a tenant says so on the card, and the button reads "Approve and replace".
