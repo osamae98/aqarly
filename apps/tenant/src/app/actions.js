@@ -97,7 +97,6 @@ export async function createMaintenanceRequestAction(formData) {
     const request = await createRequest({
       unitId: unit.id,
       category,
-      priority: formData.get("priority") === "urgent" ? "urgent" : "normal",
       summary,
       description: text(formData, "description"),
       photos: await readPhotos(formData),

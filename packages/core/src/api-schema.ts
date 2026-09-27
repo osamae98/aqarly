@@ -347,7 +347,8 @@ export interface paths {
         /**
          * Create Request
          * @description Raise a request: `createRequest`. An admin raises their own trade's; a
-         *     tenant raises for their own home, unassigned and marked as theirs.
+         *     tenant raises for their own home, marked as theirs, standard priority and
+         *     unassigned: how urgent it is and who does it are ops's call.
          */
         post: operations["create_request_requests_post"];
         delete?: never;

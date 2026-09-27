@@ -151,8 +151,9 @@ sends it as `X-Session` on every call.
   approves. `getSignedInTenant()` returns the real tenant and redirects anyone
   else where they belong, so pages use it without checking. Sign out works.
 - **Tenant request forms** ask what the admin portals' "New request" asks,
-  less the building/unit (always their own home) and "Assign to" (ops
-  decides): maintenance has category, priority, title, description, a visit
+  less the building/unit (always their own home), the priority and "Assign
+  to" (ops decides both; the API sets a tenant's request to standard and
+  unassigned whatever is sent): maintenance has category, title, description, a visit
   day + From–To window (`VisitWindow`, optional) and photos; a housekeeping
   booking has its service, title (starts as the service name), notes, a
   required day + window, and photos. The API keeps the day and window
@@ -208,8 +209,8 @@ with the request. There is no file store, which is what the count and size
 caps there are standing in for — give them somewhere real to live before
 raising either. `packages/core/data` is now only the API's seed, never read
 by core: `uv run python scripts/seed.py` in aqarly-api is the way back to a
-known state. Every app's "Reset demo data" is disabled with that reason on
-screen. Pages call these through the server actions in
+known state (it wipes real imported data too). No app has a reset control:
+the user removed them once staging held real data. Pages call these through the server actions in
 `apps/<app>/src/app/actions.js`, which are the only place `revalidatePath` is
 allowed to live.
 

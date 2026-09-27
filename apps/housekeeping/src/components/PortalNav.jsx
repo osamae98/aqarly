@@ -90,9 +90,7 @@ export default function PortalNav({ openCount, admin, className = "" }) {
       ]}
       footer={
         // Who is signed in, and the way out. Collapsed keeps just the avatar
-        // and a sign-out icon — "Reset demo data" is rare enough to live
-        // behind expanding the rail rather than becoming an icon that has to
-        // guess at its own meaning.
+        // and a sign-out icon.
         <div className="flex flex-col gap-2">
           <div
             title={collapsed ? `${admin.name} — ${admin.phone}` : undefined}
@@ -130,20 +128,6 @@ export default function PortalNav({ openCount, admin, className = "" }) {
               {!collapsed && "Sign out"}
             </button>
           </form>
-
-          {/* The portals' data lives in aqarly-api now, so there's nothing in this
-            * process to reset. Shown disabled, with the real way back, rather than
-            * as a button that would pretend. */}
-          {!collapsed && (
-            <div className="px-1 py-1 text-[11.5px] text-[var(--green-300)]">
-              <button type="button" disabled className="cursor-not-allowed opacity-60">
-                Reset demo data
-              </button>
-              <span className="block text-[10.5px] opacity-80">
-                Reset from aqarly-api: <code>uv run python scripts/seed.py</code>
-              </span>
-            </div>
-          )}
         </div>
       }
     />

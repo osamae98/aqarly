@@ -3,7 +3,6 @@ import { getSignedInTechnician, getWorklist, typeLabels } from "@aqarly/core/ope
 import { signOutAction } from "@/app/actions";
 import JobRow from "@/components/JobRow";
 import NextJobCard from "@/components/NextJobCard";
-import ResetAction from "@/components/ResetAction";
 import SectionLabel from "@/components/SectionLabel";
 import StatTiles from "@/components/StatTiles";
 
@@ -59,8 +58,6 @@ export default async function WorklistPage() {
           ))}
         </section>
       )}
-
-      <ResetAction />
 
       <form action={signOutAction} className="self-center">
         <button type="submit" className="h-12 px-4 text-sm font-semibold text-ink-soft">

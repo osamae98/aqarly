@@ -46,10 +46,7 @@ export default function ConfirmDialog({
         <p className="text-[14.5px] leading-relaxed text-ink-soft">
           {description}
         </p>
-        <p className="text-xs text-ink-muted">
-          This can&rsquo;t be undone from the portal. Resetting the API&rsquo;s
-          demo data (<code>scripts/seed.py</code>) is the only way back.
-        </p>
+        <p className="text-xs text-ink-muted">This can&rsquo;t be undone.</p>
         <FormNote state={result} />
       </div>
     </Modal>
