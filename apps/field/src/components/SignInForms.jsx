@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Icon from "@aqarly/ui/Icon";
 import { resendCodeAction, sendCodeAction, verifyCodeAction } from "@/app/actions";
 import { FormNote, Label, useFormAction } from "./Field";
 
@@ -13,7 +15,7 @@ const input =
 const primary =
   "flex h-13 w-full items-center justify-center rounded-pill bg-brand px-5 text-base font-semibold text-ink-inverse transition-colors active:bg-brand-active disabled:opacity-50";
 
-export function PhoneForm() {
+export function PhoneForm({ countries, defaultCountry }) {
   const router = useRouter();
   const send = useFormAction(sendCodeAction, { onSuccess: () => router.push("/login/verify") });
 
@@ -23,25 +25,23 @@ export function PhoneForm() {
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="login-phone">Your work mobile</Label>
         <div className="flex gap-2">
-          <input
-            aria-label="Country code"
-            name="countryCode"
-            defaultValue="+000"
-            readOnly
-            className="h-13 w-24 rounded-md border-[1.5px] border-border bg-sunken px-4 text-base text-ink-soft"
+          <CountryPicker
+            countries={countries}
+            defaultCountry={defaultCountry}
+            className="h-13 w-24 rounded-md border-[1.5px] border-border bg-surface px-3 text-base text-ink"
           />
           <input
             id="login-phone"
             name="phone"
             type="tel"
             autoComplete="tel-national"
-            placeholder="000 0101"
+            placeholder="50 123 4567"
             required
             className={`min-w-0 flex-1 ${input}`}
           />
         </div>
         <p className="text-xs text-ink-muted">
-          The number the office has for you. The country code is a placeholder until real dial codes are wired in.
+          The number the office has for you.
         </p>
       </div>
       <button type="submit" disabled={send.pending} className={primary}>
@@ -86,5 +86,33 @@ export function CodeForm() {
         {resend.pending ? "Sending…" : "Send a new code"}
       </button>
     </form>
+  );
+}
+
+// The country picker: a native select laid invisibly over a box showing the
+// chosen code, so the phone's own list opens on tap while the field stays as
+// narrow as "+966". `countries` comes from the page (@aqarly/core/phone).
+function CountryPicker({ countries, defaultCountry, className }) {
+  const [country, setCountry] = useState(defaultCountry);
+  const code = countries.find((option) => option.value === country)?.code;
+
+  return (
+    <label className={`relative flex shrink-0 cursor-pointer items-center justify-center gap-1 focus-within:border-brand focus-within:shadow-focus ${className}`}>
+      <span aria-hidden>+{code}</span>
+      <Icon name="chevron-down" size={14} className="text-ink-muted" />
+      <select
+        aria-label="Country"
+        name="country"
+        value={country}
+        onChange={(event) => setCountry(event.target.value)}
+        className="absolute inset-0 cursor-pointer opacity-0"
+      >
+        {countries.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

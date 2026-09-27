@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getMe } from "@aqarly/core/auth";
+import { countryOptions, defaultCountry } from "@aqarly/core/phone";
 import { PhoneForm } from "@/components/SignInForms";
 import SignInCard from "./SignInCard";
 
@@ -14,7 +15,7 @@ export default async function LoginPage() {
   return (
     <SignInCard title="Sign in">
       <p className="-mt-2 text-sm text-ink-soft">Housekeeping bookings across the portfolio. We&apos;ll send a code to your phone.</p>
-      <PhoneForm placeholder="000 0901" />
+      <PhoneForm countries={countryOptions()} defaultCountry={defaultCountry} />
     </SignInCard>
   );
 }

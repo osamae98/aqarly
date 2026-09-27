@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { pendingSignIn, signOut, startSignIn, verifyCode } from "@aqarly/core/auth";
+import { phoneFrom } from "@aqarly/core/phone";
 import {
   addHousekeepingRate,
   addStaff,
@@ -229,9 +230,8 @@ export async function removeStaffAction(formData) {
 
 export async function sendCodeAction(formData) {
   try {
-    const number = (formData.get("phone") ?? "").toString().trim();
-    if (!number) throw new Error("Enter your mobile number");
-    await startSignIn(`${formData.get("countryCode") ?? ""} ${number}`);
+    const country = (formData.get("country") ?? "").toString();
+    await startSignIn(phoneFrom(country, (formData.get("phone") ?? "").toString()));
     return { ok: true };
   } catch (error) {
     return fail(error);

@@ -164,6 +164,13 @@ sends it as `X-Session` on every call.
   a visit with no session cookie to /login before anything renders: Next
   renders a layout and its page at the same time, so the layout's check alone
   would let the page's API reads fail first.
+- **Country picker.** Every sign-in screen has one (default Saudi Arabia,
+  `defaultCountry` in `@aqarly/core/phone`). The login page builds the
+  options server-side (`countryOptions()`, from `libphonenumber-js`, which
+  stays out of the browser bundle) and the form lays a native select over a
+  "+966" box. The action joins country and number with `phoneFrom()`, which
+  drops the leading 0 people type at home. "Demo accounts (+000)" is last in
+  the list, for the seed's made-up numbers.
 - **Ops → Registrations** (`/registrations`): tenants who registered in the
   tenant portal, oldest first, to approve or decline. A unit that already has
   a tenant says so on the card, and the button reads "Approve and replace".

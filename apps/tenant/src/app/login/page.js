@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Logo from "@aqarly/ui/Logo";
 import { getMe } from "@aqarly/core/auth";
+import { countryOptions, defaultCountry } from "@aqarly/core/phone";
 import { site } from "@aqarly/core/site";
 import { PhoneForm } from "@/components/SignInForms";
 
@@ -22,7 +23,7 @@ export default async function LoginPage() {
           Your tenant services, in one place
         </p>
 
-        <PhoneForm />
+        <PhoneForm countries={countryOptions()} defaultCountry={defaultCountry} />
       </div>
 
       <p className="px-6 pb-6 text-center text-xs text-ink-muted">

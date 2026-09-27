@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Logo from "@aqarly/ui/Logo";
 import { getMe } from "@aqarly/core/auth";
+import { countryOptions, defaultCountry } from "@aqarly/core/phone";
 import { PhoneForm } from "@/components/SignInForms";
 
 export const metadata = { title: "Sign in" };
@@ -21,7 +22,7 @@ export default async function LoginPage() {
         <p className="text-sm text-ink-soft">We&apos;ll send a code to your phone.</p>
       </header>
 
-      <PhoneForm />
+      <PhoneForm countries={countryOptions()} defaultCountry={defaultCountry} />
     </main>
   );
 }
