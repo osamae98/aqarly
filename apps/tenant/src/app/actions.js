@@ -65,6 +65,19 @@ async function readPhotos(formData) {
   );
 }
 
+function text(formData, name) {
+  return (formData.get(name) ?? "").toString().trim();
+}
+
+// The visit the tenant asked for: a day and a "9AM–1PM" window, both or
+// neither (the API refuses one without the other, and says so).
+function visit(formData) {
+  return {
+    scheduledDate: text(formData, "scheduledDate") || null,
+    scheduledSlot: text(formData, "scheduledSlot") || null,
+  };
+}
+
 async function signedInUnit() {
   const tenant = await getSignedInTenant();
   if (!tenant?.unit) throw new Error("No unit on file for this account");
@@ -78,15 +91,17 @@ export async function createMaintenanceRequestAction(formData) {
     const category = formData.get("category");
     if (!category) throw new Error("Choose a category first");
 
-    const description = (formData.get("description") ?? "").toString().trim();
-    if (!description) throw new Error("Describe the issue before submitting");
+    const summary = text(formData, "summary");
+    if (!summary) throw new Error("Give the request a short title");
 
     const request = await createRequest({
       unitId: unit.id,
       category,
-      summary: description.length > 60 ? `${description.slice(0, 57)}…` : description,
-      description,
+      priority: formData.get("priority") === "urgent" ? "urgent" : "normal",
+      summary,
+      description: text(formData, "description"),
       photos: await readPhotos(formData),
+      ...visit(formData),
       origin: "tenant",
     });
 
@@ -102,15 +117,20 @@ export async function createHousekeepingRequestAction(formData) {
     const unit = await signedInUnit();
 
     const category = formData.get("category");
-    const summary = formData.get("label");
-    if (!category || !summary) throw new Error("Choose a service first");
+    if (!category) throw new Error("Choose a service first");
+
+    const { scheduledDate, scheduledSlot } = visit(formData);
+    if (!scheduledDate || !scheduledSlot) throw new Error("Pick a day and a time window");
 
     const request = await createRequest({
       unitId: unit.id,
       category,
-      summary,
-      scheduledDate: formData.get("scheduledDate") || null,
-      scheduledSlot: formData.get("scheduledSlot") || null,
+      // Blank means the service's own name, which the form starts with.
+      summary: text(formData, "summary") || (formData.get("label") ?? "").toString(),
+      description: text(formData, "description"),
+      photos: await readPhotos(formData),
+      scheduledDate,
+      scheduledSlot,
       origin: "tenant",
     });
 

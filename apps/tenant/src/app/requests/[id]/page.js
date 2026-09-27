@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import {
   categoryLabels,
   formatCharge,
+  formatDate,
   formatDateTime,
   getRequestById,
   getSignedInTenant,
@@ -33,7 +34,20 @@ export default async function TenantRequestPage({ params }) {
   return (
     <Screen title={request.id} backHref="/">
       <div className="mb-6">
-        <TypeTag type={request.type} />
+        <div className="flex flex-wrap items-center gap-2">
+          <TypeTag type={request.type} />
+          {/* A booking's title starts as its service's name: say it once. */}
+          {request.summary !== (categoryLabels[request.category] ?? request.category) && (
+            <span className="text-xs font-semibold text-ink-soft">
+              {categoryLabels[request.category] ?? request.category}
+            </span>
+          )}
+          {request.priority === "urgent" && (
+            <span className="rounded-pill bg-danger-tint px-2.5 py-0.5 text-xs font-bold text-danger-ink">
+              Emergency
+            </span>
+          )}
+        </div>
         <h2 className="my-2 text-xl font-bold text-ink">{request.summary}</h2>
         <p className="text-sm text-ink-soft">
           {request.unit ? `Unit ${request.unit.label}` : null}
@@ -49,6 +63,12 @@ export default async function TenantRequestPage({ params }) {
         </div>
 
         <div className="flex flex-col gap-4">
+          {request.schedule && (
+            <Panel title="Visit booked for">
+              {formatDate(request.schedule.date)} · {request.schedule.slot}
+            </Panel>
+          )}
+
           {request.description && (
             <Panel title="Your description">{request.description}</Panel>
           )}

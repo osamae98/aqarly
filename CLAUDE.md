@@ -150,6 +150,14 @@ sends it as `X-Session` on every call.
   `/login/register` (name, building, unit) → `/login/waiting` until ops
   approves. `getSignedInTenant()` returns the real tenant and redirects anyone
   else where they belong, so pages use it without checking. Sign out works.
+- **Tenant request forms** ask what the admin portals' "New request" asks,
+  less the building/unit (always their own home) and "Assign to" (ops
+  decides): maintenance has category, priority, title, description, a visit
+  day + From–To window (`VisitWindow`, optional) and photos; a housekeeping
+  booking has its service, title (starts as the service name), notes, a
+  required day + window, and photos. The API keeps the day and window
+  together, and `VisitWindow` holds the submit until they are. The request
+  page shows the category, "Emergency" and the booked visit.
 - **Field app: done.** `/login` → `/login/verify` → the worklist. No
   registering: only a number on the staff roster gets in, and the API says so
   to anyone else. Sign out is under the worklist. Its server actions check the
