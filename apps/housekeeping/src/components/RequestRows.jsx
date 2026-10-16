@@ -17,6 +17,7 @@ import {
   stageLabels,
   stageTones,
 } from "@aqarly/core/labels";
+import EmptyState from "@/components/EmptyState";
 
 // One row per booking. The mockup lays these out as a grid rather than a
 // table so the unit and assignee cells can each stack two lines. Housekeeping
@@ -35,6 +36,11 @@ export default function RequestRows({
   pageSize = requests.length,
   total = requests.length,
 }) {
+  // Empty because a search or filter left nothing, or because nothing is
+  // open: the two look different, so "no matches" never reads as "all done".
+  const narrowed = Object.entries(searchParams ?? {}).some(
+    ([key, value]) => key !== "page" && value,
+  );
   const router = useRouter();
   const [selected, setSelected] = useState([]);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -163,11 +169,20 @@ export default function RequestRows({
 
           <div className="overflow-hidden">
           <div className="max-h-[60vh] divide-y divide-sunken overflow-y-auto">
-            {requests.length === 0 && (
-              <p className="px-3 py-16 text-center text-sm text-ink-muted">
-                No bookings match these filters.
-              </p>
-            )}
+            {requests.length === 0 &&
+              (narrowed ? (
+                <EmptyState
+                  art="search"
+                  title="No matches"
+                  description="Try another search or clear the filters."
+                />
+              ) : (
+                <EmptyState
+                  art="clear"
+                  title="No open bookings"
+                  description="New bookings from tenants and your team show up here."
+                />
+              ))}
 
             {requests.map((request) => (
               <div

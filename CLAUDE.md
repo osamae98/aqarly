@@ -58,6 +58,12 @@ gray), replacing the design project's `--green-*` and `--sand-*`; dark mode
 is a cool charcoal. A re-sync from the design project would bring the old
 scales back, so update the project first or re-apply these.
 
+The housekeeping side rail uses `Sidebar tone="surface"` (white with a teal
+highlight, charcoal in dark mode), not the dark `tone="brand"` rail: the user
+found the dark teal rail made the whole app read as dark green. The compact
+top bar and the logo tile (`OpsMark`) follow the same tokens. Ops gets the
+same change on its own branch, `operations-updates`.
+
 **Corners** (the user chose semi-rounded buttons): buttons, links styled as
 buttons, segmented switches and the search box are semi-rounded, matching
 the inputs. Every full-size control is `rounded-md` (12px): inputs,
@@ -225,6 +231,12 @@ sends it as `X-Session` on every call.
   `auth`.** Those reach `next/headers` (the session cookie), which the
   production build refuses in browser code; `next dev` doesn't complain, so
   run `pnpm --filter <app> build` before pushing to `staging`.
+- **Housekeeping matches ops** (built on the `housekeeping-updates` branch,
+  from the ops work on `operations-updates`): the booking queue opens on open
+  bookings (`stage=all` for everything), Previous / Next walk that list, the
+  booking page's Activity is the same timeline (`ActivityLog`, "Booked by …"),
+  and empty states use the same ghost-rows `EmptyState` with `.empty-art` in
+  globals.css.
 - The field app and tenant portal have a root `loading.js`: while a sleeping
   staging API wakes (core's reads retry for up to two minutes), it's what
   shows instead of a blank screen.

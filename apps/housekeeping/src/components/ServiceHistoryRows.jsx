@@ -6,6 +6,7 @@ import {
   formatDate,
   stageLabels,
 } from "@aqarly/core/operations";
+import EmptyState from "@/components/EmptyState";
 
 // The per-unit record Ops PRD §7 calls for: what was done, who did it, what
 // it was charged, and who it was billed to. The service filter sits in the
@@ -40,9 +41,11 @@ export default function ServiceHistoryRows({
       </div>
 
       {requests.length === 0 && (
-        <p className="py-16 text-center text-sm text-ink-muted">
-          Nothing has been booked for this unit yet.
-        </p>
+        <EmptyState
+          art="history"
+          title="No history yet"
+          description="Bookings for this unit will be listed here."
+        />
       )}
 
       <div className="divide-y divide-sunken">

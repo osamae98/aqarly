@@ -5,3 +5,70 @@
  * packages, so the class names used inside shared components have to be
  * pointed at explicitly or they never reach the stylesheet. */
 @source "../../../../packages/ui/src";
+
+/* Empty states (components/EmptyState.jsx), "ghost rows": faint shapes of
+ * what would be here fade up one after another, then the teal detail traces
+ * itself in, once (every traced stroke has pathLength="1", so a dash of 1
+ * covers it whatever its real length). People who turn motion off get the
+ * finished picture. */
+.empty-art {
+  stroke: var(--color-brand);
+}
+.empty-art .ghost {
+  fill: var(--color-sunken);
+  stroke: none;
+}
+.empty-art .slot {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+.empty-art .chip {
+  fill: var(--color-brand-tint);
+  stroke: none;
+}
+.empty-art .dot {
+  fill: var(--teal-300);
+  stroke: none;
+}
+.empty-art .knock {
+  fill: var(--color-surface);
+  stroke: none;
+}
+.empty-art .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: empty-draw 0.7s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.empty-art .pop {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: empty-pop 0.4s ease-out forwards;
+}
+.empty-art > :nth-child(2), .empty-art > :nth-child(2) > * { animation-delay: 0.08s; }
+.empty-art > :nth-child(3), .empty-art > :nth-child(3) > * { animation-delay: 0.16s; }
+.empty-art > :nth-child(4), .empty-art > :nth-child(4) > * { animation-delay: 0.24s; }
+.empty-art > :nth-child(5), .empty-art > :nth-child(5) > * { animation-delay: 0.32s; }
+.empty-art > :nth-child(n + 6), .empty-art > :nth-child(n + 6) > * { animation-delay: 0.4s; }
+/* The teal detail always comes last, over the ghosts. */
+.empty-art > .draw { animation-delay: 0.45s; }
+
+@keyframes empty-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes empty-pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-art .draw,
+  .empty-art .pop {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: none;
+  }
+}

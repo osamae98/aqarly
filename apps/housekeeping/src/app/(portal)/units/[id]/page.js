@@ -4,6 +4,7 @@ import PageBar from "@/components/PageBar";
 import UnitCrumb from "@/components/UnitCrumb";
 import { getRequests, getUnitById } from "@aqarly/core/operations";
 import { notFound } from "next/navigation";
+import EmptyState from "@/components/EmptyState";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -58,9 +59,13 @@ export default async function UnitDetailPage({ params }) {
           </div>
 
           {open.length === 0 ? (
-            <p className="rounded-md border border-dashed border-border-strong py-10 text-center text-sm text-ink-muted">
-              No open housekeeping on this unit.
-            </p>
+            <EmptyState
+              art="clear"
+              title="No open bookings"
+              description="New bookings for this unit show up here."
+              compact
+              className="rounded-md border border-dashed border-border-strong"
+            />
           ) : (
             <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
               {open.map((request) => (

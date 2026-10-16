@@ -13,6 +13,7 @@ import {
   reportPeriods,
   staffCapacity,
 } from "@aqarly/core/operations";
+import EmptyState from "@/components/EmptyState";
 
 export default async function HousekeepingDashboardPage({ searchParams }) {
   const params = await searchParams;
@@ -109,9 +110,7 @@ export default async function HousekeepingDashboardPage({ searchParams }) {
                   />
                 ))
             ) : (
-              <p className="text-sm text-ink-muted">
-                Nothing was charged in this period.
-              </p>
+              <EmptyState art="receipt" title="Nothing charged" description="No charges in this period." compact />
             )}
           </Panel>
 

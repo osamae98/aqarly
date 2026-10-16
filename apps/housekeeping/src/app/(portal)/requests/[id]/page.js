@@ -34,7 +34,12 @@ export default async function RequestDetailPage({ params }) {
   const [unit, candidates, neighbours] = await Promise.all([
     getUnitById(request.unitId, { type: "housekeeping" }),
     getAssignmentCandidates(request),
-    getRequestNeighbours(request.id, { type: "housekeeping" }),
+    // Previous / Next walk the same list the queue shows: open bookings by
+    // default, everything once a booking is done (it's only listed under All).
+    getRequestNeighbours(
+      request.id,
+      request.stage === "done" ? { type: "housekeeping" } : { type: "housekeeping", open: true },
+    ),
   ]);
 
   const categoryLabel = categoryLabels[request.category] ?? request.category;

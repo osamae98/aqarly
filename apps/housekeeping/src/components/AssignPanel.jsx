@@ -8,6 +8,7 @@ import { MicroLabel } from "@/components/Panel";
 import Toast from "@/components/Toast";
 import { assignAction } from "@/app/actions";
 import { typeLabels } from "@aqarly/core/labels";
+import EmptyState from "@/components/EmptyState";
 
 // Why this person is the suggestion, in the order the ranking weighs it.
 function reason(candidate) {
@@ -94,9 +95,12 @@ export default function AssignPanel({
         }
       >
         {candidates.length === 0 ? (
-          <p className="text-sm text-ink-muted">
-            No one on the team does this kind of work yet.
-          </p>
+          <EmptyState
+            art="team"
+            title="No one available"
+            description="Add a housekeeper to the team."
+            compact
+          />
         ) : (
           <form
             id="assign-request"
