@@ -5,6 +5,7 @@ import Link from "next/link";
 import Icon from "@aqarly/ui/Icon";
 import { handBackAction, startJobAction } from "@/app/actions";
 import { FormNote, useFormAction } from "./Field";
+import { Busy } from "@/components/Spinner";
 
 // The three things a technician can do to a job, in the order the design puts
 // them: get on with it, ask the tenant something first, or hand it back.
@@ -53,7 +54,7 @@ export default function JobActions({ job, tone = "plain" }) {
             disabled={start.pending}
             className={`${base} w-full ${palette.primary}`}
           >
-            {start.pending ? "Starting…" : "Start job"}
+            {start.pending ? <Busy>Starting…</Busy> : "Start job"}
           </button>
         </form>
       )}
@@ -157,7 +158,7 @@ function HandBackSheet({ job, action, onClose }) {
             disabled={action.pending}
             className={`${base} flex-1 bg-brand text-ink-inverse active:bg-brand-active`}
           >
-            {action.pending ? "Sending…" : "Hand back"}
+            {action.pending ? <Busy>Sending…</Busy> : "Hand back"}
           </button>
         </div>
       </form>
