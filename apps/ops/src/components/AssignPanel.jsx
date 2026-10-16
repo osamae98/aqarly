@@ -9,6 +9,7 @@ import Toast from "@/components/Toast";
 import { assignAction } from "@/app/actions";
 import { typeLabels } from "@aqarly/core/labels";
 import EmptyState from "@/components/EmptyState";
+import { Busy } from "@/components/Spinner";
 
 // Why this person is the suggestion, in the order the ranking weighs it.
 function reason(candidate) {
@@ -78,7 +79,7 @@ export default function AssignPanel({
               className="w-full cursor-pointer rounded-md bg-brand py-3.5 text-[15px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending
-                ? "Assigning…"
+                ? <Busy>Assigning…</Busy>
                 : choice
                   ? `Assign to ${choice.name.split(" ")[0]}`
                   : "Assign"}

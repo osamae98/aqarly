@@ -1,5 +1,6 @@
 import { fontVariables } from "@aqarly/ui/fonts";
 import "./globals.css";
+import "./loaders.css";
 
 // Every rollup here is derived from request data at read time, so nothing in
 // this app may be captured at build time.

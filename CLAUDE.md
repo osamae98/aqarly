@@ -231,6 +231,11 @@ sends it as `X-Session` on every call.
   draws itself in, once (`.empty-art` in globals.css); people who turn motion
   off get the finished picture. 88px, 64px when `compact`. Then a title and
   one line.
+- **Ops loaders**, the same as housekeeping's: a `loading.js` per screen
+  (queue, request, registrations, buildings, unit, staff, reports) drawn from
+  `components/Skeleton.jsx` with a shimmer, and `<Busy>…</Busy>` spinners
+  (`components/Spinner.jsx`) in buttons that wait on the server. Ops keeps
+  the shimmer in its own `app/loaders.css`, imported by `app/layout.js`.
 - **Ops → Registrations** (`/registrations`): tenants who registered in the
   tenant portal, oldest first, to approve or decline. A unit that already has
   a tenant says so on the card, and the button reads "Approve and replace".
