@@ -16,6 +16,7 @@ import {
   maxRequestPhotos,
   visitHours,
 } from "@aqarly/core/labels";
+import { Busy } from "@/components/Spinner";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -83,7 +84,7 @@ export default function NewRequestAction({
               disabled={pending || units.length === 0 || categories.length === 0}
               className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {pending ? "Booking…" : "Create booking"}
+              {pending ? <Busy>Booking…</Busy> : "Create booking"}
             </button>
             <button
               type="button"

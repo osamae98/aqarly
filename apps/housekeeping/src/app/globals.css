@@ -72,3 +72,36 @@
     transform: none;
   }
 }
+
+/* Loading skeletons (components/Skeleton.jsx): gray blocks a soft light
+ * sweeps across. The block is a step darker than the card it sits on and the
+ * glint a step lighter than the block, in both themes. People who turn
+ * motion off see plain blocks. */
+.skeleton {
+  --skeleton-base: var(--color-border);
+  --skeleton-glint: var(--color-page);
+  background: linear-gradient(
+      90deg,
+      var(--skeleton-base) 0%,
+      var(--skeleton-glint) 40%,
+      var(--skeleton-base) 80%
+    )
+    0 0 / 300% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    --skeleton-base: var(--color-sunken);
+    --skeleton-glint: var(--color-border);
+  }
+}
+@keyframes skeleton-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--skeleton-base);
+  }
+}
