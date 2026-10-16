@@ -5,6 +5,7 @@ import JobRow from "@/components/JobRow";
 import NextJobCard from "@/components/NextJobCard";
 import SectionLabel from "@/components/SectionLabel";
 import StatTiles from "@/components/StatTiles";
+import EmptyState from "@/components/EmptyState";
 
 // The worklist. No queue, no filters, no dashboard — one technician's own
 // open work, in the order `getWorklist` decides it should be done, with the
@@ -33,12 +34,12 @@ export default async function WorklistPage() {
       {next ? (
         <NextJobCard job={next} />
       ) : (
-        <section className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface px-6 py-12 text-center">
-          <h2 className="text-lg font-bold text-ink">No open jobs</h2>
-          <p className="text-sm text-ink-soft">
-            You&apos;re all caught up.
-          </p>
-        </section>
+        <EmptyState
+          art="clear"
+          title="No open jobs"
+          description="You're all caught up."
+          className="rounded-lg border border-border bg-surface px-6"
+        />
       )}
 
       {queued.length > 0 && (

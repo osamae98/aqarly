@@ -196,6 +196,12 @@ sends it as `X-Session` on every call.
   required day + window, and photos. The API keeps the day and window
   together, and `VisitWindow` holds the submit until they are. The request
   page shows the category, "Emergency" and the booked visit.
+- **Field app loaders and empty state** (same styles as the portals). The
+  worklist's "No open jobs" is a ghost-rows `EmptyState`. The worklist
+  (`app/loading.js`), a job and the finish screen have placeholders from
+  `components/Skeleton.jsx` (`JobRowSkeleton`, `ScreenHeaderSkeleton`);
+  sign-in has its own `login/loading.js` spinner so it never shows the
+  worklist's. Waiting buttons use `<Busy>…</Busy>`.
 - **Field app: done.** `/login` → `/login/verify` → the worklist. No
   registering: only a number on the staff roster gets in, and the API says so
   to anyone else. Sign out is under the worklist. Its server actions check the

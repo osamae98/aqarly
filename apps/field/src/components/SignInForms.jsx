@@ -5,6 +5,7 @@ import { useState } from "react";
 import Icon from "@aqarly/ui/Icon";
 import { resendCodeAction, sendCodeAction, verifyCodeAction } from "@/app/actions";
 import { FormNote, Label, useFormAction } from "./Field";
+import { Busy } from "@/components/Spinner";
 
 // The two sign-in screens' forms, in the field app's own controls: one thumb,
 // 48px targets, the API's reason shown as it is when it refuses.
@@ -42,7 +43,7 @@ export function PhoneForm({ countries, defaultCountry }) {
         </div>
       </div>
       <button type="submit" disabled={send.pending} className={primary}>
-        {send.pending ? "Sending…" : "Send code"}
+        {send.pending ? <Busy>Sending…</Busy> : "Send code"}
       </button>
     </form>
   );
@@ -72,7 +73,7 @@ export function CodeForm() {
         />
       </div>
       <button type="submit" disabled={verify.pending} className={primary}>
-        {verify.pending ? "Checking…" : "Sign in"}
+        {verify.pending ? <Busy>Checking…</Busy> : "Sign in"}
       </button>
       <button
         type="button"
@@ -80,7 +81,7 @@ export function CodeForm() {
         disabled={resend.pending}
         className="flex h-12 items-center justify-center text-sm font-semibold text-brand disabled:opacity-50"
       >
-        {resend.pending ? "Sending…" : "Send a new code"}
+        {resend.pending ? <Busy>Sending…</Busy> : "Send a new code"}
       </button>
     </form>
   );
