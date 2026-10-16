@@ -5,6 +5,7 @@ import Modal from "@aqarly/ui/Modal";
 import Toast from "@/components/Toast";
 import { FormNote, Label, TextField, useFormAction } from "@/components/Field";
 import { createRequestAction } from "@/app/actions";
+import { Busy } from "@/components/Spinner";
 
 // The repeat-fault banner's action. The design sends this to the building's
 // owner for approval; approvals have no home yet, so it raises the
@@ -46,7 +47,7 @@ export default function ReplacementAction({
               disabled={pending}
               className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {pending ? "Raising…" : "Raise on this unit"}
+              {pending ? <Busy>Raising…</Busy> : "Raise on this unit"}
             </button>
             <button
               type="button"
