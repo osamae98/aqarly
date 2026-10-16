@@ -11,6 +11,7 @@ import Field from "@/components/Field";
 import PhotoPicker from "@/components/PhotoPicker";
 import Textarea from "@/components/Textarea";
 import VisitWindow from "@/components/VisitWindow";
+import { Busy } from "@/components/Spinner";
 
 // What the housekeeping portal's "New booking" asks, less what only it
 // decides (the unit is the tenant's own; who cleans is the portal's call).
@@ -80,7 +81,7 @@ export default function HousekeepingRequestForm({ selected }) {
 
       <div className="mt-auto pt-2">
         <Button type="submit" size="lg" disabled={pending || !visitReady} fullWidth>
-          {pending ? "Booking…" : "Confirm booking"}
+          {pending ? <Busy>Booking…</Busy> : "Confirm booking"}
         </Button>
       </div>
     </form>

@@ -1,10 +1,12 @@
-// Shown at once while a screen's data is fetched. Usually a blink; after a
-// quiet spell on a free host, the API can take a minute or two to wake, and
-// this keeps the screen from sitting blank meanwhile.
+import Spinner from "@/components/Spinner";
+
+// Shown while a screen without its own placeholder loads (signing in,
+// starting a request). The screens with a shape (home, history, profile,
+// notifications, a request) have their own loading.js.
 export default function Loading() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-      <span className="size-8 animate-spin rounded-pill border-[3px] border-border border-t-brand" aria-hidden />
+    <main className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-brand">
+      <Spinner size={30} label="Loading" />
       <p className="text-sm font-semibold text-ink">Loading…</p>
     </main>
   );

@@ -11,10 +11,8 @@ import Screen from "@/components/Screen";
 import SectionLabel from "@/components/SectionLabel";
 import {
   Bell,
-  CheckCircle,
   ChevronDown,
   ChevronRight,
-  FilePlus,
   Plus,
 } from "@/components/icons";
 
@@ -45,7 +43,7 @@ export default async function MyRequestsPage({ searchParams }) {
       {requests.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
-            icon={<FilePlus size={32} />}
+            art="add"
             title="No requests yet"
             description="Need something fixed or cleaned? Start here."
             action={<Button href="/requests/new">New request</Button>}
@@ -63,8 +61,7 @@ export default async function MyRequestsPage({ searchParams }) {
               </div>
             ) : (
               <EmptyState
-                tone="success"
-                icon={<CheckCircle size={32} />}
+                art="clear"
                 title="All caught up"
                 description="You have no open requests."
               />

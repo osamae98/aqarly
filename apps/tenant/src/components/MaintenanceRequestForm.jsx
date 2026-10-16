@@ -11,6 +11,7 @@ import Field from "@/components/Field";
 import PhotoPicker from "@/components/PhotoPicker";
 import Textarea from "@/components/Textarea";
 import VisitWindow from "@/components/VisitWindow";
+import { Busy } from "@/components/Spinner";
 
 // What the ops portal's "New request" asks, less what only ops decides: the
 // building and unit are the tenant's own home, and the priority and who does
@@ -89,7 +90,7 @@ export default function MaintenanceRequestForm({ categoryOptions }) {
 
       <div className="mt-auto pt-2">
         <Button type="submit" size="lg" disabled={pending || !canSubmit} fullWidth>
-          {pending ? "Submitting…" : "Submit request"}
+          {pending ? <Busy>Submitting…</Busy> : "Submit request"}
         </Button>
       </div>
     </form>
