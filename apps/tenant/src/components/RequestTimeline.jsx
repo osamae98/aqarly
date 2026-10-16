@@ -16,7 +16,7 @@ function caption(request, stage, at, isLast) {
 
   const named = stage !== "submitted" && request.assignee;
   return named
-    ? `${formatDateTime(at)} — ${request.assignee.name}`
+    ? `${formatDateTime(at)}, ${request.assignee.name}`
     : formatDateTime(at);
 }
 

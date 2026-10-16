@@ -37,7 +37,7 @@ export default function Toast({ message, duration = 4000 }) {
         entered ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0",
       ].join(" ")}
     >
-      <span className="flex size-5 shrink-0 items-center justify-center rounded-pill bg-[var(--green-400)] text-xs font-bold text-[var(--green-900)]">
+      <span className="flex size-5 shrink-0 items-center justify-center rounded-pill bg-[var(--teal-400)] text-xs font-bold text-[var(--teal-900)]">
         ✓
       </span>
       <span className="min-w-0">{message}</span>

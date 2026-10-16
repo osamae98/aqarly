@@ -66,7 +66,7 @@ export default function ServiceHistoryRows({
                   {request.summary}
                 </span>
                 <span className="block truncate text-xs text-ink-muted">
-                  {categoryLabels[request.category] ?? request.category} ·{" "}
+                  {categoryLabels[request.category] ?? request.category},{" "}
                   {request.assignee ? stageLabels[request.stage] : "Unassigned"}
                 </span>
               </span>

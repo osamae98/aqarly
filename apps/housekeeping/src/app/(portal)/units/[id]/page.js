@@ -31,8 +31,8 @@ export default async function UnitDetailPage({ params }) {
     <>
       <PageBar
         eyebrow={<UnitCrumb unit={unit} />}
-        title={`Unit ${unit.label} · ${unit.property?.name ?? ""}`}
-        meta={`${unit.bedrooms} BR · ${unit.bathrooms} bath · ${unit.tenant?.name ?? "no tenant"}`}
+        title={`Unit ${unit.label}, ${unit.property?.name ?? ""}`}
+        meta={`${unit.bedrooms} BR, ${unit.bathrooms} bath, ${unit.tenant?.name ?? "no tenant"}`}
         stats={
           <div className="flex flex-col items-end gap-0.5">
             <span className="font-mono text-[22px] leading-none font-bold text-ink">
@@ -50,7 +50,7 @@ export default async function UnitDetailPage({ params }) {
             {hasHistory && (
               <Link
                 href={`/units/${unit.id}/history`}
-                className="rounded-pill border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+                className="rounded-md border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
               >
                 View housekeeping history →
               </Link>

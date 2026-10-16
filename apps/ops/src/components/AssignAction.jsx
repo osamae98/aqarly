@@ -12,7 +12,7 @@ export default function AssignAction({ requestId, candidates, assigned, note }) 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-bold text-ink-inverse transition-colors hover:bg-brand-hover"
+        className="cursor-pointer rounded-md bg-brand px-4.5 py-2.5 text-[13.5px] font-bold text-ink-inverse transition-colors hover:bg-brand-hover"
       >
         {assigned ? "Reassign" : "Assign"}
       </button>
@@ -22,7 +22,7 @@ export default function AssignAction({ requestId, candidates, assigned, note }) 
         candidates={candidates}
         requestIds={[requestId]}
         title={assigned ? "Reassign this request" : "Assign this request"}
-        description="Ranked by trade, who is already working the building, and how loaded their day is."
+        description="Best matches first."
         note={note}
       />
     </>

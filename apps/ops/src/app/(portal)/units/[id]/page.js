@@ -40,8 +40,8 @@ export default async function UnitDetailPage({ params }) {
     <>
       <PageBar
         eyebrow={<UnitCrumb unit={unit} />}
-        title={`Unit ${unit.label} · ${unit.property?.name ?? ""}`}
-        meta={`${unit.bedrooms} BR · ${unit.bathrooms} bath · ${unit.tenant?.name ?? "no tenant"}`}
+        title={`Unit ${unit.label}, ${unit.property?.name ?? ""}`}
+        meta={`${unit.bedrooms} BR, ${unit.bathrooms} bath, ${unit.tenant?.name ?? "no tenant"}`}
         stats={
           <div className="flex flex-col items-end gap-0.5">
             <span className="font-mono text-[22px] leading-none font-bold text-ink">
@@ -59,31 +59,31 @@ export default async function UnitDetailPage({ params }) {
           <div className="flex flex-wrap items-center gap-3.5 rounded-md border border-[var(--amber-300)] bg-warning-tint px-4.5 py-3.5">
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-bold text-warning-ink">
-                Repeat-fault flag — {repeatLabel} serviced{" "}
+                Repeat fault: {repeatLabel} serviced{" "}
                 {unit.repeatFault.count} times
               </p>
               <p className="text-[13px] text-warning-ink">
-                {repeatFaultRule.occurrences} or more visits inside{" "}
+                {repeatFaultRule.occurrences} or more visits in{" "}
                 {Math.round(repeatFaultRule.withinDays / 30)} months
                 {unit.repeatFault.spend
                   ? `, costing ${formatCharge(unit.repeatFault.spend)}`
-                  : ", none of them charged yet"}
+                  : ""}
                 . Price a replacement before booking another repair.
               </p>
             </div>
             <ReplacementAction
               unitId={unit.id}
               category={unit.repeatFault.category}
-              subject={`Unit ${unit.label} · ${unit.property?.name ?? ""} · ${repeatLabel}`}
-              summary={`Replace ${repeatLabel.toLowerCase()} — repeat fault`}
+              subject={`Unit ${unit.label}, ${unit.property?.name ?? ""}, ${repeatLabel}`}
+              summary={`Replace ${repeatLabel.toLowerCase()} (repeat fault)`}
               reason={`${unit.repeatFault.count} ${repeatLabel} visits inside ${Math.round(
                 repeatFaultRule.withinDays / 30,
               )} months${
                 unit.repeatFault.spend
                   ? `, costing ${formatCharge(unit.repeatFault.spend)} so far`
                   : ""
-              }. Replacing is likely cheaper than another like-for-like repair.`}
-              approver={`Property owner — ${unit.property?.name ?? "unknown building"}`}
+              }. Replacing it is likely cheaper than another repair.`}
+              approver={`Property owner, ${unit.property?.name ?? "unknown building"}`}
             />
           </div>
         )}
@@ -94,7 +94,7 @@ export default async function UnitDetailPage({ params }) {
             {hasHistory && (
               <Link
                 href={`/units/${unit.id}/history`}
-                className="rounded-pill border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+                className="rounded-md border border-border-strong bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
               >
                 View maintenance history →
               </Link>

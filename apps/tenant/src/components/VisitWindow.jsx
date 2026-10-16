@@ -22,11 +22,11 @@ function readWindow({ date, from, to }, required) {
   const problem = complete
     ? null
     : backwards
-      ? "“To” must be after “From”."
+      ? "The end time must be after the start time."
       : !date && (from || to)
-        ? "Pick a day for that time window."
+        ? "Pick a day for this time."
         : date
-          ? "Pick a start and an end time for that day."
+          ? "Pick a start and end time."
           : null;
   return { slot, complete, problem };
 }

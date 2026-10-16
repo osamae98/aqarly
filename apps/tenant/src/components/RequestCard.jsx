@@ -11,7 +11,7 @@ function subtitle(request) {
     ? `Completed ${formatDateTime(doneAt)}`
     : `Reported ${formatDateTime(request.createdAt)}`;
 
-  return [unit, when].filter(Boolean).join(" — ");
+  return [unit, when].filter(Boolean).join(", ");
 }
 
 export default function RequestCard({ request }) {

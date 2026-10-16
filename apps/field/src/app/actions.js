@@ -35,7 +35,7 @@ function fail(error) {
 async function signedIn() {
   const me = await getMe();
   if (me?.kind !== "staff" || !me.staff) {
-    throw new Error("You've been signed out. Sign in again to carry on.");
+    throw new Error("You're signed out. Sign in again.");
   }
   return me.staff;
 }

@@ -24,7 +24,7 @@ export default function UnitCard({ unit }) {
             {unit.label}
           </span>
           <span className="truncate text-[12px] text-ink-muted">
-            {unit.bedrooms} BR · {unit.bathrooms} bath
+            {unit.bedrooms} BR, {unit.bathrooms} bath
           </span>
         </div>
         {unit.status === "under-maintenance" && (
@@ -40,7 +40,7 @@ export default function UnitCard({ unit }) {
 
       {unit.repeatFault && (
         <div className="rounded-sm bg-warning-tint px-2.5 py-1.5 text-[12px] font-semibold text-warning-ink">
-          Repeat fault ·{" "}
+          Repeat fault,{" "}
           {categoryLabels[unit.repeatFault.category] ?? unit.repeatFault.category}
         </div>
       )}

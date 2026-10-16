@@ -5,8 +5,8 @@ import { formatDateTime, stageLabels } from "@aqarly/core/operations";
 const copy = {
   submitted: (request) =>
     request.origin === "ops"
-      ? "Raised in the ops portal"
-      : "Submitted via the tenant portal",
+      ? "Raised by ops"
+      : "Raised by the tenant",
   assigned: (request) =>
     request.assignee ? `Assigned to ${request.assignee.name}` : "Assigned",
   "in-progress": (request) =>
@@ -16,7 +16,7 @@ const copy = {
   // It leaves the request unassigned and back at "submitted", so without
   // this the queue would simply grow an entry nobody can account for.
   "handed-back": (request) =>
-    `Handed back by ${request.handBack?.byName ?? "a technician"} — “${request.handBack?.reason}”`,
+    `Handed back by ${request.handBack?.byName ?? "a technician"}: ${request.handBack?.reason}`,
 };
 
 export default function ActivityLog({ request }) {

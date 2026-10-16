@@ -15,7 +15,7 @@ const options = [
   {
     href: "/requests/new/housekeeping",
     title: "Housekeeping",
-    description: "Cleaning service with upfront pricing",
+    description: "Cleaning, priced up front",
     Icon: Broom,
     className: "bg-category-housekeeping-tint text-category-housekeeping",
   },
@@ -23,12 +23,12 @@ const options = [
 
 export default function NewRequestPage() {
   return (
-    <Screen title="New Request" backHref="/" className="justify-center">
+    <Screen title="New request" backHref="/" className="justify-center">
       <h2 className="text-center text-xl font-bold text-ink">
         What do you need help with?
       </h2>
       <p className="mb-10 mt-1 text-center text-sm text-ink-soft">
-        Choose a request type to get started
+        Pick one to get started
       </p>
 
       <div className="flex flex-col gap-4 md:mx-auto md:w-full md:max-w-lg">

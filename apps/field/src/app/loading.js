@@ -6,9 +6,6 @@ export default function Loading() {
     <main className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
       <span className="size-8 animate-spin rounded-pill border-[3px] border-border border-t-brand" aria-hidden />
       <p className="text-sm font-semibold text-ink">Loading…</p>
-      <p className="max-w-xs text-xs text-ink-muted">
-        If the app hasn&apos;t been used for a while, this can take a minute.
-      </p>
     </main>
   );
 }

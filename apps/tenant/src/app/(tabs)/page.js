@@ -47,7 +47,7 @@ export default async function MyRequestsPage({ searchParams }) {
           <EmptyState
             icon={<FilePlus size={32} />}
             title="No requests yet"
-            description="Submit your first maintenance or housekeeping request when you need help."
+            description="Need something fixed or cleaned? Start here."
             action={<Button href="/requests/new">New request</Button>}
           />
         </div>
@@ -65,8 +65,8 @@ export default async function MyRequestsPage({ searchParams }) {
               <EmptyState
                 tone="success"
                 icon={<CheckCircle size={32} />}
-                title="All caught up!"
-                description="You have no active requests. Your recent work shows below."
+                title="All caught up"
+                description="You have no open requests."
               />
             )}
           </section>

@@ -27,7 +27,7 @@ export default function ReplacementAction({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-pill bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
+        className="cursor-pointer rounded-md bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
       >
         Raise replacement request
       </button>
@@ -44,14 +44,14 @@ export default function ReplacementAction({
               type="submit"
               form="raise-replacement"
               disabled={pending}
-              className="flex-1 cursor-pointer rounded-pill bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending ? "Raising…" : "Raise on this unit"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-pill px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
+              className="cursor-pointer rounded-md px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
             >
               Cancel
             </button>
@@ -82,10 +82,6 @@ export default function ReplacementAction({
             </p>
           </div>
 
-          <p className="text-xs text-ink-muted">
-            Owner approval has nowhere to live yet, so this is raised as a
-            request on the unit rather than sent out for sign-off.
-          </p>
           <FormNote state={result} />
         </form>
       </Modal>

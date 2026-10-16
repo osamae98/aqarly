@@ -65,7 +65,7 @@ export default function NewRequestAction({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-pill bg-brand px-4.5 py-2.5 text-sm font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
+        className="cursor-pointer rounded-md bg-brand px-4.5 py-2.5 text-sm font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
       >
         New booking
       </button>
@@ -81,14 +81,14 @@ export default function NewRequestAction({
               type="submit"
               form="new-request"
               disabled={pending || units.length === 0 || categories.length === 0}
-              className="flex-1 cursor-pointer rounded-pill bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending ? "Booking…" : "Create booking"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-pill px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
+              className="cursor-pointer rounded-md px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
             >
               Cancel
             </button>
@@ -113,7 +113,7 @@ export default function NewRequestAction({
               name="unitId"
               options={units.map((unit) => ({
                 value: unit.id,
-                label: `Unit ${unit.label}${unit.tenant ? ` · ${unit.tenant}` : ""}`,
+                label: `Unit ${unit.label}${unit.tenant ? `, ${unit.tenant}` : ""}`,
               }))}
             />
           </div>
@@ -126,19 +126,19 @@ export default function NewRequestAction({
             onChange={setCategory}
           />
           <p className="-mt-2 text-xs text-ink-muted">
-            Billed to the tenant at the rate card price shown.
+            Charged to the tenant at this price.
           </p>
           <TextField
             label="Title"
             name="summary"
             required
-            placeholder="e.g. Weekly clean, both bedrooms"
+            placeholder="Weekly clean, both bedrooms"
           />
           <TextField
             label="Description"
             name="description"
             textarea
-            placeholder="Rooms to cover, access notes, anything to bring…"
+            placeholder="Rooms to cover, how to get in"
           />
           <div className="grid gap-3 sm:grid-cols-3">
             <TextField
@@ -173,7 +173,7 @@ export default function NewRequestAction({
           </div>
           {rangeIsBackwards && (
             <p className="-mt-2 text-xs text-danger">
-              &ldquo;To&rdquo; must be after &ldquo;From&rdquo;.
+              The end time must be after the start time.
             </p>
           )}
           <SelectField
@@ -183,7 +183,7 @@ export default function NewRequestAction({
               { value: "", label: "Unassigned" },
               ...eligibleStaff.map((member) => ({
                 value: member.id,
-                label: `${member.name} · ${member.load}/${member.capacity} jobs`,
+                label: `${member.name}, ${member.load}/${member.capacity} jobs`,
               })),
             ]}
           />

@@ -13,7 +13,7 @@ export default function AddStaffAction() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
+        className="cursor-pointer rounded-md bg-surface border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
       >
         Add housekeeper
       </button>

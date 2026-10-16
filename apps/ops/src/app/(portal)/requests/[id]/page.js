@@ -20,7 +20,7 @@ import {
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const request = await getRequestById(id);
-  return { title: request ? `${request.id} — ${request.summary}` : "Request" };
+  return { title: request ? `${request.id} | ${request.summary}` : "Request" };
 }
 
 export default async function RequestDetailPage({ params }) {
@@ -84,7 +84,7 @@ export default async function RequestDetailPage({ params }) {
             assigned={Boolean(request.assignee)}
             note={
               repeat
-                ? `Repeat ${categoryLabel} fault — ${repeat.count} visits already. Check before another like-for-like repair.`
+                ? `Repeat ${categoryLabel} fault: ${repeat.count} visits already. Check before repairing it again.`
                 : null
             }
           />
@@ -94,7 +94,7 @@ export default async function RequestDetailPage({ params }) {
       <div className="flex flex-col gap-5 p-4 md:p-6">
         <div className="flex flex-col gap-2">
           <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-category-maintenance uppercase">
-            Maintenance · {categoryLabel}
+            Maintenance, {categoryLabel}
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[27px] leading-tight font-bold tracking-[-0.015em] text-ink">
@@ -120,7 +120,7 @@ export default async function RequestDetailPage({ params }) {
               Handed back by {request.handBack.byName ?? "a technician"}
             </p>
             <p className="mt-1 text-[14.5px] leading-relaxed text-ink">
-              &ldquo;{request.handBack.reason}&rdquo;
+              {request.handBack.reason}
             </p>
           </div>
         )}
@@ -129,10 +129,10 @@ export default async function RequestDetailPage({ params }) {
         <div className="rounded-md border border-border bg-surface p-4.5">
           <p className="text-[15px] leading-relaxed text-ink">
             {request.description ? (
-              `“${request.description}”`
+              request.description
             ) : (
               <span className="text-ink-muted">
-                No description was given when this request was raised.
+                No description
               </span>
             )}
           </p>
@@ -145,7 +145,7 @@ export default async function RequestDetailPage({ params }) {
         <div className="grid divide-y divide-border overflow-hidden rounded-md border border-border bg-surface sm:grid-cols-4 sm:divide-x sm:divide-y-0">
           <StripCell
             label="Unit"
-            value={unit ? `${unit.label} · ${unit.bedrooms} BR` : request.unit?.label}
+            value={unit ? `${unit.label}, ${unit.bedrooms} BR` : request.unit?.label}
             sub={request.property?.name}
           />
           <StripCell
@@ -169,9 +169,9 @@ export default async function RequestDetailPage({ params }) {
 
         {repeat && (
           <p className="rounded-md bg-warning-tint p-3 text-[13px] font-medium text-warning-ink">
-            Repeat fault — {repeatFaultRule.occurrences} or more {categoryLabel}{" "}
-            visits inside {Math.round(repeatFaultRule.withinDays / 30)} months.
-            Consider replacement over another repair.
+            Repeat fault: {repeatFaultRule.occurrences} or more {categoryLabel}{" "}
+            visits in {Math.round(repeatFaultRule.withinDays / 30)} months.
+            Consider replacing it instead of another repair.
           </p>
         )}
 
@@ -186,7 +186,7 @@ export default async function RequestDetailPage({ params }) {
 
 function PageStep({ href, children }) {
   const classes =
-    "rounded-pill border border-border-strong px-3.5 py-2 text-[13px] font-semibold";
+    "rounded-md bg-surface border border-border-strong px-3.5 py-2 text-[13px] font-semibold";
 
   return href ? (
     <Link href={href} className={`${classes} text-ink-soft hover:bg-sunken`}>

@@ -124,7 +124,7 @@ export async function assignAction(formData) {
     const touched = await assignRequests(ids, assigneeId);
 
     if (touched.length === 0) {
-      return { ok: false, error: "Nothing left to assign — that work is done" };
+      return { ok: false, error: "That work is already done" };
     }
 
     revalidateAll();

@@ -4,7 +4,7 @@ import Icon from "./Icon";
 // as distinct from `Badge`, which states a status.
 const tones = {
   neutral: "border-border bg-sunken text-ink-soft",
-  brand: "border-[var(--green-200)] bg-brand-tint text-brand",
+  brand: "border-[var(--teal-200)] bg-brand-tint text-brand",
   maintenance:
     "border-[var(--terracotta-300)] bg-category-maintenance-tint text-category-maintenance",
   housekeeping:

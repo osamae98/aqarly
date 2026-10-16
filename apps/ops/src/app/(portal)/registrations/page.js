@@ -29,8 +29,7 @@ export default async function RegistrationsPage() {
           <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-surface px-6 py-14 text-center">
             <h2 className="text-lg font-bold text-ink">No one waiting</h2>
             <p className="max-w-sm text-sm text-ink-soft">
-              When a tenant registers in the tenant portal, they appear here for
-              you to confirm they live where they say.
+              New tenant sign-ups show up here for you to confirm.
             </p>
           </div>
         )}

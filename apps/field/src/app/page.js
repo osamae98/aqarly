@@ -20,7 +20,7 @@ export default async function WorklistPage() {
         <Logo size={34} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="font-mono text-[11px] font-bold tracking-[0.09em] text-ink-muted uppercase">
-            {typeLabels[technician.role] ?? technician.role} · {technician.name}
+            {typeLabels[technician.role] ?? technician.role}, {technician.name}
           </p>
           <h1 className="truncate text-[26px] leading-tight font-bold tracking-[-0.02em] text-ink">
             Your work
@@ -34,9 +34,9 @@ export default async function WorklistPage() {
         <NextJobCard job={next} />
       ) : (
         <section className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface px-6 py-12 text-center">
-          <h2 className="text-lg font-bold text-ink">Nothing open</h2>
+          <h2 className="text-lg font-bold text-ink">No open jobs</h2>
           <p className="text-sm text-ink-soft">
-            Everything assigned to you is closed. The office will send more.
+            You&apos;re all caught up.
           </p>
         </section>
       )}

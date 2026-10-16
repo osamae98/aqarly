@@ -28,7 +28,7 @@ export default async function NotificationsPage() {
             tone="neutral"
             icon={<BellOff size={32} />}
             title="No notifications yet"
-            description="You'll get notified when your requests are assigned or completed."
+            description="Updates on your requests show up here."
           />
         </div>
       ) : (

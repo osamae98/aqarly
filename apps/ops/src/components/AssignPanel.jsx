@@ -12,18 +12,18 @@ import { typeLabels } from "@aqarly/core/labels";
 // Why this person is the suggestion, in the order the ranking weighs it.
 function reason(candidate) {
   if (candidate.atCapacity) {
-    return `At capacity — ${candidate.load} of ${candidate.capacity} jobs open`;
+    return `Full: ${candidate.load} of ${candidate.capacity} jobs open`;
   }
 
   const parts = [`${typeLabels[candidate.role] ?? candidate.role} crew`];
-  if (candidate.inBuilding) parts.push("already working this building");
+  if (candidate.inBuilding) parts.push("already in this building");
   parts.push(
     candidate.load === 0
       ? "free now"
       : `${candidate.load} ${candidate.load === 1 ? "job" : "jobs"} in hand`,
   );
 
-  return parts.join(" · ");
+  return parts.join(", ");
 }
 
 export default function AssignPanel({
@@ -68,30 +68,25 @@ export default function AssignPanel({
               </div>
             )}
 
-            <p className="text-xs text-ink-muted">
-              Assigning moves the request to the chosen technician. Notifying
-              the tenant needs a messaging path, so nothing is sent yet.
-            </p>
-
             <FormNote state={result} />
 
             <button
               type="submit"
               form="assign-request"
               disabled={!choice || pending || requestIds.length === 0}
-              className="w-full cursor-pointer rounded-pill bg-brand py-3.5 text-[15px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+              className="w-full cursor-pointer rounded-md bg-brand py-3.5 text-[15px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending
                 ? "Assigning…"
                 : choice
-                  ? `Assign to ${choice.name.split(" ")[0]} · notify tenant`
+                  ? `Assign to ${choice.name.split(" ")[0]}`
                   : "Assign"}
             </button>
             <button
               type="button"
               disabled
-              title="No vendor directory yet"
-              className="w-full cursor-not-allowed rounded-pill border border-border-strong py-3 text-sm font-semibold text-ink-soft opacity-45"
+              title="Coming soon"
+              className="w-full cursor-not-allowed rounded-md bg-surface border border-border-strong py-3 text-sm font-semibold text-ink-soft opacity-45"
             >
               Send to external vendor
             </button>
@@ -100,7 +95,7 @@ export default function AssignPanel({
       >
         {candidates.length === 0 ? (
           <p className="text-sm text-ink-muted">
-            No one on the roster covers this kind of work yet.
+            No one on the team does this kind of work yet.
           </p>
         ) : (
           <form

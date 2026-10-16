@@ -66,9 +66,7 @@ export default function PhotoCarousel({ photos = [] }) {
   if (!photos.length) {
     return (
       <p className="mt-3 text-xs text-ink-muted">
-        Photos, PDFs, and short videos can be attached when a request is
-        raised here; the tenant portal has no upload path yet, so nothing is
-        attached to this one.
+        No attachments
       </p>
     );
   }
@@ -129,7 +127,7 @@ export default function PhotoCarousel({ photos = [] }) {
                     className="size-full object-cover"
                   />
                   <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex size-8 items-center justify-center rounded-pill bg-black/55 text-[var(--sand-50)]">
+                    <span className="flex size-8 items-center justify-center rounded-pill bg-black/55 text-[var(--slate-50)]">
                       <PlayIcon size={12} />
                     </span>
                   </span>
@@ -172,7 +170,7 @@ export default function PhotoCarousel({ photos = [] }) {
               }}
               aria-label={fullscreen ? "Exit full screen" : "Full screen"}
               title={fullscreen ? "Exit full screen" : "Full screen"}
-              className="flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--sand-50)] transition-colors hover:bg-white/20"
+              className="flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--slate-50)] transition-colors hover:bg-white/20"
             >
               <MaximizeIcon exit={fullscreen} />
             </button>
@@ -183,7 +181,7 @@ export default function PhotoCarousel({ photos = [] }) {
                 close();
               }}
               aria-label="Close"
-              className="flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--sand-50)] transition-colors hover:bg-white/20"
+              className="flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--slate-50)] transition-colors hover:bg-white/20"
             >
               <Icon name="x" size={18} />
             </button>
@@ -197,7 +195,7 @@ export default function PhotoCarousel({ photos = [] }) {
                 step(-1);
               }}
               aria-label="Previous"
-              className="absolute start-2 top-1/2 flex -translate-y-1/2 cursor-pointer rounded-pill bg-white/10 p-2.5 text-[var(--sand-50)] transition-colors hover:bg-white/20 sm:start-4"
+              className="absolute start-2 top-1/2 flex -translate-y-1/2 cursor-pointer rounded-pill bg-white/10 p-2.5 text-[var(--slate-50)] transition-colors hover:bg-white/20 sm:start-4"
             >
               <Icon name="chevron-right" size={20} className="rotate-180" />
             </button>
@@ -234,13 +232,13 @@ export default function PhotoCarousel({ photos = [] }) {
             >
               <Icon name="camera" size={28} className="text-ink-muted" />
               <p className="text-sm text-ink">
-                This browser can&rsquo;t play {current.name} — its format
-                isn&rsquo;t supported for inline playback.
+                This browser can&rsquo;t play {current.name}. Download it
+                to watch.
               </p>
               <a
                 href={current.dataUrl}
                 download={current.name}
-                className="rounded-pill bg-brand px-4 py-2 text-[13px] font-semibold text-ink-inverse hover:bg-brand-hover"
+                className="rounded-md bg-brand px-4 py-2 text-[13px] font-semibold text-ink-inverse hover:bg-brand-hover"
               >
                 Download {current.name}
               </a>
@@ -269,7 +267,7 @@ export default function PhotoCarousel({ photos = [] }) {
                 step(1);
               }}
               aria-label="Next"
-              className="absolute end-2 top-1/2 flex -translate-y-1/2 cursor-pointer rounded-pill bg-white/10 p-2.5 text-[var(--sand-50)] transition-colors hover:bg-white/20 sm:end-4"
+              className="absolute end-2 top-1/2 flex -translate-y-1/2 cursor-pointer rounded-pill bg-white/10 p-2.5 text-[var(--slate-50)] transition-colors hover:bg-white/20 sm:end-4"
             >
               <Icon name="chevron-right" size={20} />
             </button>
@@ -286,7 +284,7 @@ export default function PhotoCarousel({ photos = [] }) {
                   onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))}
                   disabled={zoom <= ZOOM_MIN}
                   aria-label="Zoom out"
-                  className="flex cursor-pointer rounded-pill bg-white/10 p-1.5 text-[var(--sand-50)] transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex cursor-pointer rounded-pill bg-white/10 p-1.5 text-[var(--slate-50)] transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <span className="flex size-4 items-center justify-center text-base leading-none">
                     −
@@ -300,26 +298,26 @@ export default function PhotoCarousel({ photos = [] }) {
                   value={zoom}
                   onChange={(event) => setZoom(Number(event.target.value))}
                   aria-label="Zoom"
-                  className="h-1 w-28 cursor-pointer accent-[var(--sand-50)]"
+                  className="h-1 w-28 cursor-pointer accent-[var(--slate-50)]"
                 />
                 <button
                   type="button"
                   onClick={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
                   disabled={zoom >= ZOOM_MAX}
                   aria-label="Zoom in"
-                  className="flex cursor-pointer rounded-pill bg-white/10 p-1.5 text-[var(--sand-50)] transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex cursor-pointer rounded-pill bg-white/10 p-1.5 text-[var(--slate-50)] transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <span className="flex size-4 items-center justify-center text-base leading-none">
                     +
                   </span>
                 </button>
-                <span className="w-10 font-mono text-[12px] text-[var(--sand-50)]">
+                <span className="w-10 font-mono text-[12px] text-[var(--slate-50)]">
                   {Math.round(zoom * 100)}%
                 </span>
               </div>
             )}
 
-            <span className="font-mono text-[12.5px] text-[var(--sand-50)]">
+            <span className="font-mono text-[12.5px] text-[var(--slate-50)]">
               {index + 1} / {photos.length}
             </span>
 
@@ -335,7 +333,7 @@ export default function PhotoCarousel({ photos = [] }) {
                     className={[
                       "size-1.5 cursor-pointer rounded-pill transition-colors",
                       i === index
-                        ? "bg-[var(--sand-50)]"
+                        ? "bg-[var(--slate-50)]"
                         : "bg-white/30 hover:bg-white/50",
                     ].join(" ")}
                   />

@@ -65,7 +65,7 @@ export default function ColumnFilter({
         ].join(" ")}
       >
         <span className="truncate">
-          {chosen ? `${label} · ${chosen.label}` : label}
+          {chosen ? `${label}: ${chosen.label}` : label}
         </span>
         <span className="text-[8px]">▼</span>
       </button>
@@ -101,7 +101,7 @@ export default function ColumnFilter({
             <div className="flex max-h-64 flex-col gap-px overflow-y-auto">
               {matches.length === 0 && (
                 <p className="px-2.5 py-3 text-center text-[13px] font-normal tracking-normal normal-case text-ink-muted">
-                  Nothing matches “{term}”.
+                  Nothing matches &quot;{term}&quot;.
                 </p>
               )}
 

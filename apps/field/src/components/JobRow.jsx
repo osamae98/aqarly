@@ -41,12 +41,12 @@ function caption(job, done) {
     const closedAt = job.stageHistory.find((entry) => entry.stage === "done")?.at;
     const parts = [closedAt ? `Closed ${formatDateTime(closedAt)}` : "Closed"];
     if (job.charge) parts.push(`${formatCharge(job.charge)} billed`);
-    return parts.join(" · ");
+    return parts.join(", ");
   }
 
   return [job.property?.name, job.unit ? `Unit ${job.unit.label}` : null]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 }
 
 export default function JobRow({ job, done = false }) {

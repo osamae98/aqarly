@@ -38,14 +38,14 @@ export default async function UnitsPage({ searchParams }) {
       <>
         <PageBar
           title="Buildings"
-          meta={`${properties.length} buildings · ${units.length} units · ${withWork} with open work`}
+          meta={`${properties.length} buildings, ${units.length} units, ${withWork} with open work`}
         >
           <SearchField placeholder="Search buildings, area…" ariaLabel="Search buildings" />
         </PageBar>
 
         {buildings.length === 0 ? (
           <p className="py-16 text-center text-sm text-ink-muted">
-            No buildings match &ldquo;{params.q}&rdquo;.
+            No buildings match &quot;{params.q}&quot;.
           </p>
         ) : (
           <div className="grid gap-3.5 p-4 sm:grid-cols-2 md:p-6 xl:grid-cols-3">
@@ -71,7 +71,7 @@ export default async function UnitsPage({ searchParams }) {
           </span>
         }
         title={scope.name}
-        meta={`${units.length} ${units.length === 1 ? "unit" : "units"} · ${withWork} with open work`}
+        meta={`${units.length} ${units.length === 1 ? "unit" : "units"}, ${withWork} with open work`}
       />
 
       <div className="flex flex-col gap-4.5 p-4 md:p-6">

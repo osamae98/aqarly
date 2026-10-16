@@ -20,7 +20,7 @@ export default function UnitCard({ unit }) {
             {unit.label}
           </span>
           <span className="truncate text-[12px] text-ink-muted">
-            {unit.bedrooms} BR · {unit.bathrooms} bath
+            {unit.bedrooms} BR, {unit.bathrooms} bath
           </span>
         </div>
         {unit.status === "under-maintenance" && (

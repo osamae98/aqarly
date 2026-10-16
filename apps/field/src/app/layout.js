@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: {
     default: "Your work",
-    template: "%s — Field",
+    template: "%s | Field",
   },
-  description: "Today's jobs for one technician.",
+  description: "Your jobs for today.",
 };
 
 export default function RootLayout({ children }) {

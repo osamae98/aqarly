@@ -87,15 +87,15 @@ export default function RequestRows({
   return (
     <>
       {selected.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3.5 border-y border-[var(--green-100)] bg-brand-tint px-4 py-2.5 md:px-6">
+        <div className="flex flex-wrap items-center gap-3.5 border-y border-[var(--teal-100)] bg-brand-tint px-4 py-2.5 md:px-6">
           <span className="text-[13.5px] font-semibold text-brand">
             {selected.length} selected
           </span>
-          <span className="h-4.5 w-px bg-[var(--green-200)]" />
+          <span className="h-4.5 w-px bg-[var(--teal-200)]" />
           <button
             type="button"
             onClick={() => setAssignOpen(true)}
-            className="cursor-pointer rounded-pill bg-brand px-3.5 py-1.5 text-[13px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
+            className="cursor-pointer rounded-sm bg-brand px-3.5 py-1.5 text-[13px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
           >
             Assign to technician
           </button>
@@ -115,7 +115,7 @@ export default function RequestRows({
                   name="priority"
                   value={option.value}
                   disabled={priorityPending}
-                  className="cursor-pointer rounded-pill border border-[var(--green-200)] bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-page disabled:opacity-45"
+                  className="cursor-pointer rounded-sm border border-[var(--teal-200)] bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-page disabled:opacity-45"
                 >
                   {option.label}
                 </button>
@@ -132,7 +132,7 @@ export default function RequestRows({
             <button
               type="button"
               onClick={() => setPriorityOpen(true)}
-              className="cursor-pointer rounded-pill border border-[var(--green-200)] px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-surface"
+              className="cursor-pointer rounded-sm bg-surface border border-[var(--teal-200)] px-3.5 py-1.5 text-[13px] font-semibold text-brand transition-colors hover:bg-sunken"
             >
               Change priority
             </button>
@@ -146,7 +146,7 @@ export default function RequestRows({
                 label: `${selected.length} ${selected.length === 1 ? "request" : "requests"}`,
               });
             }}
-            className="cursor-pointer rounded-pill border border-border-strong px-3.5 py-1.5 text-[13px] font-semibold text-danger transition-colors hover:bg-surface"
+            className="cursor-pointer rounded-sm bg-danger-tint/60 border border-danger/30 px-3.5 py-1.5 text-[13px] font-semibold text-danger-ink transition-colors hover:bg-danger-tint"
           >
             Remove
           </button>
@@ -338,14 +338,14 @@ export default function RequestRows({
         onAssigned={() => setSelected([])}
         eyebrow={`${selected.length} selected`}
         title={`Assign ${selected.length} ${selected.length === 1 ? "request" : "requests"}`}
-        description="Ranked by how much room each person has left in their day."
+        description="Least busy first."
       />
 
       <ConfirmDialog
         open={Boolean(removing)}
         onClose={() => setRemoving(null)}
         title="Remove from the queue"
-        description={`${removing?.label ?? "This request"} will be taken out of the queue, and out of every rollup it was counted in.`}
+        description={`${removing?.label ?? "This request"} will be removed from the queue and from reports.`}
         confirmLabel="Remove"
         pending={removePending}
         result={removeResult}
@@ -486,7 +486,7 @@ function Checkbox({ checked, label, onChange }) {
       checked={checked}
       onChange={onChange}
       aria-label={label}
-      className="size-4.5 cursor-pointer appearance-none rounded-[5px] border-[1.5px] border-border-strong bg-surface transition-colors checked:border-brand checked:bg-brand focus-visible:shadow-focus focus-visible:outline-none checked:after:block checked:after:text-center checked:after:text-[11px] checked:after:leading-4 checked:after:font-bold checked:after:text-[var(--sand-0)] checked:after:content-['✓']"
+      className="size-4.5 cursor-pointer appearance-none rounded-[5px] border-[1.5px] border-border-strong bg-surface transition-colors checked:border-brand checked:bg-brand focus-visible:shadow-focus focus-visible:outline-none checked:after:block checked:after:text-center checked:after:text-[11px] checked:after:leading-4 checked:after:font-bold checked:after:text-[var(--slate-0)] checked:after:content-['✓']"
     />
   );
 }

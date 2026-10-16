@@ -61,7 +61,7 @@ export default function PortalNav({ openCount, admin, className = "" }) {
         ) : (
           <span className="flex items-center gap-2.5">
             <OpsMark className="size-7 shrink-0" />
-            <span className="truncate text-[15px] font-semibold text-[var(--sand-50)]">
+            <span className="truncate text-[15px] font-semibold text-[var(--slate-50)]">
               Aqarly Housekeeping
             </span>
           </span>
@@ -93,21 +93,21 @@ export default function PortalNav({ openCount, admin, className = "" }) {
         // and a sign-out icon.
         <div className="flex flex-col gap-2">
           <div
-            title={collapsed ? `${admin.name} — ${admin.phone}` : undefined}
+            title={collapsed ? `${admin.name}, ${admin.phone}` : undefined}
             className={[
               "flex items-center gap-2.5 py-0.5",
               collapsed ? "justify-center px-0" : "px-1",
             ].join(" ")}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--green-400)] text-xs font-bold text-[var(--green-900)]">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--teal-400)] text-xs font-bold text-[var(--teal-900)]">
               {initials(admin.name)}
             </span>
             {!collapsed && (
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold text-[var(--sand-50)]">
+                <span className="block truncate text-[13px] font-semibold text-[var(--slate-50)]">
                   {admin.name}
                 </span>
-                <span className="block truncate text-xs text-[var(--green-300)]">
+                <span className="block truncate text-xs text-[var(--teal-300)]">
                   {admin.phone}
                 </span>
               </span>
@@ -120,7 +120,7 @@ export default function PortalNav({ openCount, admin, className = "" }) {
               title={collapsed ? "Sign out" : undefined}
               aria-label="Sign out"
               className={[
-                "flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[12.5px] font-semibold text-[var(--green-200)] transition-colors hover:bg-white/[0.07] hover:text-[var(--sand-50)]",
+                "flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[12.5px] font-semibold text-[var(--teal-200)] transition-colors hover:bg-white/[0.07] hover:text-[var(--slate-50)]",
                 collapsed ? "justify-center px-0" : "px-1",
               ].join(" ")}
             >

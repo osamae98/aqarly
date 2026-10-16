@@ -19,7 +19,7 @@ export default function BookingCard({ request }) {
     {
       label: "Scheduled",
       value: request.schedule
-        ? `${formatDate(request.schedule.date)} · ${request.schedule.slot}`
+        ? `${formatDate(request.schedule.date)}, ${request.schedule.slot}`
         : "Not scheduled",
     },
     {
@@ -30,7 +30,7 @@ export default function BookingCard({ request }) {
     { label: "Tenant", value: request.tenant?.name ?? "—" },
     {
       label: "Charge",
-      value: request.charge ? `${formatCharge(request.charge)} · tenant` : "—",
+      value: request.charge ? `${formatCharge(request.charge)}, tenant` : "—",
       className: "font-mono text-[13px] text-ink",
     },
   ];

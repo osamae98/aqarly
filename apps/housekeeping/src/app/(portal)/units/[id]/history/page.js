@@ -48,7 +48,7 @@ export default async function UnitHistoryPage({ params, searchParams }) {
       <PageBar
         eyebrow={<UnitCrumb unit={unit} current="Housekeeping history" />}
         title="Housekeeping history"
-        meta={`Unit ${unit.label} · ${unit.property?.name ?? ""} · ${unit.tenant?.name ?? "no tenant"}`}
+        meta={`Unit ${unit.label}, ${unit.property?.name ?? ""}, ${unit.tenant?.name ?? "no tenant"}`}
         stats={
           <div className="flex flex-col items-end gap-0.5">
             <span className="font-mono text-[22px] leading-none font-bold text-ink">

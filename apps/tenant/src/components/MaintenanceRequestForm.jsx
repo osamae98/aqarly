@@ -64,7 +64,7 @@ export default function MaintenanceRequestForm({ categoryOptions }) {
         label="Title"
         required
         maxLength={80}
-        placeholder="e.g. Kitchen sink is leaking"
+        placeholder="Kitchen sink is leaking"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
       />
@@ -72,12 +72,12 @@ export default function MaintenanceRequestForm({ categoryOptions }) {
       <Field
         label="Describe the issue"
         htmlFor="maintenance-description"
-        hint="Tip: include where the issue is, when it started, and how to get in"
+        hint="Where it is, when it started, and how to get in"
       >
         <Textarea
           id="maintenance-description"
           name="description"
-          placeholder="What's the problem? Be as specific as you can..."
+          placeholder="Water is leaking under the sink since this morning"
         />
       </Field>
 

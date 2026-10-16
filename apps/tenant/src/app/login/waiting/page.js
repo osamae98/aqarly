@@ -39,12 +39,11 @@ export default async function WaitingPage() {
         ) : (
           <>
             <p className="text-base text-ink">
-              Thanks, {registration.name}. Your building is confirming that you
+              Thanks, {registration.name}. Your building is checking that you
               live at <span className="font-semibold">{where}</span>.
             </p>
             <p className="text-sm text-ink-soft">
-              Once they have, you&apos;ll see your home here. There&apos;s nothing
-              else to do; check back later.
+              You&apos;ll see your home here once they confirm.
             </p>
           </>
         )}
@@ -52,7 +51,7 @@ export default async function WaitingPage() {
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full rounded-pill py-4 text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
+            className="w-full rounded-md py-4 text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
           >
             Sign out
           </button>

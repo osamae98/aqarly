@@ -54,7 +54,7 @@ export function HeaderNav() {
           href={href}
           aria-current={isActive(href) ? "page" : undefined}
           className={[
-            "rounded-pill px-3 py-1.5 text-sm transition-colors",
+            "rounded-sm px-3 py-1.5 text-sm transition-colors",
             isActive(href)
               ? "bg-brand-tint font-medium text-brand"
               : "text-ink-soft hover:bg-sunken hover:text-ink",

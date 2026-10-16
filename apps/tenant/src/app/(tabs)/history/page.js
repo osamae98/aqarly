@@ -42,8 +42,8 @@ export default async function HistoryPage({ searchParams }) {
           <EmptyState
             tone="neutral"
             icon={<CreditCard size={32} />}
-            title="Nothing here yet"
-            description="Completed work and any housekeeping charges will appear here once a request is closed."
+            title="No history yet"
+            description="Finished requests and charges show up here."
           />
         </div>
       ) : (

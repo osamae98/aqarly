@@ -5,8 +5,8 @@ import { formatDateTime, stageLabels } from "@aqarly/core/operations";
 const copy = {
   submitted: (request) =>
     request.origin === "ops"
-      ? "Booked in the housekeeping portal"
-      : "Submitted via the tenant portal",
+      ? "Booked by housekeeping"
+      : "Booked by the tenant",
   assigned: (request) =>
     request.assignee ? `Assigned to ${request.assignee.name}` : "Assigned",
   "in-progress": (request) =>

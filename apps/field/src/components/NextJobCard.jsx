@@ -22,7 +22,7 @@ export default function NextJobCard({ job }) {
           {started ? "In progress" : "Do this next"}
         </span>
         <span className="font-mono text-[11px] font-bold tracking-[0.08em] opacity-80 uppercase">
-          {typeLabels[job.type]} · {categoryLabels[job.category] ?? job.category}
+          {typeLabels[job.type]}, {categoryLabels[job.category] ?? job.category}
         </span>
       </div>
 
@@ -33,7 +33,7 @@ export default function NextJobCard({ job }) {
         <p className="text-sm opacity-90">
           {[job.unit ? `Unit ${job.unit.label}` : null, job.property?.name]
             .filter(Boolean)
-            .join(" · ")}
+            .join(", ")}
         </p>
         {job.tenant && <p className="text-sm opacity-90">{job.tenant.name}</p>}
       </div>

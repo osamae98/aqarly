@@ -28,14 +28,14 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="flex-1 cursor-pointer rounded-pill bg-danger py-3 text-[14.5px] font-semibold text-ink-inverse transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex-1 cursor-pointer rounded-md bg-danger py-3 text-[14.5px] font-semibold text-ink-inverse transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {pending ? "Removing…" : confirmLabel}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-pill px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
+            className="cursor-pointer rounded-md px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
           >
             Cancel
           </button>

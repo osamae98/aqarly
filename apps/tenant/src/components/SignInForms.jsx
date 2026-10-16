@@ -138,8 +138,7 @@ export function RegisterForm({ phone, buildings }) {
   return (
     <form action={submit} className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-lg">
       <p className="text-sm text-ink-soft">
-        Just a few details to set up your account. Your building confirms you
-        live there before you can see your home.
+        Tell us who you are and where you live. Your building will confirm it.
       </p>
 
       {error && (
@@ -148,7 +147,7 @@ export function RegisterForm({ phone, buildings }) {
         </Alert>
       )}
 
-      <Input id="register-name" name="name" label="Full name" placeholder="e.g. Layla Al Habsi" required />
+      <Input id="register-name" name="name" label="Full name" placeholder="Layla Al Habsi" required />
 
       <Field label="Phone number">
         <input

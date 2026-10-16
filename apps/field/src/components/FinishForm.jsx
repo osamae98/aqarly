@@ -25,8 +25,8 @@ export default function FinishForm({ job, submitLabel, required, max }) {
       <Textarea
         label="Note for the office"
         name="notes"
-        placeholder="What you found, what you did, anything that needs following up."
-        hint="Optional. The tenant sees this on the request once it is closed."
+        placeholder="What you found and what you did"
+        hint="Optional. The tenant can see it."
       />
 
       <FormNote state={finish.result} />
@@ -34,7 +34,7 @@ export default function FinishForm({ job, submitLabel, required, max }) {
       <button
         type="submit"
         disabled={finish.pending}
-        className="flex h-14 items-center justify-center rounded-pill bg-brand px-5 text-base font-bold text-ink-inverse transition-colors active:bg-brand-active disabled:opacity-50"
+        className="flex h-14 items-center justify-center rounded-md bg-brand px-5 text-base font-bold text-ink-inverse transition-colors active:bg-brand-active disabled:opacity-50"
       >
         {finish.pending ? "Marking done…" : submitLabel}
       </button>

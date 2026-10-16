@@ -17,12 +17,12 @@ const palettes = {
   },
   plain: {
     primary: "bg-brand text-ink-inverse active:bg-brand-active",
-    secondary: "border-border-strong text-ink active:bg-sunken",
+    secondary: "border-border-strong bg-surface text-ink active:bg-sunken",
   },
 };
 
 const base =
-  "flex h-13 items-center justify-center gap-2 whitespace-nowrap rounded-pill px-5 text-base font-semibold transition-colors disabled:opacity-50";
+  "flex h-13 items-center justify-center gap-2 whitespace-nowrap rounded-md px-5 text-base font-semibold transition-colors disabled:opacity-50";
 
 // The pair under the primary share one row on a 375px screen, so they trade
 // some padding for the room their labels actually need.
@@ -120,8 +120,7 @@ function HandBackSheet({ job, action, onClose }) {
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-bold text-ink">Hand this job back</h2>
           <p className="text-sm text-ink-soft">
-            {job.id} goes back to the office unassigned, with your reason on it.
-            It does not get closed.
+            The office will give it to someone else.
           </p>
         </div>
 
@@ -138,7 +137,7 @@ function HandBackSheet({ job, action, onClose }) {
             rows={3}
             required
             autoFocus
-            placeholder="Need a part I don't carry, no access to the unit, wrong trade…"
+            placeholder="Need a part, no access to the unit"
             className="resize-y rounded-md border border-border bg-page px-4 py-3 text-base text-ink placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none"
           />
         </div>

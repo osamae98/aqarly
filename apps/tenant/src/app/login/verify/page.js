@@ -22,8 +22,7 @@ export default async function VerifyCodePage() {
           * here, so the flow can be walked end to end. It goes once a texting
           * provider is wired in. */}
         {pending.shownCode && (
-          <Alert tone="info" title="Test code" className="mb-6">
-            Codes aren&apos;t texted yet. Yours is{" "}
+          <Alert tone="info" title="Your code" className="mb-6">
             <span className="font-mono text-base font-semibold tracking-[4px]">{pending.shownCode}</span>
           </Alert>
         )}

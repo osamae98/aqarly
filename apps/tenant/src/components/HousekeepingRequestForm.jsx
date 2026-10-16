@@ -58,7 +58,7 @@ export default function HousekeepingRequestForm({ selected }) {
         <Textarea
           id="housekeeping-description"
           name="description"
-          placeholder="Anything the cleaner should know: rooms to focus on, pets, how to get in..."
+          placeholder="Rooms to focus on, pets, how to get in"
         />
       </Field>
 
@@ -74,7 +74,7 @@ export default function HousekeepingRequestForm({ selected }) {
           <span className="text-xl font-bold text-ink">{formatCharge(selected.price)}</span>
         </div>
         <p className="mt-2 text-xs text-ink-muted">
-          Billed to your account after completion
+          Charged when the job is done
         </p>
       </div>
 

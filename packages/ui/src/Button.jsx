@@ -3,7 +3,7 @@ import Link from "next/link";
 const variants = {
   primary:
     "border-transparent bg-brand text-ink-inverse hover:bg-brand-hover active:bg-brand-active",
-  outline: "border-border-strong text-ink hover:bg-sunken",
+  outline: "border-border-strong bg-surface text-ink hover:bg-sunken",
   ghost: "border-transparent text-brand hover:bg-brand-tint",
 };
 
@@ -26,7 +26,7 @@ export default function Button({
   ...props
 }) {
   const classes = [
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md",
     "border-[1.5px] font-medium transition-colors",
     sizes[size] ?? sizes.md,
     variants[variant] ?? variants.primary,

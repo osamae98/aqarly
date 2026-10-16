@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: {
     default: "My home",
-    template: "%s — My home",
+    template: "%s | My home",
   },
-  description: "Maintenance and housekeeping requests for your unit.",
+  description: "Maintenance and cleaning for your home.",
 };
 
 export default function RootLayout({ children }) {

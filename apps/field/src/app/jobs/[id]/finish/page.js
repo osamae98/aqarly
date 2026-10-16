@@ -36,12 +36,12 @@ export default async function FinishJobPage({ params }) {
           </h2>
           <p className="max-w-xs text-sm text-ink-soft">
             {job.stage === "done"
-              ? "This job has been marked done. Nothing left to log."
-              : "Start the job when you get to the unit — then you can close it."}
+              ? "This job is already done."
+              : "Start the job first, then you can finish it."}
           </p>
           <Link
             href={`/jobs/${job.id}`}
-            className="mt-2 flex h-12 items-center rounded-pill border-[1.5px] border-border-strong px-6 text-base font-semibold text-ink"
+            className="mt-2 flex h-12 items-center rounded-md bg-surface border-[1.5px] border-border-strong px-6 text-base font-semibold text-ink"
           >
             Back to the job
           </Link>
@@ -53,7 +53,7 @@ export default async function FinishJobPage({ params }) {
   // Maintenance is the landlord's cost and is never billed on, so only a
   // housekeeping job has a figure to put on the button.
   const submitLabel = job.charge
-    ? `Mark done · charge ${formatCharge(job.charge)}`
+    ? `Mark done and charge ${formatCharge(job.charge)}`
     : "Mark done";
 
   return (
@@ -63,7 +63,7 @@ export default async function FinishJobPage({ params }) {
       <main className="flex flex-1 flex-col gap-5 p-4 pb-10">
         <section className="flex flex-col gap-1 rounded-lg bg-surface p-4 shadow-sm">
           <p className="font-mono text-[10.5px] font-bold tracking-[0.09em] text-ink-muted uppercase">
-            {typeLabels[job.type]} · {categoryLabels[job.category] ?? job.category}
+            {typeLabels[job.type]}, {categoryLabels[job.category] ?? job.category}
           </p>
           <h2 className="text-[17px] leading-snug font-bold text-ink">
             {job.summary}
@@ -71,7 +71,7 @@ export default async function FinishJobPage({ params }) {
           <p className="text-[13px] text-ink-soft">
             {[job.unit ? `Unit ${job.unit.label}` : null, job.property?.name]
               .filter(Boolean)
-              .join(" · ")}
+              .join(", ")}
           </p>
         </section>
 

@@ -89,13 +89,13 @@ export default function BuildingCard({ building, detail = false }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <p className="text-[12.5px] text-ink-muted">
-          {formatCharge(Math.round(building.spendPerUnit))} per unit ·{" "}
+          {formatCharge(Math.round(building.spendPerUnit))} per unit,{" "}
           {building.requests} {building.requests === 1 ? "booking" : "bookings"} on
           record
         </p>
         <Link
           href={`/requests?propertyId=${building.id}`}
-          className="rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+          className="rounded-md bg-surface border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
         >
           View bookings
         </Link>

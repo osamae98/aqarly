@@ -1,10 +1,10 @@
 // Deterministic accent per name, drawn from the design system's raw scales.
 const palette = [
-  "bg-[var(--green-600)]",
+  "bg-[var(--teal-600)]",
   "bg-[var(--sky-500)]",
   "bg-[var(--terracotta-500)]",
   "bg-[var(--amber-500)]",
-  "bg-[var(--sand-600)]",
+  "bg-[var(--slate-600)]",
 ];
 
 function hash(str) {

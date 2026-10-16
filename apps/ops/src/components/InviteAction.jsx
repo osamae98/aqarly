@@ -14,7 +14,7 @@ export default function InviteAction() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
+        className="cursor-pointer rounded-md bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
       >
         Invite to field app
       </button>
@@ -28,7 +28,7 @@ export default function InviteAction() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="flex-1 cursor-pointer rounded-pill border border-border-strong py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
+            className="flex-1 cursor-pointer rounded-md bg-surface border border-border-strong py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
           >
             Done
           </button>
@@ -36,8 +36,7 @@ export default function InviteAction() {
       >
         <div className="flex flex-col items-center gap-3.5">
           <p className="text-center text-[13.5px] text-ink-soft">
-            A technician scans this with their phone camera, or opens the link.
-            The invite would expire after seven days.
+            Scan with a phone camera or open the link.
           </p>
           <div className="flex size-40 items-center justify-center rounded-md border border-dashed border-border-strong bg-page text-xs text-ink-muted">
             QR code
@@ -45,10 +44,7 @@ export default function InviteAction() {
           <div className="w-full rounded-sm border border-border bg-page px-3.5 py-2.5 text-center font-mono text-[12.5px] text-ink-muted">
             No invite link yet
           </div>
-          <p className="text-center text-xs text-ink-muted">
-            Issuing an invite needs a write path, and the field app is a later
-            phase — nothing is generated here.
-          </p>
+          <p className="text-center text-xs text-ink-muted">Invites are coming soon.</p>
         </div>
       </Modal>
     </>

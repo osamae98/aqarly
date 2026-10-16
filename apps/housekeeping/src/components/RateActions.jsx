@@ -20,14 +20,14 @@ export default function RateActions({ services }) {
       <button
         type="button"
         onClick={() => setOpen("history")}
-        className="cursor-pointer rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
+        className="cursor-pointer rounded-md bg-surface border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken"
       >
         Version history
       </button>
       <button
         type="button"
         onClick={() => setOpen("new")}
-        className="cursor-pointer rounded-pill bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
+        className="cursor-pointer rounded-md bg-brand px-4.5 py-2.5 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover"
       >
         New rate
       </button>
@@ -46,16 +46,10 @@ export default function RateActions({ services }) {
               </span>
             </div>
             <p className="mt-1 text-[13px] text-ink-soft">
-              {services} {services === 1 ? "service" : "services"}, including
-              anything added since the portal started.
+              {services} {services === 1 ? "service" : "services"}
             </p>
           </div>
-          <p className="text-xs text-ink-muted">
-            Rate changes are versioned and dated, never retroactive — but
-            publishing a version needs somewhere durable to publish it to, so
-            there is only ever one until the data has a home outside this
-            process.
-          </p>
+          <p className="text-xs text-ink-muted">Version history is coming soon.</p>
         </div>
       </Modal>
 
@@ -69,14 +63,14 @@ export default function RateActions({ services }) {
               type="submit"
               form="new-rate"
               disabled={pending}
-              className="flex-1 cursor-pointer rounded-pill bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending ? "Adding…" : "Add to rate card"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(null)}
-              className="cursor-pointer rounded-pill px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
+              className="cursor-pointer rounded-md px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
             >
               Cancel
             </button>
@@ -88,7 +82,7 @@ export default function RateActions({ services }) {
             label="Service name"
             name="label"
             required
-            placeholder="e.g. Balcony pressure wash"
+            placeholder="Balcony pressure wash"
           />
           <TextField
             label="Price"
@@ -98,10 +92,6 @@ export default function RateActions({ services }) {
             min="1"
             placeholder="AED"
           />
-          <p className="text-xs text-ink-muted">
-            Housekeeping is billed to the tenant, so a new service is charged
-            the same way as the rest of the card.
-          </p>
           <FormNote state={result} />
         </form>
       </Modal>

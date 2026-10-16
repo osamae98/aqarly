@@ -34,18 +34,18 @@ export default async function OpsDashboardPage({ searchParams }) {
     <>
       <PageBar
         title="Operations overview"
-        meta={`Portfolio · ${buildings.length} buildings · ${totalUnits} units · ${reportPeriods[period].label.toLowerCase()}`}
+        meta={`Portfolio, ${buildings.length} buildings, ${totalUnits} units, ${reportPeriods[period].label.toLowerCase()}`}
       >
         {/* The period control is real: everything counted as raised or spent
          * below is scoped by it. */}
-        <div className="flex gap-1.5 rounded-pill bg-sunken p-1">
+        <div className="flex gap-1.5 rounded-md bg-sunken p-1">
           {Object.entries(reportPeriods).map(([key, spec]) => (
             <Link
               key={key}
               href={key === "month" ? "/" : `/?period=${key}`}
               aria-current={key === period ? "true" : undefined}
               className={[
-                "rounded-pill px-3.5 py-1.5 text-[13px] transition-colors",
+                "rounded-sm px-3.5 py-1.5 text-[13px] transition-colors",
                 key === period
                   ? "bg-surface font-semibold text-ink shadow-sm"
                   : "text-ink-soft hover:text-ink",
@@ -56,8 +56,8 @@ export default async function OpsDashboardPage({ searchParams }) {
           ))}
         </div>
         <span
-          title="Export needs a write path"
-          className="cursor-not-allowed rounded-pill border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft opacity-45"
+          title="Export is coming soon"
+          className="cursor-not-allowed rounded-md bg-surface border border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink-soft opacity-45"
         >
           Export
         </span>
@@ -92,7 +92,7 @@ export default async function OpsDashboardPage({ searchParams }) {
         <div className="grid gap-3.5 lg:grid-cols-2">
           <Panel
             title="Spend by category"
-            caption={`${reportPeriods[period].label} · ${formatCharge(
+            caption={`${reportPeriods[period].label}, ${formatCharge(
               stats.periodSpend,
             )} total`}
             bodyClassName="flex flex-col gap-3.5"
@@ -196,7 +196,7 @@ export default async function OpsDashboardPage({ searchParams }) {
           <Panel
             tone="brand"
             title="Crew"
-            caption={`Open jobs held · out of ${staffCapacity} each`}
+            caption={`Open jobs, out of ${staffCapacity} each`}
             bodyClassName="flex flex-col gap-3"
           >
             {staff.map((member) => {
@@ -206,22 +206,22 @@ export default async function OpsDashboardPage({ searchParams }) {
                 <div key={member.id} className="flex items-center gap-2.5">
                   <Initials name={member.name} size={30} tone="brand" />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="truncate text-[13.5px] font-semibold text-[var(--sand-50)]">
+                    <span className="truncate text-[13.5px] font-semibold text-[var(--slate-50)]">
                       {member.name}
                     </span>
                     <span className="h-1.5 overflow-hidden rounded-pill bg-white/15">
                       {/* Fill is data-driven. */}
                       <span
-                        className="block h-full rounded-pill bg-[var(--green-300)]"
+                        className="block h-full rounded-pill bg-[var(--teal-300)]"
                         style={{ width: `${pct}%` }}
                       />
                     </span>
                   </div>
                   <div className="shrink-0 text-end">
-                    <div className="font-mono text-[13px] font-bold text-[var(--sand-50)]">
+                    <div className="font-mono text-[13px] font-bold text-[var(--slate-50)]">
                       {member.load}
                     </div>
-                    <div className="font-mono text-[11.5px] text-[var(--green-300)]">
+                    <div className="font-mono text-[11.5px] text-[var(--teal-300)]">
                       {member.closed} closed
                     </div>
                   </div>

@@ -20,7 +20,7 @@ export default function CompactNav({ openCount, registrationCount = 0 }) {
   const pathname = usePathname();
 
   return (
-    <header className="flex shrink-0 items-center gap-2 bg-[var(--green-700)] px-3 py-2 md:hidden">
+    <header className="flex shrink-0 items-center gap-2 bg-[var(--teal-700)] px-3 py-2 md:hidden">
       <OpsMark className="size-7 shrink-0" />
       <nav className="flex flex-1 items-center justify-end gap-1">
         {items.map((item) => {
@@ -38,8 +38,8 @@ export default function CompactNav({ openCount, registrationCount = 0 }) {
               className={[
                 "relative flex size-9 items-center justify-center rounded-sm transition-colors",
                 active
-                  ? "bg-white/10 text-[var(--sand-50)]"
-                  : "text-[var(--green-200)] hover:bg-white/[0.07]",
+                  ? "bg-white/10 text-[var(--slate-50)]"
+                  : "text-[var(--teal-200)] hover:bg-white/[0.07]",
               ].join(" ")}
             >
               <Icon name={item.icon} size={18} />
@@ -60,7 +60,7 @@ export default function CompactNav({ openCount, registrationCount = 0 }) {
           <button
             type="submit"
             aria-label="Sign out"
-            className="flex size-9 cursor-pointer items-center justify-center rounded-sm text-[var(--green-200)] transition-colors hover:bg-white/[0.07]"
+            className="flex size-9 cursor-pointer items-center justify-center rounded-sm text-[var(--teal-200)] transition-colors hover:bg-white/[0.07]"
           >
             <Icon name="log-out" size={18} />
           </button>

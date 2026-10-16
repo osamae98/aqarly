@@ -48,13 +48,13 @@ export default async function ProfilePage() {
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full rounded-pill py-4 text-center text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
+            className="w-full rounded-md py-4 text-center text-base font-semibold text-danger transition-colors hover:bg-danger-tint"
           >
             Sign out
           </button>
         </form>
         <p className="text-center text-xs text-ink-muted">
-          Editing a profile needs a write path, which doesn&apos;t exist yet.
+          Profile editing is coming soon.
         </p>
       </div>
     </Screen>

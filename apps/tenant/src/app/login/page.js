@@ -20,7 +20,7 @@ export default async function LoginPage() {
           {site.name}
         </h1>
         <p className="mb-8 text-center text-sm text-ink-soft">
-          Your tenant services, in one place
+          Maintenance and cleaning for your home
         </p>
 
         <PhoneForm countries={countryOptions()} defaultCountry={defaultCountry} />

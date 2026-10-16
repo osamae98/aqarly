@@ -125,7 +125,7 @@ export default async function RequestQueuePage({ searchParams }) {
     options.find((option) => option.value === value)?.label ?? value;
 
   const chips = [
-    params.q && { label: `“${params.q}”`, param: "q" },
+    params.q && { label: `Search: ${params.q}`, param: "q" },
     params.stage && { label: stageLabels[params.stage], param: "stage" },
     params.category && {
       label: optionLabel(filters.category, params.category),
@@ -152,8 +152,8 @@ export default async function RequestQueuePage({ searchParams }) {
         title="Housekeeping bookings"
         meta={
           scope
-            ? `${scope.name} · ${scope.units} units · ${scope.open} open`
-            : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
+            ? `${scope.name}, ${scope.units} units, ${scope.open} open`
+            : `${properties.length} buildings, ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
         <SearchField
@@ -174,7 +174,7 @@ export default async function RequestQueuePage({ searchParams }) {
           }))}
           categories={rates.map((rate) => ({
             value: rate.serviceType,
-            label: `${rate.label} · ${formatCharge(rate.price)}`,
+            label: `${rate.label}, ${formatCharge(rate.price)}`,
           }))}
           staff={staff.map((member) => ({
             id: member.id,

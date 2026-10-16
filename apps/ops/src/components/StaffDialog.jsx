@@ -35,7 +35,7 @@ export default function StaffDialog({ open, onClose, member = null }) {
               type="submit"
               form="staff-form"
               disabled={pending}
-              className="flex-1 cursor-pointer rounded-pill bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending
                 ? "Saving…"
@@ -46,7 +46,7 @@ export default function StaffDialog({ open, onClose, member = null }) {
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded-pill px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
+              className="cursor-pointer rounded-md px-5 py-3 text-[14.5px] font-semibold text-ink-soft transition-colors hover:bg-page"
             >
               Cancel
             </button>
@@ -83,7 +83,7 @@ export default function StaffDialog({ open, onClose, member = null }) {
                   name="photo"
                   max={1}
                   accept="image/*"
-                  hint="Choose a new photo to replace this one, 2 MB max."
+                  hint="Choose a new photo. 2 MB max."
                 />
               </div>
             </div>
@@ -93,15 +93,9 @@ export default function StaffDialog({ open, onClose, member = null }) {
               name="photo"
               max={1}
               accept="image/*"
-              hint="Optional · one photo, 2 MB max."
+              hint="Optional. 2 MB max."
             />
           )}
-
-          <p className="text-xs text-ink-muted">
-            Jobs in progress and closed are derived from the work assigned to
-            them, so there is nothing to set here. Contract and pay belong to
-            the HRMS from Phase 3.
-          </p>
 
           <FormNote state={result} />
         </form>

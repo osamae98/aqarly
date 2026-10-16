@@ -60,7 +60,9 @@ export default function SearchField({ param = "q", placeholder, ariaLabel }) {
   }
 
   return (
-    <div className="flex h-10 items-center gap-1.5 rounded-pill border border-border bg-page ps-4 pe-1 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-focus">
+    // Searches as you type, so the magnifier is a hint, not a button.
+    <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-page px-3 transition-[border-color,box-shadow] focus-within:border-brand focus-within:shadow-focus">
+      <Icon name="search" size={16} className="shrink-0 text-ink-muted" />
       <input
         type="search"
         value={term}
@@ -69,9 +71,6 @@ export default function SearchField({ param = "q", placeholder, ariaLabel }) {
         aria-label={ariaLabel}
         className="w-full min-w-0 bg-transparent text-[13.5px] text-ink placeholder:text-ink-muted focus:outline-none sm:w-52"
       />
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-brand text-ink-inverse">
-        <Icon name="search" size={15} />
-      </span>
     </div>
   );
 }

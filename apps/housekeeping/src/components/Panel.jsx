@@ -16,7 +16,7 @@ export default function Panel({
       className={[
         "rounded-md border p-5",
         tone === "brand"
-          ? "border-[var(--green-800)] bg-[var(--green-700)]"
+          ? "border-[var(--teal-800)] bg-[var(--teal-700)]"
           : "border-border bg-surface",
         className,
       ].join(" ")}
@@ -29,7 +29,7 @@ export default function Panel({
               <h2
                 className={[
                   "text-base font-bold",
-                  tone === "brand" ? "text-[var(--sand-50)]" : "text-ink",
+                  tone === "brand" ? "text-[var(--slate-50)]" : "text-ink",
                 ].join(" ")}
               >
                 {title}
@@ -40,7 +40,7 @@ export default function Panel({
                 className={[
                   "mt-0.5 text-[12.5px]",
                   tone === "brand"
-                    ? "text-[var(--green-300)]"
+                    ? "text-[var(--teal-300)]"
                     : "text-ink-muted",
                 ].join(" ")}
               >
@@ -61,7 +61,7 @@ export function MicroLabel({ tone = "surface", className = "", children }) {
     <div
       className={[
         "text-[11.5px] font-bold tracking-[0.12em] uppercase",
-        tone === "brand" ? "text-[var(--green-300)]" : "text-ink-muted",
+        tone === "brand" ? "text-[var(--teal-300)]" : "text-ink-muted",
         className,
       ].join(" ")}
     >

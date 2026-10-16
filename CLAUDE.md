@@ -52,6 +52,43 @@ project's `.d.ts` files stay accurate.
 The tokens ship light-only. The dark palette in `tokens.css` is derived from
 the same scales locally and has not been reviewed by the design system owner.
 
+**The palette was changed locally on 2026-10-16** (the user chose "fresh
+teal"): the brand scale is `--teal-*` and the neutrals `--slate-*` (cool
+gray), replacing the design project's `--green-*` and `--sand-*`; dark mode
+is a cool charcoal. A re-sync from the design project would bring the old
+scales back, so update the project first or re-apply these.
+
+**Corners** (the user chose semi-rounded buttons): buttons, links styled as
+buttons, segmented switches and the search box are semi-rounded, matching
+the inputs. Every full-size control is `rounded-md` (12px): inputs,
+selects, the search box, page-header actions (New request, Add technician)
+and form or dialog buttons, so controls side by side always match.
+`rounded-sm` (8px) is only for small row buttons (Edit, Change priority,
+the filter bar), dropdown menu rows and thumbnails. `rounded-pill` is only for labels and choices: status tags,
+`Badge`/`Tag`, filter and choice chips, count badges, progress bars, avatars,
+dots, and round icon-only buttons (close, arrows, trash).
+
+**Outlined buttons are filled**, never see-through: `bg-surface` with
+`hover:bg-sunken`, so they read as buttons on tinted bars and off-white
+pages. A destructive one (Remove) is `bg-danger-tint/60` with a
+`border-danger/30` edge and `text-danger-ink`, which stays readable in dark
+mode where `text-danger` doesn't.
+
+## Copy
+
+The user finds certain patterns machine-written ("AI-ish"). In anything a
+person reads (labels, hints, errors, empty states, toasts, notifications):
+
+- No em dashes (—) in sentences: use a period, comma or colon. A lone "—" for
+  an empty table cell is fine. Browser titles use " | ".
+- No text explaining the system or its limits ("needs a write path", "the
+  country code is a placeholder", "nothing is sent yet"). A control that
+  can't work yet is disabled with a short reason ("Coming soon").
+- Short and plain: labels of a few words, hints of one line, empty states
+  that say what goes there. No "e.g." in placeholders: give a real example.
+- No "·" separators or curly quotes in sentences: commas and plain quotes.
+  "…" only for something in progress ("Saving…").
+
 A new app must import `@aqarly/ui/styles/tokens.css` after `@import
 "tailwindcss"`, list both packages in `transpilePackages`, and point a Tailwind
 `@source` at `packages/ui/src` — otherwise the shared components' class names

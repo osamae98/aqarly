@@ -13,7 +13,7 @@ const input =
   "h-13 rounded-md border-[1.5px] border-border bg-surface px-4 text-base text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none";
 
 const primary =
-  "flex h-13 w-full items-center justify-center rounded-pill bg-brand px-5 text-base font-semibold text-ink-inverse transition-colors active:bg-brand-active disabled:opacity-50";
+  "flex h-13 w-full items-center justify-center rounded-md bg-brand px-5 text-base font-semibold text-ink-inverse transition-colors active:bg-brand-active disabled:opacity-50";
 
 export function PhoneForm({ countries, defaultCountry }) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export function PhoneForm({ countries, defaultCountry }) {
     <form action={send.submit} className="flex flex-col gap-4">
       <FormNote state={send.result} />
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="login-phone">Your work mobile</Label>
+        <Label htmlFor="login-phone">Mobile number</Label>
         <div className="flex gap-2">
           <CountryPicker
             countries={countries}
@@ -40,9 +40,6 @@ export function PhoneForm({ countries, defaultCountry }) {
             className={`min-w-0 flex-1 ${input}`}
           />
         </div>
-        <p className="text-xs text-ink-muted">
-          The number the office has for you.
-        </p>
       </div>
       <button type="submit" disabled={send.pending} className={primary}>
         {send.pending ? "Sending…" : "Send code"}

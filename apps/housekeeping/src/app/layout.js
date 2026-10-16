@@ -8,9 +8,9 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: {
     default: "Housekeeping",
-    template: "%s — Housekeeping",
+    template: "%s | Housekeeping",
   },
-  description: "Housekeeping bookings across the portfolio.",
+  description: "Housekeeping across your buildings.",
 };
 
 // Just the document. The portal's shell (rail, sign-in check) is

@@ -34,7 +34,7 @@ export default function StaffRows({ staff }) {
       <div
         className={`${GRID} border-b border-border px-3 py-3 text-[11px] font-bold tracking-[0.1em] uppercase text-ink-muted`}
       >
-        <span>Name · staff id</span>
+        <span>Name</span>
         <span>Mobile</span>
         <span>Trade</span>
         <span className="text-center">In progress</span>
@@ -179,7 +179,7 @@ function PhotoPreview({ member, onClose }) {
         type="button"
         onClick={onClose}
         aria-label="Close"
-        className="absolute top-4 end-4 flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--sand-50)] transition-colors hover:bg-white/20"
+        className="absolute top-4 end-4 flex cursor-pointer rounded-pill bg-white/10 p-2 text-[var(--slate-50)] transition-colors hover:bg-white/20"
       >
         <Icon name="x" size={18} />
       </button>
@@ -194,7 +194,7 @@ function PhotoPreview({ member, onClose }) {
         className="max-h-[75vh] max-w-full rounded-md object-contain shadow-lg"
       />
 
-      <span className="text-sm font-semibold text-[var(--sand-50)]">
+      <span className="text-sm font-semibold text-[var(--slate-50)]">
         {member.name}
       </span>
     </div>

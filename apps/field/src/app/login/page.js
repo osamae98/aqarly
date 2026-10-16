@@ -17,7 +17,7 @@ export default async function LoginPage() {
       <header className="flex flex-col gap-3">
         <Logo size={40} />
         <h1 className="text-[26px] leading-tight font-bold tracking-[-0.02em] text-ink">
-          Sign in to your work
+          Sign in
         </h1>
         <p className="text-sm text-ink-soft">We&apos;ll send a code to your phone.</p>
       </header>

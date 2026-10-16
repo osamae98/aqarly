@@ -32,7 +32,7 @@ export default function Initials({ name = "", size = 34, tone = "sand", src = nu
         "inline-flex shrink-0 items-center justify-center rounded-pill font-bold",
         tone === "brand"
           ? "bg-brand text-ink-inverse"
-          : "bg-[var(--sand-200)] text-[var(--sand-700)]",
+          : "bg-[var(--slate-200)] text-[var(--slate-700)]",
       ].join(" ")}
     >
       {initials}

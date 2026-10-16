@@ -41,7 +41,7 @@ export default function RegistrationRows({ registrations }) {
                   {registration.phone}
                 </a>
                 <span className="text-[13px] text-ink">
-                  Unit {registration.unit.label} · {registration.property.name}
+                  Unit {registration.unit.label}, {registration.property.name}
                 </span>
                 <span className="text-xs text-ink-muted">
                   Registered {formatDateTime(registration.createdAt)}
@@ -64,7 +64,7 @@ export default function RegistrationRows({ registrations }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="cursor-pointer rounded-pill border-[1.5px] border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-45"
+                  className="cursor-pointer rounded-md bg-surface border-[1.5px] border-border-strong px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   Decline
                 </button>
@@ -74,7 +74,7 @@ export default function RegistrationRows({ registrations }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="cursor-pointer rounded-pill bg-brand px-4 py-2 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
+                  className="cursor-pointer rounded-md bg-brand px-4 py-2 text-[13.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {replacing ? "Approve and replace" : "Approve"}
                 </button>

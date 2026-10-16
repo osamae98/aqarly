@@ -342,26 +342,28 @@ function notificationsFor(
   const copy: Record<Stage, { title: string; body: string }> = {
     submitted: {
       title: "Request submitted",
-      body: `${summary} — we'll let you know as soon as it is assigned.`,
+      body: `${summary}. We'll let you know when someone is assigned.`,
     },
     assigned: {
       title: `Request assigned: ${summary}`,
       body: who
-        ? `${who} has been assigned and will be in touch.`
-        : "A team member has been assigned.",
+        ? `${who} will take care of it.`
+        : "Someone will take care of it.",
     },
     "in-progress": {
       title: `Work started: ${summary}`,
-      body: who ? `${who} is working on it now.` : "Work is under way.",
+      body: who ? `${who} is working on it now.` : "Work has started.",
     },
     done: {
       title:
         type === "housekeeping"
-          ? `Housekeeping completed${charge ? " & charged" : ""}`
-          : "Maintenance completed",
+          ? `Housekeeping done${charge ? " and charged" : ""}`
+          : "Maintenance done",
       body: charge
-        ? `${summary} — ${formatCharge(charge)} charged to your account.`
-        : `${summary} — ${completionNotes ?? "marked complete."}`,
+        ? `${summary}. ${formatCharge(charge)} charged to your account.`
+        : completionNotes
+          ? `${summary}. ${completionNotes}`
+          : `${summary} is done.`,
     },
   };
 

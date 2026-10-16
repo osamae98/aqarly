@@ -20,7 +20,7 @@ export default function Tabs({
       className={[
         "flex font-sans",
         pill
-          ? "gap-2 rounded-pill bg-sunken p-1"
+          ? "gap-2 rounded-md bg-sunken p-1"
           : "gap-5 border-b border-border",
         className,
       ].join(" ")}
@@ -33,7 +33,7 @@ export default function Tabs({
           "inline-flex items-center justify-center gap-2 text-sm transition-colors",
           fullWidth ? "flex-1" : "flex-none",
           pill
-            ? "min-h-9 rounded-pill px-4 py-2"
+            ? "min-h-9 rounded-sm px-4 py-2"
             : "-mb-px min-h-11 border-b-2 py-3",
           pill
             ? active

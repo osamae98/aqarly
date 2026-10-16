@@ -7,7 +7,7 @@ import { useRef, useState, useTransition } from "react";
 // carries its own type scale; these match the dialogs, which sit a size down.
 
 const control =
-  "rounded-sm border border-border bg-surface px-3.5 py-2.5 text-sm text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none";
+  "rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm text-ink transition-[border-color,box-shadow] placeholder:text-ink-muted focus:border-brand focus:shadow-focus focus:outline-none";
 
 export function Label({ htmlFor, children }) {
   return (
@@ -125,7 +125,7 @@ export function PhotoField({
         accept={accept}
         multiple={max > 1}
         onChange={(event) => read(event.target.files)}
-        className="cursor-pointer rounded-sm border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-pill file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
+        className="cursor-pointer rounded-md border border-dashed border-border-strong bg-page px-3.5 py-2.5 text-[13px] text-ink-soft file:me-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-brand-tint file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-brand focus:border-brand focus:shadow-focus focus:outline-none"
       />
 
       {photos.length > 0 && (
@@ -168,10 +168,10 @@ export function PhotoField({
 
       <p className={`text-xs ${trimmed ? "font-medium text-warning-ink" : "text-ink-muted"}`}>
         {trimmed
-          ? `Only the first ${max} were kept — up to ${max} attachments per request.`
+          ? `Only the first ${max} were kept. The limit is ${max}.`
           : photos.length === max
-            ? `${max} of ${max} attachments selected — that's the limit.`
-            : (hint ?? `Up to ${max} photos, PDFs, or videos — 2 MB each (50 MB for video).`)}
+            ? `${max} of ${max} added. That's the limit.`
+            : (hint ?? `Up to ${max} photos, PDFs or videos. 2 MB each, 50 MB for video.`)}
       </p>
     </div>
   );
@@ -273,7 +273,7 @@ export function SelectField({
             <div role="listbox" className="flex max-h-56 flex-col gap-px overflow-y-auto">
               {matches.length === 0 && (
                 <p className="px-2.5 py-3 text-center text-[13px] text-ink-muted">
-                  Nothing matches &ldquo;{term}&rdquo;.
+                  Nothing matches &quot;{term}&quot;.
                 </p>
               )}
 

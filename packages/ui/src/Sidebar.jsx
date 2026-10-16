@@ -22,17 +22,17 @@ const chrome = {
     handle: "border-border bg-surface text-ink-muted hover:border-brand hover:text-brand",
   },
   brand: {
-    aside: "border-e border-[var(--green-800)] bg-[var(--green-700)]",
+    aside: "border-e border-[var(--teal-800)] bg-[var(--teal-700)]",
     header: "border-b border-white/10",
-    label: "text-[var(--green-300)]",
-    idle: "text-[var(--green-200)] hover:bg-white/[0.07]",
-    active: "bg-white/10 font-semibold text-[var(--sand-50)]",
-    rail: "bg-[var(--green-300)]",
+    label: "text-[var(--teal-300)]",
+    idle: "text-[var(--teal-200)] hover:bg-white/[0.07]",
+    active: "bg-white/10 font-semibold text-[var(--slate-50)]",
+    rail: "bg-[var(--teal-300)]",
     footer: "border-t border-white/10",
-    countIdle: "bg-white/10 text-[var(--green-200)]",
-    countActive: "bg-white/15 text-[var(--sand-50)]",
+    countIdle: "bg-white/10 text-[var(--teal-200)]",
+    countActive: "bg-white/15 text-[var(--slate-50)]",
     handle:
-      "border-[var(--green-800)] bg-[var(--green-600)] text-[var(--green-200)] hover:bg-[var(--green-500)] hover:text-[var(--sand-50)]",
+      "border-[var(--teal-800)] bg-[var(--teal-600)] text-[var(--teal-200)] hover:bg-[var(--teal-500)] hover:text-[var(--slate-50)]",
   },
 };
 

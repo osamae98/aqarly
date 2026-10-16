@@ -51,7 +51,7 @@ export default async function TenantRequestPage({ params }) {
         <h2 className="my-2 text-xl font-bold text-ink">{request.summary}</h2>
         <p className="text-sm text-ink-soft">
           {request.unit ? `Unit ${request.unit.label}` : null}
-          {request.unit && request.property ? " · " : null}
+          {request.unit && request.property ? ", " : null}
           {request.property?.name}
         </p>
       </div>
@@ -65,7 +65,7 @@ export default async function TenantRequestPage({ params }) {
         <div className="flex flex-col gap-4">
           {request.schedule && (
             <Panel title="Visit booked for">
-              {formatDate(request.schedule.date)} · {request.schedule.slot}
+              {formatDate(request.schedule.date)}, {request.schedule.slot}
             </Panel>
           )}
 
@@ -83,7 +83,7 @@ export default async function TenantRequestPage({ params }) {
               </p>
               <p className="mt-2 text-xs text-ink-muted">
                 {categoryLabels[request.category] ?? request.category}
-                {doneAt ? ` · billed ${formatDateTime(doneAt)}` : null}
+                {doneAt ? `, billed ${formatDateTime(doneAt)}` : null}
               </p>
             </div>
           )}

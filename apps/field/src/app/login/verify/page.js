@@ -23,7 +23,7 @@ export default async function VerifyCodePage() {
           * texting provider is wired in. */}
         {pending.shownCode && (
           <p className="rounded-md bg-brand-tint px-4 py-3 text-sm text-ink">
-            Codes aren&apos;t texted yet. Yours is{" "}
+            Your code is{" "}
             <span className="font-mono text-base font-bold tracking-[4px]">{pending.shownCode}</span>
           </p>
         )}

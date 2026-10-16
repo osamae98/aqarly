@@ -135,7 +135,7 @@ export default async function RequestQueuePage({ searchParams }) {
     options.find((option) => option.value === value)?.label ?? value;
 
   const chips = [
-    params.q && { label: `“${params.q}”`, param: "q" },
+    params.q && { label: `Search: ${params.q}`, param: "q" },
     params.stage && { label: stageLabels[params.stage], param: "stage" },
     params.category && {
       label: optionLabel(filters.category, params.category),
@@ -163,8 +163,8 @@ export default async function RequestQueuePage({ searchParams }) {
         title="Service requests"
         meta={
           scope
-            ? `${scope.name} · ${scope.units} units · ${scope.open} open`
-            : `${properties.length} buildings · ${properties.reduce((sum, p) => sum + p.units, 0)} units`
+            ? `${scope.name}, ${scope.units} units, ${scope.open} open`
+            : `${properties.length} buildings, ${properties.reduce((sum, p) => sum + p.units, 0)} units`
         }
       >
         <SearchField

@@ -38,19 +38,15 @@ export default async function RatesPage() {
     <>
       <PageBar
         title="Housekeeping rates"
-        meta={`${rates.length} ${rates.length === 1 ? "service" : "services"} · applies to every building`}
+        meta={`${rates.length} ${rates.length === 1 ? "service" : "services"}, for every building`}
       >
         <RateActions services={rates.length} />
       </PageBar>
 
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="rounded-md border border-[var(--sky-300)] bg-info-tint px-4 py-3.5 text-[13.5px] leading-relaxed text-info-ink">
-          <b>Tenants see the rate before they book</b>, the housekeeper sees it
-          again before closing the job, and it appears on the statement with the
-          same wording — so a charge is never a surprise. A service added here
-          becomes bookable straight away; changing the price of one that is
-          already live is what needs versioning, and versioning needs somewhere
-          durable to publish to.
+          Tenants see these prices before they book. A new service can be
+          booked right away.
         </div>
 
         <div className="overflow-x-auto">
@@ -111,8 +107,7 @@ export default async function RatesPage() {
           <p className="text-[13px] text-ink-muted">
             {openBookings} housekeeping{" "}
             {openBookings === 1 ? "booking is" : "bookings are"} still open.
-            A rate change would not touch them — bookings keep the price they
-            were made at.
+            They keep the price they were booked at.
           </p>
         )}
       </div>

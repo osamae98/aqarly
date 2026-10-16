@@ -14,7 +14,7 @@ export default async function LoginPage() {
 
   return (
     <SignInCard title="Sign in">
-      <p className="-mt-2 text-sm text-ink-soft">Maintenance across the portfolio. We&apos;ll send a code to your phone.</p>
+      <p className="-mt-2 text-sm text-ink-soft">We&apos;ll send a code to your phone.</p>
       <PhoneForm countries={countryOptions()} defaultCountry={defaultCountry} />
     </SignInCard>
   );

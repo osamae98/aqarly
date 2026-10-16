@@ -122,9 +122,9 @@ export function PhotoField({ name, required, max }) {
 
       <p className={`text-xs ${trimmed ? "font-medium text-warning-ink" : "text-ink-muted"}`}>
         {trimmed
-          ? `Only the first ${max} were kept — up to ${max} photos per job.`
+          ? `Only the first ${max} were kept. The limit is ${max} photos.`
           : short
-            ? `At least ${required} photos of the work. The office and the tenant both see these.`
+            ? `Add at least ${required} photos of the work.`
             : `Up to ${max} photos, 5 MB each.`}
       </p>
     </div>

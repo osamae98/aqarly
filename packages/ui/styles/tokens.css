@@ -1,6 +1,7 @@
 /* ---------------------------------------------------------------------------
  * Design tokens, synced from the Claude Design project
- * d34fa991-3f86-41bf-9d5e-a8b903594210 (2026-08-20).
+ * d34fa991-3f86-41bf-9d5e-a8b903594210 (2026-08-20), with the brand and
+ * neutral scales changed locally since (teal and slate, below).
  *
  * `:root` below carries the primitive scales verbatim, exactly as the design
  * system ships them, so a future re-sync is a straight diff. The `@theme`
@@ -12,28 +13,34 @@
  * ------------------------------------------------------------------------- */
 
 :root {
-  --green-50: #edf3ee;
-  --green-100: #d3e4d8;
-  --green-200: #a8c9b1;
-  --green-300: #7cae8b;
-  --green-400: #4f8862;
-  --green-500: #2f6b45;
-  --green-600: #1b4332;
-  --green-700: #153627;
-  --green-800: #0f291d;
-  --green-900: #0a1c13;
+  /* Brand: teal. Replaced the design project's forest green on 2026-10-16
+   * (the user chose "fresh teal"); re-sync the design project to match. */
+  --teal-50: #e6f4ef;
+  --teal-100: #c7e8dc;
+  --teal-200: #9fdac5;
+  --teal-300: #5dcaa5;
+  --teal-400: #2fa683;
+  --teal-500: #1d8a6a;
+  --teal-600: #0f6e56;
+  --teal-700: #0b5a47;
+  --teal-800: #08473a;
+  --teal-900: #04342c;
 
-  --sand-0: #ffffff;
-  --sand-50: #fbf8f3;
-  --sand-100: #f4eee4;
-  --sand-200: #e8dfd1;
-  --sand-300: #d6c9b4;
-  --sand-400: #b8a98d;
-  --sand-500: #8f7f63;
-  --sand-600: #6b5d47;
-  --sand-700: #4a3f30;
-  --sand-800: #2e2620;
-  --sand-900: #1c1712;
+  /* Neutrals: a cool, slightly green-tinted gray (was a warm sand). 850 and
+   * 950 exist for the dark theme's surfaces. */
+  --slate-0: #ffffff;
+  --slate-50: #f6f8f8;
+  --slate-100: #edf1f0;
+  --slate-200: #e2e8e7;
+  --slate-300: #cbd4d2;
+  --slate-400: #a3aeab;
+  --slate-500: #7a8784;
+  --slate-600: #56625f;
+  --slate-700: #3a4442;
+  --slate-800: #222b29;
+  --slate-850: #172020;
+  --slate-900: #0f1a19;
+  --slate-950: #0e1312;
 
   --amber-100: #fcebd2;
   --amber-300: #f0b961;
@@ -79,31 +86,31 @@
 
 @theme {
   /* Surfaces — tokens/colors.css --color-bg-* */
-  --color-page: var(--sand-50);
-  --color-surface: var(--sand-0);
-  --color-surface-raised: var(--sand-0);
-  --color-sunken: var(--sand-100);
+  --color-page: var(--slate-50);
+  --color-surface: var(--slate-0);
+  --color-surface-raised: var(--slate-0);
+  --color-sunken: var(--slate-100);
 
   /* Lines — --color-border* */
-  --color-border: var(--sand-200);
-  --color-border-strong: var(--sand-300);
+  --color-border: var(--slate-200);
+  --color-border-strong: var(--slate-300);
 
   /* Text — --color-text-primary / -secondary / -muted / -inverse */
-  --color-ink: var(--sand-900);
-  --color-ink-soft: var(--sand-600);
-  --color-ink-muted: var(--sand-500);
-  --color-ink-inverse: var(--sand-50);
+  --color-ink: var(--slate-900);
+  --color-ink-soft: var(--slate-600);
+  --color-ink-muted: var(--slate-500);
+  --color-ink-inverse: var(--slate-50);
 
   /* Brand */
-  --color-brand: var(--green-600);
-  --color-brand-hover: var(--green-700);
-  --color-brand-active: var(--green-800);
-  --color-brand-tint: var(--green-50);
-  --color-brand-tint-strong: var(--green-100);
+  --color-brand: var(--teal-600);
+  --color-brand-hover: var(--teal-700);
+  --color-brand-active: var(--teal-800);
+  --color-brand-tint: var(--teal-50);
+  --color-brand-tint-strong: var(--teal-100);
 
   /* Status */
-  --color-success: var(--green-500);
-  --color-success-tint: var(--green-50);
+  --color-success: var(--teal-500);
+  --color-success-tint: var(--teal-50);
   --color-warning: var(--amber-500);
   --color-warning-tint: var(--amber-100);
   --color-danger: var(--red-500);
@@ -114,24 +121,24 @@
   /* Text that sits *on* the matching tint. The design system writes these as
    * the 700 stop against the 100 stop; naming the pair keeps that legible
    * when the dark palette swaps which end of the scale the tint comes from. */
-  --color-success-ink: var(--green-700);
+  --color-success-ink: var(--teal-700);
   --color-warning-ink: var(--amber-700);
   --color-danger-ink: var(--red-700);
   --color-info-ink: var(--sky-700);
 
   /* Tailwind inlines --shadow-* values at build time, so the focus ring has
    * to swap via a colour token to stay dark-mode aware. */
-  --color-focus-ring: var(--green-100);
+  --color-focus-ring: var(--teal-100);
 
   /* Request lifecycle stages */
-  --color-stage-submitted: var(--sand-500);
-  --color-stage-submitted-tint: var(--sand-100);
+  --color-stage-submitted: var(--slate-500);
+  --color-stage-submitted-tint: var(--slate-100);
   --color-stage-assigned: var(--sky-500);
   --color-stage-assigned-tint: var(--sky-100);
   --color-stage-in-progress: var(--amber-500);
   --color-stage-in-progress-tint: var(--amber-100);
-  --color-stage-done: var(--green-500);
-  --color-stage-done-tint: var(--green-50);
+  --color-stage-done: var(--teal-500);
+  --color-stage-done-tint: var(--teal-50);
   --color-stage-overdue: var(--red-500);
   --color-stage-overdue-tint: var(--red-100);
 
@@ -180,11 +187,11 @@
   --radius-pill: 999px;
 
   /* Elevation — tokens/shadows.css */
-  --shadow-sm: 0 1px 2px 0 rgb(28 23 18 / 0.06);
+  --shadow-sm: 0 1px 2px 0 rgb(15 26 25 / 0.06);
   --shadow-md:
-    0 4px 12px -2px rgb(28 23 18 / 0.1), 0 2px 4px -2px rgb(28 23 18 / 0.06);
+    0 4px 12px -2px rgb(15 26 25 / 0.1), 0 2px 4px -2px rgb(15 26 25 / 0.06);
   --shadow-lg:
-    0 12px 24px -4px rgb(28 23 18 / 0.12), 0 4px 8px -4px rgb(28 23 18 / 0.06);
+    0 12px 24px -4px rgb(15 26 25 / 0.12), 0 4px 8px -4px rgb(15 26 25 / 0.06);
   --shadow-focus: 0 0 0 3px var(--color-focus-ring);
 }
 
@@ -197,33 +204,32 @@ body {
   font-family: var(--font-arabic);
 }
 
-/* The design system ships light tokens only. These dark values are derived
- * from its own sand/green scales so the theme tokens keep working in dark
- * mode — no new hexes, but they have not been reviewed by the design system
- * owner. */
+/* Dark theme. The design system ships light tokens only; this is derived
+ * from the same scales: a cool charcoal (slate 950/850/800) with the teal
+ * lifted to its light stops so it reads on dark. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-page: var(--sand-900);
-    --color-surface: var(--sand-800);
-    --color-surface-raised: var(--sand-700);
-    --color-sunken: var(--sand-700);
+    --color-page: var(--slate-950);
+    --color-surface: var(--slate-850);
+    --color-surface-raised: var(--slate-800);
+    --color-sunken: var(--slate-800);
 
-    --color-border: var(--sand-700);
-    --color-border-strong: var(--sand-600);
+    --color-border: var(--slate-700);
+    --color-border-strong: var(--slate-600);
 
-    --color-ink: var(--sand-50);
-    --color-ink-soft: var(--sand-300);
-    --color-ink-muted: var(--sand-400);
-    --color-ink-inverse: var(--sand-900);
+    --color-ink: var(--slate-50);
+    --color-ink-soft: var(--slate-300);
+    --color-ink-muted: var(--slate-400);
+    --color-ink-inverse: var(--slate-950);
 
-    --color-brand: var(--green-300);
-    --color-brand-hover: var(--green-200);
-    --color-brand-active: var(--green-100);
-    --color-brand-tint: var(--green-900);
-    --color-brand-tint-strong: var(--green-800);
+    --color-brand: var(--teal-300);
+    --color-brand-hover: var(--teal-200);
+    --color-brand-active: var(--teal-100);
+    --color-brand-tint: var(--teal-900);
+    --color-brand-tint-strong: var(--teal-800);
 
-    --color-success: var(--green-300);
-    --color-success-tint: var(--green-900);
+    --color-success: var(--teal-300);
+    --color-success-tint: var(--teal-900);
     --color-warning: var(--amber-300);
     --color-warning-tint: var(--amber-700);
     --color-danger: var(--red-300);
@@ -231,20 +237,20 @@ body {
     --color-info: var(--sky-300);
     --color-info-tint: var(--sky-700);
 
-    /* The tints are the 700 stops here, so their ink flips to the 100s. */
-    --color-success-ink: var(--green-100);
+    /* The tints are the 700/900 stops here, so their ink flips to the 100s. */
+    --color-success-ink: var(--teal-100);
     --color-warning-ink: var(--amber-100);
     --color-danger-ink: var(--red-100);
     --color-info-ink: var(--sky-100);
 
-    --color-stage-submitted: var(--sand-400);
-    --color-stage-submitted-tint: var(--sand-700);
+    --color-stage-submitted: var(--slate-400);
+    --color-stage-submitted-tint: var(--slate-800);
     --color-stage-assigned: var(--sky-300);
     --color-stage-assigned-tint: var(--sky-700);
     --color-stage-in-progress: var(--amber-300);
     --color-stage-in-progress-tint: var(--amber-700);
-    --color-stage-done: var(--green-300);
-    --color-stage-done-tint: var(--green-800);
+    --color-stage-done: var(--teal-300);
+    --color-stage-done-tint: var(--teal-900);
     --color-stage-overdue: var(--red-300);
     --color-stage-overdue-tint: var(--red-700);
 
@@ -253,6 +259,6 @@ body {
     --color-category-housekeeping: var(--sky-300);
     --color-category-housekeeping-tint: var(--sky-700);
 
-    --color-focus-ring: var(--green-400);
+    --color-focus-ring: var(--teal-700);
   }
 }
