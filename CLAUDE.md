@@ -237,6 +237,14 @@ sends it as `X-Session` on every call.
   booking page's Activity is the same timeline (`ActivityLog`, "Booked by …"),
   and empty states use the same ghost-rows `EmptyState` with `.empty-art` in
   globals.css.
+- **Loaders (housekeeping; ops gets the same on `operations-updates`).**
+  Each portal screen has a `loading.js` drawn in its own shape from
+  `components/Skeleton.jsx` (`Bone`, `PageBarSkeleton`, `TableSkeleton`,
+  `CardGridSkeleton`); the rail stays while only the content shimmers
+  (`.skeleton` in globals.css: a light sweep, a step darker than the card in
+  both themes, still for people who turn motion off). Buttons that wait on
+  the server show `components/Spinner.jsx`'s arc through
+  `{pending ? <Busy>Saving…</Busy> : "Save"}`.
 - The field app and tenant portal have a root `loading.js`: while a sleeping
   staging API wakes (core's reads retry for up to two minutes), it's what
   shows instead of a blank screen.

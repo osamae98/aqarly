@@ -5,6 +5,7 @@ import Modal from "@aqarly/ui/Modal";
 import Toast from "@/components/Toast";
 import { FormNote, TextField, useFormAction } from "@/components/Field";
 import { addRateAction } from "@/app/actions";
+import { Busy } from "@/components/Spinner";
 
 // The rate card's two header actions. A new rate becomes a real service the
 // queue can categorise against; versioning is still the thing that has
@@ -65,7 +66,7 @@ export default function RateActions({ services }) {
               disabled={pending}
               className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {pending ? "Adding…" : "Add to rate card"}
+              {pending ? <Busy>Adding…</Busy> : "Add to rate card"}
             </button>
             <button
               type="button"

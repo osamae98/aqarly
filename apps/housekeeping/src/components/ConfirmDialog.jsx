@@ -2,6 +2,7 @@
 
 import Modal from "@aqarly/ui/Modal";
 import { FormNote } from "@/components/Field";
+import { Busy } from "@/components/Spinner";
 
 // One dialog for every removal in the portal. Nothing here is recoverable —
 // the store has no archive and no undo — so the copy says what goes and the
@@ -30,7 +31,7 @@ export default function ConfirmDialog({
             disabled={pending}
             className="flex-1 cursor-pointer rounded-md bg-danger py-3 text-[14.5px] font-semibold text-ink-inverse transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {pending ? "Removing…" : confirmLabel}
+            {pending ? <Busy>Removing…</Busy> : confirmLabel}
           </button>
           <button
             type="button"

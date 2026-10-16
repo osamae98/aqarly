@@ -10,6 +10,7 @@ import {
   useFormAction,
 } from "@/components/Field";
 import { addStaffAction, updateStaffAction } from "@/app/actions";
+import { Busy } from "@/components/Spinner";
 
 // One form for both halves of the roster's write path. Everyone here is
 // housekeeping crew, so only what ops actually owns is asked for — who they
@@ -38,7 +39,7 @@ export default function StaffDialog({ open, onClose, member = null }) {
               className="flex-1 cursor-pointer rounded-md bg-brand py-3 text-[14.5px] font-semibold text-ink-inverse transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-45"
             >
               {pending
-                ? "Saving…"
+                ? <Busy>Saving…</Busy>
                 : editing
                   ? "Save changes"
                   : "Add to roster"}

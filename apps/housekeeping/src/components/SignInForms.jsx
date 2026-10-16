@@ -7,6 +7,7 @@ import Alert from "@aqarly/ui/Alert";
 import Button from "@aqarly/ui/Button";
 import { resendCodeAction, sendCodeAction, verifyCodeAction } from "@/app/actions";
 import { Label, useFormAction } from "@/components/Field";
+import { Busy } from "@/components/Spinner";
 
 // The two sign-in screens' forms. Each posts to a server action and either
 // moves on or shows the API's reason as it is ("This number isn't an admin
@@ -46,7 +47,7 @@ export function PhoneForm({ countries, defaultCountry }) {
         </div>
       </div>
       <Button type="submit" size="lg" fullWidth disabled={send.pending}>
-        {send.pending ? "Sending…" : "Send code"}
+        {send.pending ? <Busy>Sending…</Busy> : "Send code"}
       </Button>
     </form>
   );
@@ -80,7 +81,7 @@ export function CodeForm() {
         />
       </div>
       <Button type="submit" size="lg" fullWidth disabled={verify.pending}>
-        {verify.pending ? "Checking…" : "Sign in"}
+        {verify.pending ? <Busy>Checking…</Busy> : "Sign in"}
       </Button>
       <button
         type="button"
@@ -88,7 +89,7 @@ export function CodeForm() {
         disabled={resend.pending}
         className="cursor-pointer text-sm font-semibold text-brand transition-colors hover:text-brand-hover disabled:opacity-50"
       >
-        {resend.pending ? "Sending…" : "Send a new code"}
+        {resend.pending ? <Busy>Sending…</Busy> : "Send a new code"}
       </button>
     </form>
   );
