@@ -7,7 +7,7 @@ import {
 import EmptyState from "@/components/EmptyState";
 import Screen from "@/components/Screen";
 import SectionLabel from "@/components/SectionLabel";
-import { BellOff, Check, Clock, Send, UserCheck } from "@/components/icons";
+import { Check, Clock, Send, UserCheck } from "@/components/icons";
 
 export const metadata = { title: "Notifications" };
 
@@ -25,8 +25,7 @@ export default async function NotificationsPage() {
       {notifications.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
-            tone="neutral"
-            icon={<BellOff size={32} />}
+            art="bell"
             title="No notifications yet"
             description="Updates on your requests show up here."
           />

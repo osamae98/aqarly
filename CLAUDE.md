@@ -193,6 +193,13 @@ sends it as `X-Session` on every call.
   `/login/register` (name, building, unit) → `/login/waiting` until ops
   approves. `getSignedInTenant()` returns the real tenant and redirects anyone
   else where they belong, so pages use it without checking. Sign out works.
+- **Tenant loaders and empty states** (same styles as ops and housekeeping).
+  Empty states use `components/EmptyState.jsx` ghost rows, with two
+  tenant-only drawings: `add` (no requests yet) and `bell` (no
+  notifications). Home, history, profile, notifications and a request each
+  have a `loading.js` drawn from `components/Skeleton.jsx` (`ScreenSkeleton`,
+  `RequestCardSkeleton`, `RowSkeleton`); other screens fall back to the root
+  `loading.js`, an arc spinner. Waiting buttons use `<Busy>…</Busy>`.
 - **Tenant request forms** ask what the admin portals' "New request" asks,
   less the building/unit (always their own home), the priority and "Assign
   to" (ops decides both; the API sets a tenant's request to standard and

@@ -9,7 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterChips from "@/components/FilterChips";
 import Screen from "@/components/Screen";
 import SectionLabel from "@/components/SectionLabel";
-import { Broom, CreditCard, Wrench } from "@/components/icons";
+import { Broom, Wrench } from "@/components/icons";
 
 export const metadata = { title: "History" };
 
@@ -40,8 +40,7 @@ export default async function HistoryPage({ searchParams }) {
       {months.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
-            tone="neutral"
-            icon={<CreditCard size={32} />}
+            art="history"
             title="No history yet"
             description="Finished requests and charges show up here."
           />

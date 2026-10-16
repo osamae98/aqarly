@@ -14,6 +14,7 @@ import {
   verifyCodeAction,
 } from "@/app/actions";
 import Field from "@/components/Field";
+import { Busy } from "@/components/Spinner";
 
 // The sign-in screens' forms. Each posts to a server action and either moves
 // on to where the action says, or shows the API's reason in an Alert.
@@ -74,7 +75,7 @@ export function PhoneForm({ countries, defaultCountry }) {
       </Field>
 
       <Button type="submit" size="lg" fullWidth className="mt-6" disabled={pending}>
-        {pending ? "Sending…" : "Send code"}
+        {pending ? <Busy>Sending…</Busy> : "Send code"}
       </Button>
     </form>
   );
@@ -116,12 +117,12 @@ export function CodeForm() {
             disabled={resend.pending}
             className="font-medium text-brand transition-colors hover:text-brand-hover disabled:opacity-50"
           >
-            {resend.pending ? "Sending…" : "Resend"}
+            {resend.pending ? <Busy>Sending…</Busy> : "Resend"}
           </button>
         </p>
 
         <Button type="submit" size="lg" fullWidth disabled={verify.pending}>
-          {verify.pending ? "Checking…" : "Verify"}
+          {verify.pending ? <Busy>Checking…</Busy> : "Verify"}
         </Button>
       </form>
     </div>
@@ -191,7 +192,7 @@ export function RegisterForm({ phone, buildings }) {
 
       <div className="mt-auto pt-2">
         <Button type="submit" size="lg" fullWidth disabled={pending || !building}>
-          {pending ? "Sending…" : "Continue"}
+          {pending ? <Busy>Sending…</Busy> : "Continue"}
         </Button>
       </div>
     </form>
