@@ -35,9 +35,13 @@ export default async function RequestQueuePage({ searchParams }) {
 
   // The ops portal is maintenance-only, so every read here is scoped to it —
   // housekeeping bookings never surface in this queue.
+  // With no status picked the queue shows open work, the same count the
+  // rail's badge shows; "All" and the single stages are in the Status menu.
+  const status = params.stage ?? "open";
   const query = {
     type: "maintenance",
-    stage: params.stage,
+    stage: status === "open" || status === "all" ? undefined : status,
+    open: status === "open" ? true : undefined,
     category: params.category,
     tier: params.tier,
     propertyId: params.propertyId,
@@ -107,7 +111,8 @@ export default async function RequestQueuePage({ searchParams }) {
       })),
     ],
     stage: [
-      { value: null, label: "Any status", count: unfiltered.length },
+      { value: null, label: "Open", count: unfiltered.filter((r) => r.stage !== "done").length },
+      { value: "all", label: "All", count: unfiltered.length },
       ...stages.map((stage) => ({
         value: stage,
         label: stageLabels[stage],
@@ -136,7 +141,10 @@ export default async function RequestQueuePage({ searchParams }) {
 
   const chips = [
     params.q && { label: `Search: ${params.q}`, param: "q" },
-    params.stage && { label: stageLabels[params.stage], param: "stage" },
+    params.stage && {
+      label: params.stage === "all" ? "All statuses" : stageLabels[params.stage],
+      param: "stage",
+    },
     params.category && {
       label: optionLabel(filters.category, params.category),
       param: "category",

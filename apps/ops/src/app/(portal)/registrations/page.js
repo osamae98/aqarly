@@ -1,6 +1,7 @@
 import PageBar from "@/components/PageBar";
 import RegistrationRows from "@/components/RegistrationRows";
 import { getRegistrations } from "@aqarly/core/operations";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata = {
   title: "Registrations",
@@ -26,12 +27,12 @@ export default async function RegistrationsPage() {
         {registrations.length > 0 ? (
           <RegistrationRows registrations={registrations} />
         ) : (
-          <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-surface px-6 py-14 text-center">
-            <h2 className="text-lg font-bold text-ink">No one waiting</h2>
-            <p className="max-w-sm text-sm text-ink-soft">
-              New tenant sign-ups show up here for you to confirm.
-            </p>
-          </div>
+          <EmptyState
+            art="inbox"
+            title="No one waiting"
+            description="New tenant sign-ups show up here for you to confirm."
+            className="rounded-md border border-border bg-surface px-6"
+          />
         )}
       </div>
     </>

@@ -4,6 +4,7 @@ import PageBar from "@/components/PageBar";
 import SearchField from "@/components/SearchField";
 import UnitCard from "@/components/UnitCard";
 import { getPropertyRollups, getUnits } from "@aqarly/core/operations";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata = {
   title: "Buildings",
@@ -44,9 +45,11 @@ export default async function UnitsPage({ searchParams }) {
         </PageBar>
 
         {buildings.length === 0 ? (
-          <p className="py-16 text-center text-sm text-ink-muted">
-            No buildings match &quot;{params.q}&quot;.
-          </p>
+          <EmptyState
+            art="search"
+            title={`No buildings match "${params.q}"`}
+            description="Try another name or area."
+          />
         ) : (
           <div className="grid gap-3.5 p-4 sm:grid-cols-2 md:p-6 xl:grid-cols-3">
             {buildings.map((building) => (
@@ -80,9 +83,11 @@ export default async function UnitsPage({ searchParams }) {
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-bold text-ink">Units</h2>
           {units.length === 0 ? (
-            <p className="py-16 text-center text-sm text-ink-muted">
-              No units in this building.
-            </p>
+            <EmptyState
+              art="building"
+              title="No units yet"
+              description="Units added to this building show up here."
+            />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {units.map((unit) => (
