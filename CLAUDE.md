@@ -223,6 +223,20 @@ sends it as `X-Session` on every call.
   "+966" box. The action joins country and number with `phoneFrom()`, which
   drops the leading 0 people type at home. "Demo accounts (+000)" is last in
   the list, for the seed's made-up numbers.
+- **Ops queue** opens on open requests (no `stage` param), the same count
+  as the rail's badge; the Status menu has "All" (`stage=all`) and each stage.
+  A request page's Previous / Next walk that same list (all requests once it
+  is done). The request page's Activity is a timeline (`ActivityLog`): an
+  icon and color per stage, a hand-back step with its reason, the closing
+  note in a box and the completion photos under "Done".
+- **Empty states** in ops use `components/EmptyState.jsx` in the "ghost
+  rows" style the user picked: a faint outline of what would be there (rows,
+  unit cards, avatars, bars) with one teal detail on top (a magnifier, ticks,
+  a wrench, a "+"), one per kind of empty (search, clear, inbox, wrench,
+  building, history, receipt, team). The ghosts fade up and the teal detail
+  draws itself in, once (`.empty-art` in globals.css); people who turn motion
+  off get the finished picture. 88px, 64px when `compact`. Then a title and
+  one line.
 - **Ops → Registrations** (`/registrations`): tenants who registered in the
   tenant portal, oldest first, to approve or decline. A unit that already has
   a tenant says so on the card, and the button reads "Approve and replace".

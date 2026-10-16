@@ -34,7 +34,12 @@ export default async function RequestDetailPage({ params }) {
   const [unit, candidates, neighbours] = await Promise.all([
     getUnitById(request.unitId),
     getAssignmentCandidates(request),
-    getRequestNeighbours(request.id, { type: "maintenance" }),
+    // Previous / Next walk the same list the queue shows: open work by
+    // default, everything once a request is done (it's only listed under All).
+    getRequestNeighbours(
+      request.id,
+      request.stage === "done" ? { type: "maintenance" } : { type: "maintenance", open: true },
+    ),
   ]);
 
   const categoryLabel = categoryLabels[request.category] ?? request.category;

@@ -49,7 +49,7 @@ export default function OpsNav({ openCount, registrationCount, admin, className 
 
   return (
     <Sidebar
-      tone="brand"
+      tone="surface"
       collapsed={collapsed}
       onToggleCollapse={toggle}
       className={className}
@@ -61,7 +61,7 @@ export default function OpsNav({ openCount, registrationCount, admin, className 
         ) : (
           <span className="flex items-center gap-2.5">
             <OpsMark className="size-7 shrink-0" />
-            <span className="truncate text-[15px] font-semibold text-[var(--slate-50)]">
+            <span className="truncate text-[15px] font-semibold text-ink">
               Aqarly Ops
             </span>
           </span>
@@ -106,15 +106,15 @@ export default function OpsNav({ openCount, registrationCount, admin, className 
               collapsed ? "justify-center px-0" : "px-1",
             ].join(" ")}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-[var(--teal-400)] text-xs font-bold text-[var(--teal-900)]">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-brand-tint text-xs font-bold text-brand">
               {initials(admin.name)}
             </span>
             {!collapsed && (
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold text-[var(--slate-50)]">
+                <span className="block truncate text-[13px] font-semibold text-ink">
                   {admin.name}
                 </span>
-                <span className="block truncate text-xs text-[var(--teal-300)]">
+                <span className="block truncate text-xs text-ink-muted">
                   {admin.phone}
                 </span>
               </span>
@@ -127,7 +127,7 @@ export default function OpsNav({ openCount, registrationCount, admin, className 
               title={collapsed ? "Sign out" : undefined}
               aria-label="Sign out"
               className={[
-                "flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[12.5px] font-semibold text-[var(--teal-200)] transition-colors hover:bg-white/[0.07] hover:text-[var(--slate-50)]",
+                "flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:bg-sunken hover:text-ink",
                 collapsed ? "justify-center px-0" : "px-1",
               ].join(" ")}
             >
